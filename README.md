@@ -1,1 +1,2 @@
 # bizzarehijinks
+# discord: nejrio
