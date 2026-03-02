@@ -1,3 +1,5 @@
+--[[lol hi I made this script nejrio will recieve updates soon please star so I can update you guys in the post, 
+uhhh have fun. :p]]
 local user = game.Players.LocalPlayer.Name
 local noevasive, nocombowait, noragdoll, nostun = false, false, false, false
 local infSpecial, stateBypass, abilSpeedOn, chantLock = false, false, false, false
