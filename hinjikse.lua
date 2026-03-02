@@ -390,7 +390,7 @@ while true do
         wait(0.2)
     end
 
-    if Character then dCharLbl.Text = "Character: "..Character.Value.."Credits besosme" end
+    if Character then dCharLbl.Text = "Credit: besosme | Character: "..Character.Value end
 -- game logic
     if not isDead and States then
         if stateBypass then
