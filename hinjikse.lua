@@ -67,10 +67,6 @@ spawn(function()
     end
 end)
 
--- ============================================================
--- DRAWING
--- allDrawings = every object, showSet = should be visible
--- ============================================================
 local allDrawings = {}
 local showSet     = {}
 
@@ -129,11 +125,6 @@ local function lerpC(a,b,t)
         math.floor(a.B*255+(b.B*255-a.B*255)*t))
 end
 
--- ============================================================
--- BASE UI
--- mainBg handles all rounded corners (Corner=10)
--- inner panels are flat squares inset 1px so corners show
--- ============================================================
 local dShadow  = mkD(mkSq(uiX+6,uiY+6,uiW,uiH,         Color3.fromRGB(0,0,6),true,0.5,0,nil,10))
 local dMainBg  = mkD(mkSq(uiX,uiY,uiW,uiH,              C_BG,   true,1,1,nil,10))
 local dBorder  = mkD(mkSq(uiX,uiY,uiW,uiH,              C_BORDER,false,1,2,1,10))
@@ -156,9 +147,6 @@ local baseUI = {dShadow,dMainBg,dBorder,dTopBar,dTopFill,dTopLine,
                 dSide,dSideLn,dContent,dBotDiv,dCharLbl}
 for _,d in ipairs(baseUI) do setShow(d,true) end
 
--- ============================================================
--- TABS
--- ============================================================
 local tabNames = {"Combat","Boosts","Settings"}
 local tabObjs  = {}
 
@@ -172,9 +160,6 @@ for i,name in ipairs(tabNames) do
     tabObjs[i] = {bg=tbg,acc=tacc,lbl=tlbl,name=name,sel=isSel,lt=isSel and 1 or 0,relTY=relTY}
 end
 
--- ============================================================
--- BUTTONS
--- ============================================================
 local btns = {}
 
 local function bShow(b, yes)
@@ -279,9 +264,6 @@ btns[iDestroy].lbl.Color = C_RED
 
 showTab("Combat")
 
--- ============================================================
--- UPDATE POSITIONS (drag)
--- ============================================================
 local function updatePos()
     dShadow.Position  = Vector2.new(uiX+6,uiY+6)
     dMainBg.Position  = Vector2.new(uiX,uiY)
@@ -312,9 +294,7 @@ local function updatePos()
     end
 end
 
--- ============================================================
--- KEY NAMES
--- ============================================================
+-- Key names
 local kn = {}
 for i=0x41,0x5A do kn[i]=string.char(i) end
 for i=0x30,0x39 do kn[i]=tostring(i-0x30) end
@@ -329,22 +309,14 @@ kn[0x26]="Up" kn[0x28]="Down" kn[0x25]="Left" kn[0x27]="Right"
 kn[0xBC]="," kn[0xBE]="." kn[0xBF]="/" kn[0xBA]=";" kn[0xBB]="=" kn[0xBD]="-"
 kn[0xDB]="[" kn[0xDD]="]" kn[0xDC]="\\" kn[0xDE]="'" kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
-
--- ============================================================
--- MAIN LOOP
--- ============================================================
+-- main loops
 AbilitySpeed.Value = 100
 
 while true do
     task.wait()
     if destroyed then break end
-
     local clicking = ismouse1pressed()
-
-    -- ---- DEATH ----
     if Humanoid and Humanoid.Health <= 0 then isDead = true end
-
-    -- ---- TAB LERP ----
     for _,t in ipairs(tabObjs) do
         local tgt = t.sel and 1 or 0
         t.lt = t.lt + (tgt-t.lt)*0.15
@@ -353,7 +325,6 @@ while true do
         t.lbl.Color = lerpC(C_GRAY,   C_WHITE,  t.lt)
     end
 
-    -- ---- TOGGLE LERP ----
     for _,b in ipairs(btns) do
         if b.isTog and b.tog then
             local tgt = b.state and 1 or 0
@@ -364,7 +335,6 @@ while true do
         end
     end
 
-    -- ---- CLICKS ----
     if clicking and not wasClicking and menuOpen then
         if inBox(uiX,uiY,uiW,TOPBAR_H) then
             dragging=true; dragOffX=mouse.X-uiX; dragOffY=mouse.Y-uiY
@@ -398,7 +368,7 @@ while true do
     end
     wasClicking = clicking
 
-    -- ---- KEY REBIND ----
+    -- keyrebind
     if listenKey then
         for k=0x08,0xDD do
             if iskeypressed(k) and k~=0x01 and k~=0x02 then
@@ -414,17 +384,14 @@ while true do
         end
     end
 
-    -- ---- MENU TOGGLE ----
     if iskeypressed(menuKey) then
         menuOpen = not menuOpen
         setAllVisible(menuOpen)
         wait(0.2)
     end
 
-    -- ---- LABELS ----
-    if Character then dCharLbl.Text = "Character: "..Character.Value end
-
-    -- ---- GAME LOGIC ----
+    if Character then dCharLbl.Text = "Character: ". .Character.Value + "Credits besosme" end
+-- game logic
     if not isDead and States then
         if stateBypass then
             for _,s in pairs(States:GetChildren()) do
