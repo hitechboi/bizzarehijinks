@@ -2,7 +2,7 @@
     Check it Interface
     by hitechboi / nejrio
     github.com/hitechboi
-    star my post have fun :p
+    star my post :p have fun.
 ]]
 local user = game.Players.LocalPlayer.Name
 local gameName = getgamename()
@@ -11,7 +11,6 @@ local infSpecial, stateBypass, chantLock        = false, false, false
 local abilitySpeed = 1
 local damageMultiplierValue = 1
 local mouse = game.Players.LocalPlayer:GetMouse()
-
 -- window
 local uiX, uiY       = 300, 200
 local uiW, uiH       = 440, 380
@@ -180,12 +179,10 @@ local dGlow2 = mkD(mkSq(uiX-2,uiY-2,uiW+4,uiH+4, C_ACCENT,false,0.35,0,2,12))
 local glowLines = {dGlow1,dGlow2}
 local glowPhase = {0, math.pi*0.6}
 local dBorder  = mkD(mkSq(uiX,uiY,uiW,uiH, C_BORDER,false,0.2,3,1,10))
-
 -- topbar (rounded top only; flat strip squares off the bottom join)
 local dTopBar  = mkD(mkSq(uiX+1,uiY+1,uiW-2,TOPBAR_H,      C_TOPBAR,true,1,3,nil,9))
 local dTopFill = mkD(mkSq(uiX+1,uiY+TOPBAR_H-5,uiW-2,7,    C_TOPBAR,true,1,3))
 local dTopLine = mkD(mkLn(uiX+1,uiY+TOPBAR_H,uiX+uiW-1,uiY+TOPBAR_H, C_BORDER,4,1))
-
 -- title
 local dTitleW  = mkD(mkTx("Check it",   uiX+14,      uiY+12, 14,C_WHITE, false,9,true))
 local dTitleA  = mkD(mkTx("Interface",  uiX+78,      uiY+12, 14,C_ACCENT,false,9,true))
@@ -194,12 +191,10 @@ local dKeyLbl  = mkD(mkTx("F1",        uiX+uiW-22, uiY+14, 11,C_GRAY,  false,9))
 -- two small indicator dots in topbar
 local dDotY    = mkD(mkSq(uiX+uiW-55,uiY+15,8,8, Color3.fromRGB(190,148,0),true,1,9,nil,3))
 local dDotR    = mkD(mkSq(uiX+uiW-42,uiY+15,8,8, Color3.fromRGB(170,44,44),true,1,9,nil,3))
-
 -- sidebar & content — flat so mainBg corners show; inset 1px
 local dSide    = mkD(mkSq(uiX+1,uiY+TOPBAR_H,SIDEBAR_W-1,uiH-TOPBAR_H-FOOTER_H-1, C_SIDEBAR,true,1,2,nil,8))
 local dSideLn  = mkD(mkLn(uiX+SIDEBAR_W,uiY+TOPBAR_H,uiX+SIDEBAR_W,uiY+uiH-FOOTER_H, C_BORDER,4,1))
 local dContent = mkD(mkSq(uiX+SIDEBAR_W,uiY+TOPBAR_H,CONTENT_W-1,uiH-TOPBAR_H-FOOTER_H-1, C_CONTENT,true,1,2,nil,8))
-
 -- footer
 local dFooter  = mkD(mkSq(uiX+1,uiY+uiH-FOOTER_H,uiW-2,FOOTER_H-1, C_TOPBAR,true,1,3,nil,6))
 local dFotLine = mkD(mkLn(uiX+1,uiY+uiH-FOOTER_H,uiX+uiW-1,uiY+uiH-FOOTER_H, C_BORDER,4,1))
@@ -254,13 +249,18 @@ local function bPos(b)
     b.bg.Position = Vector2.new(ax,ay)
     if b.isLog then
         for i,lb in ipairs(b.lbls) do
-            lb.Position = Vector2.new(ax+8, ay+b.pad+(i-1)*b.lineH)
+            if b.starFirst and i==1 then
+                lb.Position = Vector2.new(ax+b.cw/2, ay+b.pad)
+            else
+                local offset = b.starFirst and (b.starH+b.pad+(i-2)*b.lineH) or (b.pad+(i-1)*b.lineH)
+                lb.Position = Vector2.new(ax+8, ay+offset)
+            end
         end
         return
     end
     if b.isDiv then
         b.lbl.Position = Vector2.new(ax+6,ay)
-        b.ln.From=Vector2.new(ax,ay+13); b.ln.To=Vector2.new(ax+b.cw,ay+13)
+        if b.ln then b.ln.From=Vector2.new(ax,ay+13); b.ln.To=Vector2.new(ax+b.cw,ay+13) end
     elseif b.isAct then
         b.lbl.Position = Vector2.new(ax+b.cw/2,ay+b.ch/2-6)
         b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
@@ -372,35 +372,49 @@ local function addSlider(tab,lbl,relY,minV,maxV,initV,cb)
 end
 
 
-local function addLog(tab, lines, relY)
-    -- lines: table of strings, each prefixed with "> "
-    local rx  = SIDEBAR_W+ROW_PAD
-    local cw  = CONTENT_W-ROW_PAD*2
+local function addLog(tab, lines, relY, starFirst)
+    local rx    = SIDEBAR_W+ROW_PAD
+    local cw    = CONTENT_W-ROW_PAD*2
     local lineH = 18
-    local pad = 10
-    local ch  = #lines * lineH + pad*2
-    local ry  = TOPBAR_H+relY
-    local bg  = mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C_ROWBG,true,1,3,nil,6))
-    local lbls = {}
+    local starH = starFirst and 26 or 0  -- extra height for star line
+    local pad   = 10
+    local ch    = starH + (#lines - (starFirst and 1 or 0)) * lineH + pad*2
+    local ry    = TOPBAR_H+relY
+    local bg    = mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C_ROWBG,true,1,3,nil,6))
+    local lbls  = {}
     for i,line in ipairs(lines) do
         local tx = uiX+rx+8
-        local ty = uiY+ry+pad+(i-1)*lineH
+        local ty
         local lb = mkD(Drawing.new("Text"))
-        lb.Text         = line
-        lb.Position     = Vector2.new(tx, ty)
-        lb.Size         = 11
-        lb.Color        = C_WHITE
-        lb.Center       = false
-        lb.Outline      = true
-        lb.Font         = Drawing.Fonts.Minecraft
+        if starFirst and i==1 then
+            -- centered gold star line
+            ty = uiY+ry+pad
+            lb.Text        = line
+            lb.Position    = Vector2.new(uiX+rx+cw/2, ty)
+            lb.Size        = 14
+            lb.Color       = Color3.fromRGB(255, 200, 40)
+            lb.Center      = true
+            lb.Outline     = true
+            lb.Font        = Drawing.Fonts.Minecraft
+        else
+            local offset = starFirst and (starH + pad + (i-2)*lineH) or (pad + (i-1)*lineH)
+            ty = uiY+ry+offset
+            lb.Text        = line
+            lb.Position    = Vector2.new(tx, ty)
+            lb.Size        = 11
+            lb.Color       = C_WHITE
+            lb.Center      = false
+            lb.Outline     = true
+            lb.Font        = Drawing.Fonts.Minecraft
+        end
         lb.Transparency = 1
         lb.ZIndex       = 8
-        lb.Visible      = true
-        mkD(lb)
+        lb.Visible      = false
         table.insert(lbls, lb)
     end
     local b = {tab=tab,isLog=true,bg=bg,lbl=bg,ln=nil,lbls=lbls,
-               rx=rx,ry=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad}
+               rx=rx,ry=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
+               starFirst=starFirst,starH=starH}
     table.insert(btns,b); return #btns
 end
 -- ── populate tabs ──────────────────────────────────────────────
@@ -440,30 +454,8 @@ addAct("Misc","v1.0  |  github.com/hitechboi",84,C_ROWBG,nil,C_GRAY)
 
 -- Updates
 addDiv("Updates","UPDATE LOG",6)
-
--- "STAR MY POST ! :D" in bold golden text above the log
-do
-    local rx = SIDEBAR_W+ROW_PAD
-    local cw = CONTENT_W-ROW_PAD*2
-    local starLbl = mkD(Drawing.new("Text"))
-    starLbl.Text        = "STAR MY POST ! :D"
-    starLbl.Position    = Vector2.new(uiX+rx + cw/2, uiY+TOPBAR_H+22)
-    starLbl.Size        = 14
-    starLbl.Color       = Color3.fromRGB(255, 200, 40)
-    starLbl.Center      = true
-    starLbl.Outline     = true
-    starLbl.Font        = Drawing.Fonts.SystemBold
-    starLbl.Transparency = 1
-    starLbl.ZIndex      = 8
-    starLbl.Visible     = true
-    table.insert(btns, {
-        tab="Updates", isDiv=true,
-        bg=starLbl, lbl=starLbl, ln=nil,
-        rx=rx, ry=TOPBAR_H+22, cw=cw, ch=20
-    })
-end
-
 addLog("Updates", {
+    "STAR MY POST ! :D",
     "> v1.0 - Initial release",
     "> v1.1 - QOL features, and new menu",
     "> v1.1 - No Stun now clears CantRun",
@@ -471,7 +463,7 @@ addLog("Updates", {
     "> v1.1 - Animated glow border",
     "> v1.1 - Tab fade transitions",
     "> v1.1 - Update log tab added"
-}, 48)
+}, 22, true)
 
 -- Settings
 addDiv("Settings","KEYBIND",6)
