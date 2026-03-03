@@ -6,6 +6,8 @@
 ]]
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/Uilib.lua"))()
+repeat task.wait() until _G.UILib
+local UILib = _G.UILib
 
 local user = game.Players.LocalPlayer.Name
 local gameName = getgamename()
