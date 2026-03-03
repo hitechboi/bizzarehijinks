@@ -2,12 +2,12 @@
     Check it Interface
     by hitechboi / nejrio
     github.com/hitechboi
-    star my post :p have fun!
+    star my post :p, have fun!
 ]]
 local user = game.Players.LocalPlayer.Name
 local gameName = getgamename()
 local noevasive, nocombowait, noragdoll, nostun = false, false, false, false
-local infSpecial, stateBypass, chantLock        = false, false, false
+local infSpecial, stateBypass, chantLock, antiAC = false, false, false, false
 local abilitySpeed = 1
 local damageMultiplierValue = 1
 local mouse = game.Players.LocalPlayer:GetMouse()
@@ -448,8 +448,11 @@ end)
 -- Misc
 addDiv("Misc","MISCELLANEOUS",6)
 addAct("Misc","Auto-reapply: ON",20,Color3.fromRGB(12,26,16),nil,C_GREEN)
-addDiv("Misc","INFO",68)
-addAct("Misc","v1.0  |  github.com/hitechboi",84,C_ROWBG,nil,C_GRAY)
+addToggle("Misc","Anti-Anticheat",58,false,function(s) antiAC=s
+    notif(("Anti-Anticheat "..(s and "enabled" or "disabled")), nil, 2)
+end)
+addDiv("Misc","INFO",106)
+addAct("Misc","v1.0  |  github.com/hitechboi",122,C_ROWBG,nil,C_GRAY)
 
 -- Updates
 addDiv("Updates","UPDATE LOG",6)
@@ -459,6 +462,7 @@ addLog("Updates", {
     "> v1.1 - QOL features, and new menu",
     "> v1.1 - No Stun now clears CantRun",
     "> v1.1 - Ability Speed slider added",
+    "> v1.1 - Anti-Anticheat added to Misc",
     "> hi :p"
 }, 22, true)
 
@@ -530,7 +534,7 @@ kn[0xDB]="[" kn[0xDD]="]" kn[0xDC]="\\" kn[0xDE]="'" kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
 
 -- ── main loop ──────────────────────────────────────────────────
-AbilitySpeed.Value = 1
+if AbilitySpeed then AbilitySpeed.Value = 1 end
 
 while true do
     task.wait()
@@ -671,6 +675,20 @@ while true do
         dCharLbl.Text="Credit: besosme  |  Character: "..Character.Value
     end
 
+    -- anti-anticheat: clamp upward velocity so Security script never triggers kick
+    if antiAC and Humanoid and Humanoid.Health > 0 then
+        pcall(function()
+            local hrp = game.Workspace.Live[user]:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local v = hrp.AssemblyLinearVelocity
+                if v.Y > 8 then
+                    hrp.AssemblyLinearVelocity = Vector3.new(v.X, 8, v.Z)
+                end
+            end
+        end)
+    end
+
+
     -- game logic
     if not isDead and States then
         if stateBypass then
@@ -680,7 +698,7 @@ while true do
             local Stuns=States:FindFirstChild("Stuns")
             if Stuns then
                 for _,s in pairs(Stuns:GetChildren()) do
-                    if s.ClassName=="BoolValue" then s.Value=false end
+                    pcall(function() s:Destroy() end)
                 end
             end
         end
@@ -689,21 +707,24 @@ while true do
         if nocombowait then States.ComboWait.Value=false end
         if noragdoll   then States.Ragdolled.Value=false end
         if nostun then
-            States.Attacking.Value=false
-            States.BaseAttacking.Value=false
-            States.CantRun.Value=false
-            -- clear Stuns folder
+            local _clearStates={"Attacking","BaseAttacking","CantRun","Blocking","Dashing",
+                "Landing","Parkour","SlowWalk","HoldingItem","InUltimate","AwakeningActive",
+                "HyperArmor","CantGrab","Scared","Frozen","Counter","Emoting","IFrames"}
+            for _,name in ipairs(_clearStates) do
+                local s=States:FindFirstChild(name)
+                if s and s:IsA("BoolValue") then pcall(function() s.Value=false end) end
+            end
             local Stuns=States:FindFirstChild("Stuns")
             if Stuns then
                 for _,s in pairs(Stuns:GetChildren()) do
-                    if s.ClassName=="BoolValue" then s.Value=false end
+                    pcall(function() s:Destroy() end)
                 end
             end
         end
         if chantLock and Character and Character.Value=="KingOfCurses" then
             if Chant then Chant.Value=3 end
         end
-        DamageMultiplier.Value=damageMultiplierValue
-        AbilitySpeed.Value=abilitySpeed
+        if DamageMultiplier then DamageMultiplier.Value=damageMultiplierValue end
+        if AbilitySpeed then AbilitySpeed.Value=abilitySpeed end
     end
 end
