@@ -455,7 +455,7 @@ local iDestroy = addAct("Settings","Destroy Menu",  122,Color3.fromRGB(28,7,7),f
     destroyed=true
 end,C_RED)
 
-showTab("Combat")
+showTab("Updates")
 notif("Loaded on "..gameName,"Check it Interface",4)
 
 -- ── update positions (drag) ────────────────────────────────────
