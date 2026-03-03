@@ -6,19 +6,23 @@
 ]]
 
 local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/UiLib/refs/heads/main/Uilib.lua"))()
+
 local user = game.Players.LocalPlayer.Name
 local gameName = getgamename()
+
 -- feature flags
 local noevasive, nocombowait, noragdoll, nostun = false, false, false, false
 local infSpecial, stateBypass, chantLock, antiAC = false, false, false, false
 local abilitySpeed = 1
 local runSpeed = 1
 local damageMultiplierValue = 1
+
 -- game refs
 local States, AbilitySpeed, Special, Combo, DamageMultiplier, Chant
 local Character, Humanoid
 local isDead = false
 local destroyed = false
+
 local function grabRefs()
     pcall(function()
         States           = game.Workspace.Live[user].Combat.States
@@ -39,8 +43,9 @@ spawn(function()
     end
 end)
 
---build UI
+-- ── build UI ──────────────────────────────────────────────────
 local win = UILib.Window("Check it", "Interface", gameName)
+
 -- Combat tab
 local combat = win:Tab("Combat")
 combat:Div("COMBAT")
@@ -48,6 +53,7 @@ combat:Toggle("No Evasive",   false, function(s) noevasive=s end)
 combat:Toggle("No ComboWait", false, function(s) nocombowait=s end)
 combat:Toggle("No Ragdoll",   false, function(s) noragdoll=s end)
 combat:Toggle("No Stun",      false, function(s) nostun=s end)
+
 -- Boosts tab
 local boosts = win:Tab("Boosts")
 boosts:Div("BOOSTS")
@@ -55,6 +61,7 @@ boosts:Toggle("Inf Special",         false, function(s) infSpecial=s end)
 boosts:Toggle("StateChecker Bypass", false, function(s) stateBypass=s end)
 boosts:Slider("Ability Speed", 1, 100, 1,   function(v) abilitySpeed=v end, false)
 boosts:Toggle("KOC Chant Lock",      false, function(s) chantLock=s end)
+
 -- Misc tab
 local misc = win:Tab("Misc")
 misc:Div("MISCELLANEOUS")
@@ -63,6 +70,7 @@ misc:Toggle("Anti-Anticheat", false, function(s) antiAC=s end)
 misc:Slider("Run Speed", 1, 100, 1, function(v) runSpeed=v end, true)
 misc:Div("INFO")
 misc:Button("v1.1  |  github.com/hitechboi", UILib.Colors.ROWBG, nil, UILib.Colors.GRAY)
+
 -- Updates tab
 local updates = win:Tab("Updates")
 updates:Div("UPDATE LOG")
@@ -85,8 +93,9 @@ win:SettingsTab(function()
     win:Destroy()
 end)
 
---start UI
+-- ── start UI ──────────────────────────────────────────────────
 if AbilitySpeed then AbilitySpeed.Value = 1 end
+
 win:Init("Updates", function()
     -- char label callback
     if Character then
@@ -95,10 +104,12 @@ win:Init("Updates", function()
     return ""
 end)
 
--- game loop
+-- ── game loop ─────────────────────────────────────────────────
 while not destroyed do
     task.wait()
+
     if Humanoid and Humanoid.Health <= 0 then isDead = true end
+
     if antiAC and Humanoid and Humanoid.Health > 0 then
         pcall(function()
             local hrp = game.Workspace.Live[user]:FindFirstChild("HumanoidRootPart")
