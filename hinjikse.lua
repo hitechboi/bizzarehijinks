@@ -9,6 +9,7 @@ local gameName = getgamename()
 local noevasive, nocombowait, noragdoll, nostun = false, false, false, false
 local infSpecial, stateBypass, chantLock, antiAC = false, false, false, false
 local abilitySpeed = 1
+local runSpeed = 1
 local damageMultiplierValue = 1
 local mouse = game.Players.LocalPlayer:GetMouse()
 -- window
@@ -169,41 +170,31 @@ local function lerpC(a,b,t)
 end
 
 -- ── base UI ────────────────────────────────────────────────────
--- drop shadow — same size as UI, offset down-right, no outline
 local dShadow  = mkD(mkSq(uiX-2,uiY-2,uiW+4,uiH+4,  C_SHADOW,true,0.5,0,nil,12))
 local dMainBg  = mkD(mkSq(uiX,uiY,uiW,uiH,           C_BG,    true,1,1,nil,10))
--- animated glow border
-local dGlow1 = mkD(mkSq(uiX-1,uiY-1,uiW+2,uiH+2, C_ACCENT,false,0.9,1,1,11))
-local dGlow2 = mkD(mkSq(uiX-2,uiY-2,uiW+4,uiH+4, C_ACCENT,false,0.35,0,2,12))
+local dGlow1   = mkD(mkSq(uiX-1,uiY-1,uiW+2,uiH+2,  C_ACCENT,false,0.9,1,1,11))
+local dGlow2   = mkD(mkSq(uiX-2,uiY-2,uiW+4,uiH+4,  C_ACCENT,false,0.35,0,2,12))
 local glowLines = {dGlow1,dGlow2}
 local glowPhase = {0, math.pi*0.6}
-local dBorder  = mkD(mkSq(uiX,uiY,uiW,uiH, C_BORDER,false,0.2,3,1,10))
--- topbar (rounded top only; flat strip squares off the bottom join)
-local dTopBar  = mkD(mkSq(uiX+1,uiY+1,uiW-2,TOPBAR_H,      C_TOPBAR,true,1,3,nil,9))
-local dTopFill = mkD(mkSq(uiX+1,uiY+TOPBAR_H-5,uiW-2,7,    C_TOPBAR,true,1,3))
+local dBorder  = mkD(mkSq(uiX,uiY,uiW,uiH,           C_BORDER,false,0.2,3,1,10))
+local dTopBar  = mkD(mkSq(uiX+1,uiY+1,uiW-2,TOPBAR_H,         C_TOPBAR,true,1,3,nil,9))
+local dTopFill = mkD(mkSq(uiX+1,uiY+TOPBAR_H-5,uiW-2,7,       C_TOPBAR,true,1,3))
 local dTopLine = mkD(mkLn(uiX+1,uiY+TOPBAR_H,uiX+uiW-1,uiY+TOPBAR_H, C_BORDER,4,1))
--- title
-local dTitleW  = mkD(mkTx("Check it",   uiX+14,      uiY+12, 14,C_WHITE, false,9,true))
-local dTitleA  = mkD(mkTx("Interface",  uiX+78,      uiY+12, 14,C_ACCENT,false,9,true))
-local dTitleG  = mkD(mkTx(gameName,     uiX+154,     uiY+12, 13,C_ORANGE,false,9,false))
-local dKeyLbl  = mkD(mkTx("F1",        uiX+uiW-22, uiY+14, 11,C_GRAY,  false,9))
--- two small indicator dots in topbar
+local dTitleW  = mkD(mkTx("Check it",  uiX+14,      uiY+12, 14,C_WHITE, false,9,true))
+local dTitleA  = mkD(mkTx("Interface", uiX+78,      uiY+12, 14,C_ACCENT,false,9,true))
+local dTitleG  = mkD(mkTx(gameName,    uiX+154,     uiY+12, 13,C_ORANGE,false,9,false))
+local dKeyLbl  = mkD(mkTx("F1",        uiX+uiW-22,  uiY+14, 11,C_GRAY,  false,9))
 local dDotY    = mkD(mkSq(uiX+uiW-55,uiY+15,8,8, Color3.fromRGB(190,148,0),true,1,9,nil,3))
 local dDotR    = mkD(mkSq(uiX+uiW-42,uiY+15,8,8, Color3.fromRGB(170,44,44),true,1,9,nil,3))
--- sidebar & content — flat so mainBg corners show; inset 1px
 local dSide    = mkD(mkSq(uiX+1,uiY+TOPBAR_H,SIDEBAR_W-1,uiH-TOPBAR_H-FOOTER_H-1, C_SIDEBAR,true,1,2,nil,8))
 local dSideLn  = mkD(mkLn(uiX+SIDEBAR_W,uiY+TOPBAR_H,uiX+SIDEBAR_W,uiY+uiH-FOOTER_H, C_BORDER,4,1))
 local dContent = mkD(mkSq(uiX+SIDEBAR_W,uiY+TOPBAR_H,CONTENT_W-1,uiH-TOPBAR_H-FOOTER_H-1, C_CONTENT,true,1,2,nil,8))
--- footer
 local dFooter  = mkD(mkSq(uiX+1,uiY+uiH-FOOTER_H,uiW-2,FOOTER_H-1, C_TOPBAR,true,1,3,nil,6))
 local dFotLine = mkD(mkLn(uiX+1,uiY+uiH-FOOTER_H,uiX+uiW-1,uiY+uiH-FOOTER_H, C_BORDER,4,1))
 local dCharLbl = mkD(mkTx("Character: ...",uiX+SIDEBAR_W+8,uiY+uiH-FOOTER_H+5,10,C_GRAY,false,9))
 
 local baseUI = {
-    dShadow,
-    dGlow2,dGlow1,
-    dMainBg,
-    dBorder,
+    dShadow,dGlow2,dGlow1,dMainBg,dBorder,
     dTopBar,dTopFill,dTopLine,
     dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR,
     dSide,dSideLn,dContent,
@@ -219,8 +210,7 @@ for i,name in ipairs(tabNames) do
     local relTY = TOPBAR_H + 8 + (i-1)*34
     local isSel = name==currentTab
     local tbg  = mkD(mkSq(uiX+7,uiY+relTY,SIDEBAR_W-14,26, isSel and C_TABSEL or C_SIDEBAR,true,1,3,nil,5))
-    local tacc = mkD(mkSq(uiX+7,uiY+relTY,3,26,             isSel and C_ACCENT or C_SIDEBAR, true,1,4,nil,2))
-    -- two labels: white (selected) and gray (unselected) — swap on tab change since Text.Color is immutable
+    local tacc = mkD(mkSq(uiX+7,uiY+relTY,3,26,             isSel and C_ACCENT or C_SIDEBAR,true,1,4,nil,2))
     local tlblW = mkD(mkTx(name,uiX+18,uiY+relTY+7,11,C_WHITE,false,8))
     local tlblG = mkD(mkTx(name,uiX+18,uiY+relTY+7,11,C_GRAY, false,8))
     setShow(tbg,true); setShow(tacc,true)
@@ -306,16 +296,15 @@ local function switchTab(name)
     prevTab=currentTab; currentTab=name; tabSwitchedAt=os.clock()
     for _,t in ipairs(tabObjs) do
         t.sel=t.name==name
-        -- swap white/gray labels
         setShow(t.lbl,  t.sel)
         setShow(t.lblG, not t.sel)
     end
     for _,d in ipairs(allDrawings) do tabSet[d]=nil end
     for _,b in ipairs(btns) do
-        if b.tab==prevTab  then bShow(b,true); bPos(b); tagBtnFade(b,"prev") end
+        if b.tab==prevTab then bShow(b,true); bPos(b); tagBtnFade(b,"prev") end
     end
     for _,b in ipairs(btns) do
-        if b.tab==name     then bShow(b,true); bPos(b); tagBtnFade(b,"next") end
+        if b.tab==name    then bShow(b,true); bPos(b); tagBtnFade(b,"next") end
     end
 end
 
@@ -351,13 +340,14 @@ local function addAct(tab,lbl,relY,col,cb,lblCol)
     table.insert(btns,b); return #btns
 end
 
-local function addSlider(tab,lbl,relY,minV,maxV,initV,cb)
+local function addSlider(tab,lbl,relY,minV,maxV,initV,cb,isFloat)
     local rx=SIDEBAR_W+ROW_PAD; local ry=TOPBAR_H+relY
     local cw=CONTENT_W-ROW_PAD*2; local ch=ROW_H+6
     local trackW=cw-16
+    local initLbl = isFloat and string.format("%.1f",initV) or math.floor(initV)
     local bg  = mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C_ROWBG,true,1,3,nil,4))
     local dl  = mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C_DIV,4,1))
-    local lb  = mkD(mkTx(lbl..": "..math.floor(initV),uiX+rx+8,uiY+ry+7,12,C_WHITE,false,8))
+    local lb  = mkD(mkTx(lbl..": "..initLbl,uiX+rx+8,uiY+ry+7,12,C_WHITE,false,8))
     local ty  = uiY+ry+ch-11
     local trk = mkD(mkLn(uiX+rx+8,ty,uiX+rx+8+trackW,ty,C_DIMGRAY,5,3))
     local frac=(initV-minV)/(maxV-minV)
@@ -366,16 +356,15 @@ local function addSlider(tab,lbl,relY,minV,maxV,initV,cb)
     local hdl = mkD(mkSq(fx-4,ty-4,HDL_SIZE,HDL_SIZE,C_WHITE,true,1,7,nil,3))
     local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,
              rx=rx,ry=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
-             value=initV,baseLbl=lbl,dragging=false,cb=cb}
+             value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false}
     table.insert(btns,b); return #btns
 end
-
 
 local function addLog(tab, lines, relY, starFirst)
     local rx    = SIDEBAR_W+ROW_PAD
     local cw    = CONTENT_W-ROW_PAD*2
     local lineH = 18
-    local starH = starFirst and 26 or 0  -- extra height for star line
+    local starH = starFirst and 26 or 0
     local pad   = 10
     local ch    = starH + (#lines - (starFirst and 1 or 0)) * lineH + pad*2
     local ry    = TOPBAR_H+relY
@@ -383,76 +372,64 @@ local function addLog(tab, lines, relY, starFirst)
     local lbls  = {}
     for i,line in ipairs(lines) do
         local tx = uiX+rx+8
-        local ty
         local lb = mkD(Drawing.new("Text"))
         if starFirst and i==1 then
-            -- centered gold star line
-            ty = uiY+ry+pad
-            lb.Text        = line
-            lb.Position    = Vector2.new(uiX+rx+cw/2, ty)
-            lb.Size        = 14
-            lb.Color       = Color3.fromRGB(255, 200, 40)
-            lb.Center      = true
-            lb.Outline     = true
-            lb.Font        = Drawing.Fonts.Minecraft
+            lb.Text=line; lb.Position=Vector2.new(uiX+rx+cw/2,uiY+ry+pad)
+            lb.Size=14; lb.Color=Color3.fromRGB(255,200,40); lb.Center=true
+            lb.Outline=true; lb.Font=Drawing.Fonts.Minecraft
         else
-            local offset = starFirst and (starH + pad + (i-2)*lineH) or (pad + (i-1)*lineH)
-            ty = uiY+ry+offset
-            lb.Text        = line
-            lb.Position    = Vector2.new(tx, ty)
-            lb.Size        = 11
-            lb.Color       = C_WHITE
-            lb.Center      = false
-            lb.Outline     = true
-            lb.Font        = Drawing.Fonts.Minecraft
+            local offset=starFirst and (starH+pad+(i-2)*lineH) or (pad+(i-1)*lineH)
+            lb.Text=line; lb.Position=Vector2.new(tx,uiY+ry+offset)
+            lb.Size=11; lb.Color=C_WHITE; lb.Center=false
+            lb.Outline=true; lb.Font=Drawing.Fonts.Minecraft
         end
-        lb.Transparency = 1
-        lb.ZIndex       = 8
-        lb.Visible      = false
-        table.insert(lbls, lb)
+        lb.Transparency=1; lb.ZIndex=8; lb.Visible=false
+        table.insert(lbls,lb)
     end
-    local b = {tab=tab,isLog=true,bg=bg,lbl=bg,ln=nil,lbls=lbls,
-               rx=rx,ry=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
-               starFirst=starFirst,starH=starH}
+    local b={tab=tab,isLog=true,bg=bg,lbl=bg,ln=nil,lbls=lbls,
+             rx=rx,ry=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
+             starFirst=starFirst,starH=starH}
     table.insert(btns,b); return #btns
 end
+
 -- ── populate tabs ──────────────────────────────────────────────
 -- Combat
 addDiv("Combat","COMBAT",6)
 addToggle("Combat","No Evasive",   20,false,function(s) noevasive=s
-    notif(("No Evasive "..(s and "enabled" or "disabled")), nil, 2)
+    notif("No Evasive "..(s and "enabled" or "disabled"),nil,2)
 end)
 addToggle("Combat","No ComboWait", 58,false,function(s) nocombowait=s
-    notif(("No ComboWait "..(s and "enabled" or "disabled")), nil, 2)
+    notif("No ComboWait "..(s and "enabled" or "disabled"),nil,2)
 end)
 addToggle("Combat","No Ragdoll",   96,false,function(s) noragdoll=s
-    notif(("No Ragdoll "..(s and "enabled" or "disabled")), nil, 2)
+    notif("No Ragdoll "..(s and "enabled" or "disabled"),nil,2)
 end)
 addToggle("Combat","No Stun",     134,false,function(s) nostun=s
-    notif(("No Stun "..(s and "enabled" or "disabled")), nil, 2)
+    notif("No Stun "..(s and "enabled" or "disabled"),nil,2)
 end)
 
 -- Boosts
 addDiv("Boosts","BOOSTS",6)
 addToggle("Boosts","Inf Special",         20,false,function(s) infSpecial=s
-    notif(("Inf Special "..(s and "enabled" or "disabled")), nil, 2)
+    notif("Inf Special "..(s and "enabled" or "disabled"),nil,2)
 end)
 addToggle("Boosts","StateChecker Bypass", 58,false,function(s) stateBypass=s
-    notif(("StateChecker Bypass "..(s and "enabled" or "disabled")), nil, 2)
+    notif("StateChecker Bypass "..(s and "enabled" or "disabled"),nil,2)
 end)
-addSlider("Boosts","Ability Speed",       96,1,100,1,function(v) abilitySpeed=v end)
+addSlider("Boosts","Ability Speed",       96,1,100,1,function(v) abilitySpeed=v end,false)
 addToggle("Boosts","KOC Chant Lock",     144,false,function(s) chantLock=s
-    notif(("KOC Chant Lock "..(s and "enabled" or "disabled")), nil, 2)
+    notif("KOC Chant Lock "..(s and "enabled" or "disabled"),nil,2)
 end)
 
 -- Misc
 addDiv("Misc","MISCELLANEOUS",6)
 addAct("Misc","Auto-reapply: ON",20,Color3.fromRGB(12,26,16),nil,C_GREEN)
 addToggle("Misc","Anti-Anticheat",58,false,function(s) antiAC=s
-    notif(("Anti-Anticheat "..(s and "enabled" or "disabled")), nil, 2)
+    notif("Anti-Anticheat "..(s and "enabled" or "disabled"),nil,2)
 end)
-addDiv("Misc","INFO",106)
-addAct("Misc","v1.0  |  github.com/hitechboi",122,C_ROWBG,nil,C_GRAY)
+addSlider("Misc","Run Speed",96,1,100,1,function(v) runSpeed=v end,true)
+addDiv("Misc","INFO",144)
+addAct("Misc","v1.0  |  github.com/hitechboi",160,C_ROWBG,nil,C_GRAY)
 
 -- Updates
 addDiv("Updates","UPDATE LOG",6)
@@ -463,6 +440,7 @@ addLog("Updates", {
     "> v1.1 - No Stun now clears CantRun",
     "> v1.1 - Ability Speed slider added",
     "> v1.1 - Anti-Anticheat added to Misc",
+    "> v1.1 - Run Speed slider added to Misc",
     "> hi :p"
 }, 22, true)
 
@@ -472,22 +450,21 @@ local iKeyInfo = addAct("Settings","Menu Key: F1",   20,C_ROWBG,nil)
 local iKeyBind = addAct("Settings","Click to Rebind",58,Color3.fromRGB(14,20,40),nil)
 addDiv("Settings","DANGER",106)
 local iDestroy = addAct("Settings","Destroy Menu",  122,Color3.fromRGB(28,7,7),function()
-    notif("UI destroyed.", "Check it Interface", 3)
+    notif("UI destroyed.","Check it Interface",3)
     for _,d in ipairs(allDrawings) do pcall(function() d:Remove() end) end
     destroyed=true
 end,C_RED)
 
 showTab("Combat")
-notif("Loaded on "..gameName, "Check it Interface", 4)
+notif("Loaded on "..gameName,"Check it Interface",4)
 
 -- ── update positions (drag) ────────────────────────────────────
 local function updatePos()
     dShadow.Position  = Vector2.new(uiX-2,uiY-2)
     dMainBg.Position  = Vector2.new(uiX,uiY)
     dBorder.Position  = Vector2.new(uiX,uiY)
-    -- glow border squares
-    dGlow1.Position=Vector2.new(uiX-1,uiY-1)
-    dGlow2.Position=Vector2.new(uiX-2,uiY-2)
+    dGlow1.Position   = Vector2.new(uiX-1,uiY-1)
+    dGlow2.Position   = Vector2.new(uiX-2,uiY-2)
     dTopBar.Position  = Vector2.new(uiX+1,uiY+1)
     dTopFill.Position = Vector2.new(uiX+1,uiY+TOPBAR_H-5)
     dTopLine.From     = Vector2.new(uiX+1,uiY+TOPBAR_H)
@@ -575,30 +552,24 @@ while true do
         end
     end
 
-    -- fade
     applyFade()
 
-    -- clean up prev tab after transition
     if prevTab and (os.clock()-tabSwitchedAt)>=TAB_FADE_DUR then
         for _,b in ipairs(btns) do if b.tab==prevTab then bShow(b,false) end end
         for _,d in ipairs(allDrawings) do if tabSet[d]=="prev" then tabSet[d]=nil end end
         prevTab=nil
     end
 
-    -- click guard
     local mfn  = 1-(menuToggledAt-(os.clock()-FADE_DUR))/FADE_DUR
     local mOp  = math.abs((menuOpen and 0 or 1)-clamp(mfn,0,1))
 
     if clicking and not wasClicking and mOp>0.5 then
-        -- topbar drag
         if inBox(uiX,uiY,uiW,TOPBAR_H) then
             dragging=true; dragOffX=mouse.X-uiX; dragOffY=mouse.Y-uiY
         end
-        -- tab switch
         for _,t in ipairs(tabObjs) do
             if inBox(uiX+7,uiY+t.relTY,SIDEBAR_W-14,26) then switchTab(t.name) end
         end
-        -- buttons
         for i,b in ipairs(btns) do
             if b.tab==currentTab and not b.isDiv and not b.isSlider then
                 if inBox(uiX+b.rx,uiY+b.ry,b.cw,b.ch) then
@@ -624,9 +595,9 @@ while true do
             if clicking and not wasClicking then
                 if inBox(uiX+b.rx,uiY+b.ry,b.cw,b.ch) then b.dragging=true end
             end
-            -- notify on release
             if not clicking and wasClicking and b.dragging then
-                notif(b.baseLbl..": "..math.floor(b.value), nil, 2)
+                local disp = b.isFloat and string.format("%.1f",b.value) or math.floor(b.value)
+                notif(b.baseLbl..": "..disp,nil,2)
             end
             if not clicking then b.dragging=false end
             if b.dragging and clicking then
@@ -635,7 +606,8 @@ while true do
                 local fx=ax+frac*b.trackW
                 b.fill.To=Vector2.new(fx,ay)
                 b.handle.Position=Vector2.new(fx-4,ay-4)
-                b.lbl.Text=b.baseLbl..": "..math.floor(b.value)
+                local disp = b.isFloat and string.format("%.1f",b.value) or math.floor(b.value)
+                b.lbl.Text=b.baseLbl..": "..disp
                 if b.cb then b.cb(b.value) end
             end
         end
@@ -648,7 +620,6 @@ while true do
     end
     wasClicking=clicking
 
-    -- key rebind
     if listenKey then
         for k=0x08,0xDD do
             if iskeypressed(k) and k~=0x01 and k~=0x02 then
@@ -663,19 +634,16 @@ while true do
         end
     end
 
-    -- menu toggle (fire on press only)
     local keyDown=iskeypressed(menuKey)
     if keyDown and not wasMenuKey then
         menuOpen=not menuOpen; menuToggledAt=os.clock()
     end
     wasMenuKey=keyDown
 
-    -- character label
     if Character then
         dCharLbl.Text="Credit: besosme  |  Character: "..Character.Value
     end
 
-    -- anti-anticheat: clamp upward velocity so Security script never triggers kick
     if antiAC and Humanoid and Humanoid.Health > 0 then
         pcall(function()
             local hrp = game.Workspace.Live[user]:FindFirstChild("HumanoidRootPart")
@@ -688,8 +656,6 @@ while true do
         end)
     end
 
-
-    -- game logic
     if not isDead and States then
         if stateBypass then
             for _,s in pairs(States:GetChildren()) do
@@ -726,5 +692,7 @@ while true do
         end
         if DamageMultiplier then DamageMultiplier.Value=damageMultiplierValue end
         if AbilitySpeed then AbilitySpeed.Value=abilitySpeed end
+        local rs=States:FindFirstChild("RunningSpeed")
+        if rs then rs.Value=runSpeed end
     end
 end
