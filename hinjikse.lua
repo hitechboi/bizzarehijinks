@@ -459,7 +459,8 @@ addLog("Updates", {
     "> v1.0 - Initial release",
     "> v1.1 - QOL features, and new menu",
     "> v1.1 - No Stun now clears CantRun",
-    "> v1.1 - Ability Speed slider added"
+    "> v1.1 - Ability Speed slider added",
+    "> hi :p"
 }, 22, true)
 
 -- Settings
