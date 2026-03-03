@@ -5,7 +5,7 @@
     star my post :p, have fun!
 ]]
 
-local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/Uilib.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/Uilib.lua"))()
 
 local user = game.Players.LocalPlayer.Name
 local gameName = getgamename()
