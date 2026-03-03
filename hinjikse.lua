@@ -459,10 +459,7 @@ addLog("Updates", {
     "> v1.0 - Initial release",
     "> v1.1 - QOL features, and new menu",
     "> v1.1 - No Stun now clears CantRun",
-    "> v1.1 - Ability Speed slider added",
-    "> v1.1 - Animated glow border",
-    "> v1.1 - Tab fade transitions",
-    "> v1.1 - Update log tab added"
+    "> v1.1 - Ability Speed slider added"
 }, 22, true)
 
 -- Settings
