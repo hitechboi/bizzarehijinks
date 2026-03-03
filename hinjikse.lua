@@ -2,7 +2,7 @@
     Check it Interface
     by hitechboi / nejrio
     github.com/hitechboi
-    have fun make sure to star my post :p
+    star my post have fun :p
 ]]
 local user = game.Players.LocalPlayer.Name
 local gameName = getgamename()
@@ -172,6 +172,7 @@ local function lerpC(a,b,t)
 end
 
 -- ── base UI ────────────────────────────────────────────────────
+-- drop shadow — same size as UI, offset down-right, no outline
 local dShadow  = mkD(mkSq(uiX-2,uiY-2,uiW+4,uiH+4,  C_SHADOW,true,0.5,0,nil,12))
 local dMainBg  = mkD(mkSq(uiX,uiY,uiW,uiH,           C_BG,    true,1,1,nil,10))
 local dGlow1 = mkD(mkSq(uiX-1,uiY-1,uiW+2,uiH+2, C_ACCENT,false,0.9,1,1,11))
@@ -179,9 +180,12 @@ local dGlow2 = mkD(mkSq(uiX-2,uiY-2,uiW+4,uiH+4, C_ACCENT,false,0.35,0,2,12))
 local glowLines = {dGlow1,dGlow2}
 local glowPhase = {0, math.pi*0.6}
 local dBorder  = mkD(mkSq(uiX,uiY,uiW,uiH, C_BORDER,false,0.2,3,1,10))
+
+-- topbar (rounded top only; flat strip squares off the bottom join)
 local dTopBar  = mkD(mkSq(uiX+1,uiY+1,uiW-2,TOPBAR_H,      C_TOPBAR,true,1,3,nil,9))
 local dTopFill = mkD(mkSq(uiX+1,uiY+TOPBAR_H-5,uiW-2,7,    C_TOPBAR,true,1,3))
 local dTopLine = mkD(mkLn(uiX+1,uiY+TOPBAR_H,uiX+uiW-1,uiY+TOPBAR_H, C_BORDER,4,1))
+
 -- title
 local dTitleW  = mkD(mkTx("Check it",   uiX+14,      uiY+12, 14,C_WHITE, false,9,true))
 local dTitleA  = mkD(mkTx("Interface",  uiX+78,      uiY+12, 14,C_ACCENT,false,9,true))
@@ -190,10 +194,12 @@ local dKeyLbl  = mkD(mkTx("F1",        uiX+uiW-22, uiY+14, 11,C_GRAY,  false,9))
 -- two small indicator dots in topbar
 local dDotY    = mkD(mkSq(uiX+uiW-55,uiY+15,8,8, Color3.fromRGB(190,148,0),true,1,9,nil,3))
 local dDotR    = mkD(mkSq(uiX+uiW-42,uiY+15,8,8, Color3.fromRGB(170,44,44),true,1,9,nil,3))
+
 -- sidebar & content — flat so mainBg corners show; inset 1px
 local dSide    = mkD(mkSq(uiX+1,uiY+TOPBAR_H,SIDEBAR_W-1,uiH-TOPBAR_H-FOOTER_H-1, C_SIDEBAR,true,1,2,nil,8))
 local dSideLn  = mkD(mkLn(uiX+SIDEBAR_W,uiY+TOPBAR_H,uiX+SIDEBAR_W,uiY+uiH-FOOTER_H, C_BORDER,4,1))
 local dContent = mkD(mkSq(uiX+SIDEBAR_W,uiY+TOPBAR_H,CONTENT_W-1,uiH-TOPBAR_H-FOOTER_H-1, C_CONTENT,true,1,2,nil,8))
+
 -- footer
 local dFooter  = mkD(mkSq(uiX+1,uiY+uiH-FOOTER_H,uiW-2,FOOTER_H-1, C_TOPBAR,true,1,3,nil,6))
 local dFotLine = mkD(mkLn(uiX+1,uiY+uiH-FOOTER_H,uiX+uiW-1,uiY+uiH-FOOTER_H, C_BORDER,4,1))
@@ -227,6 +233,7 @@ for i,name in ipairs(tabNames) do
     setShow(tlblW, isSel); setShow(tlblG, not isSel)
     tabObjs[i] = {bg=tbg,acc=tacc,lbl=tlblW,lblG=tlblG,name=name,sel=isSel,lt=isSel and 1 or 0,relTY=relTY}
 end
+
 -- ── button system ──────────────────────────────────────────────
 local btns = {}
 
@@ -433,10 +440,38 @@ addAct("Misc","v1.0  |  github.com/hitechboi",84,C_ROWBG,nil,C_GRAY)
 
 -- Updates
 addDiv("Updates","UPDATE LOG",6)
+
+-- "STAR MY POST ! :D" in bold golden text above the log
+do
+    local rx = SIDEBAR_W+ROW_PAD
+    local cw = CONTENT_W-ROW_PAD*2
+    local starLbl = mkD(Drawing.new("Text"))
+    starLbl.Text        = "STAR MY POST ! :D"
+    starLbl.Position    = Vector2.new(uiX+rx + cw/2, uiY+TOPBAR_H+22)
+    starLbl.Size        = 14
+    starLbl.Color       = Color3.fromRGB(255, 200, 40)
+    starLbl.Center      = true
+    starLbl.Outline     = true
+    starLbl.Font        = Drawing.Fonts.SystemBold
+    starLbl.Transparency = 1
+    starLbl.ZIndex      = 8
+    starLbl.Visible     = true
+    table.insert(btns, {
+        tab="Updates", isDiv=true,
+        bg=starLbl, lbl=starLbl, ln=nil,
+        rx=rx, ry=TOPBAR_H+22, cw=cw, ch=20
+    })
+end
+
 addLog("Updates", {
     "> v1.0 - Initial release",
-    "> v1.1 - QOL features, and new menu"
-}, 22)
+    "> v1.1 - QOL features, and new menu",
+    "> v1.1 - No Stun now clears CantRun",
+    "> v1.1 - Ability Speed slider added",
+    "> v1.1 - Animated glow border",
+    "> v1.1 - Tab fade transitions",
+    "> v1.1 - Update log tab added"
+}, 48)
 
 -- Settings
 addDiv("Settings","KEYBIND",6)
@@ -664,7 +699,18 @@ while true do
         if noevasive   then States.EvadeCooldown.Value=false States.CantEvade.Value=false end
         if nocombowait then States.ComboWait.Value=false end
         if noragdoll   then States.Ragdolled.Value=false end
-        if nostun      then States.Attacking.Value=false States.BaseAttacking.Value=false end
+        if nostun then
+            States.Attacking.Value=false
+            States.BaseAttacking.Value=false
+            States.CantRun.Value=false
+            -- clear Stuns folder
+            local Stuns=States:FindFirstChild("Stuns")
+            if Stuns then
+                for _,s in pairs(Stuns:GetChildren()) do
+                    if s.ClassName=="BoolValue" then s.Value=false end
+                end
+            end
+        end
         if chantLock and Character and Character.Value=="KingOfCurses" then
             if Chant then Chant.Value=3 end
         end
