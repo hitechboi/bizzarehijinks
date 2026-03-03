@@ -2,7 +2,7 @@
     Check it Interface
     by hitechboi / nejrio
     github.com/hitechboi
-    star my post :p have fun.
+    star my post :p have fun!
 ]]
 local user = game.Players.LocalPlayer.Name
 local gameName = getgamename()
@@ -57,7 +57,6 @@ local C_ROWBG   = Color3.fromRGB(14, 18, 33)
 local C_DIV     = Color3.fromRGB(22, 27, 48)
 local C_SHADOW  = Color3.fromRGB(0, 0, 5)
 local C_ORANGE  = Color3.fromRGB(255, 175, 80)
-
 -- layout
 local SIDEBAR_W = 128
 local TOPBAR_H  = 40
@@ -68,7 +67,6 @@ local TOG_W     = 34
 local TOG_H     = 17
 local CONTENT_W = uiW - SIDEBAR_W
 local HDL_SIZE  = 8
-
 -- refs
 local States, AbilitySpeed, Special, Combo, DamageMultiplier, Chant
 local Character, Humanoid
@@ -174,6 +172,7 @@ end
 -- drop shadow — same size as UI, offset down-right, no outline
 local dShadow  = mkD(mkSq(uiX-2,uiY-2,uiW+4,uiH+4,  C_SHADOW,true,0.5,0,nil,12))
 local dMainBg  = mkD(mkSq(uiX,uiY,uiW,uiH,           C_BG,    true,1,1,nil,10))
+-- animated glow border
 local dGlow1 = mkD(mkSq(uiX-1,uiY-1,uiW+2,uiH+2, C_ACCENT,false,0.9,1,1,11))
 local dGlow2 = mkD(mkSq(uiX-2,uiY-2,uiW+4,uiH+4, C_ACCENT,false,0.35,0,2,12))
 local glowLines = {dGlow1,dGlow2}
