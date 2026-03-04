@@ -70,10 +70,9 @@ updates:Log({
     "> v1.1 - Ability Speed slider added",
     "> v1.1 - Anti-Anticheat added to Misc",
     "> v1.1 - Run Speed slider added to Misc",
-    "> v1.1 - No Stun removed (serverside)",
     "> v1.2 - UILib refactor",
     "> v1.2 - Added minimize feature C:<",
-    "> v1.2 - Damage multiplier slider added",
+    "> v1.2 - Damage multi slider added to Misc",
     "> hi :p"
 }, true)
 
