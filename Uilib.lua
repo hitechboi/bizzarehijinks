@@ -131,7 +131,7 @@ function UILib.Window(titleA, titleB, gameName)
     for i=1,MAX_MINI_LBLS do
         local lb = mkTx("",0,0,11,C.WHITE,false,8,false)
         lb.Visible=false
-        lb.Transparency=0
+        lb.Transparency=1
         table.insert(miniActiveLbls,lb)
         table.insert(miniActivePulse,i*0.7)
     end
@@ -803,8 +803,8 @@ function UILib.Window(titleA, titleB, gameName)
                 if charLabelFn then dCharLbl.Text=charLabelFn() end
             end
         end
-        end) -- spawn
-    end -- Init
+        end) 
+    end 
 
     -- Tab factory
     win._tabOrder = {}
