@@ -1,7 +1,6 @@
 --[[
-    UILib.lua
-    Generic Drawing-based UI Library
-    by hitechboi / nejrio
+    uilib.lua :3
+    by hitechboi / nejrio >_< 
     took off from da jet :p
 ]]
 
