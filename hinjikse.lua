@@ -5,7 +5,7 @@
     star my post :p, have fun!
 ]]
 
-if game.GameId ~= 81732171608429 then
+if game.GameId ~= 6809578891 then
     notify("Check it", "This script is not supported for this game.", 5)
     return
 end
