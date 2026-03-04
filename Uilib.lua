@@ -14,7 +14,7 @@ local function lerpC(a,b,t)
         math.floor(a.B*255+(b.B*255-a.B*255)*t))
 end
 
---palettes
+--  palette
 local C = {
     BG      = Color3.fromRGB(9,  11, 20),
     SIDEBAR = Color3.fromRGB(12, 15, 27),
@@ -41,7 +41,7 @@ local C = {
 }
 UILib.Colors = C
 
--- layout constants
+--layout constants
 local L = {
     W        = 440, H        = 380,
     SIDEBAR  = 128, TOPBAR   = 40,
@@ -93,6 +93,7 @@ kn[0x26]="Up" kn[0x28]="Down" kn[0x25]="Left" kn[0x27]="Right"
 kn[0xBC]="," kn[0xBE]="." kn[0xBF]="/" kn[0xBA]=";" kn[0xBB]="=" kn[0xBD]="-"
 kn[0xDB]="[" kn[0xDD]="]" kn[0xDC]="\\" kn[0xDE]="'" kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
+
 -- Window constructor
 function UILib.Window(titleA, titleB, gameName)
     local win = {}
@@ -118,7 +119,6 @@ function UILib.Window(titleA, titleB, gameName)
     local miniDragging    = false
     local miniDragOffX, miniDragOffY = 0, 0
     local glowPhase       = {0, math.pi*0.6}
-
     -- drawing registry
     local allDrawings = {}
     local showSet     = {}
@@ -151,7 +151,7 @@ function UILib.Window(titleA, titleB, gameName)
         return mouse.X>=x and mouse.X<=x+w and mouse.Y>=y and mouse.Y<=y+h
     end
 
-    --fade
+    -- fade
     local function applyFade()
         if minimized then
             for _,d in ipairs(allDrawings) do d.Visible=false end
@@ -180,7 +180,7 @@ function UILib.Window(titleA, titleB, gameName)
         end
     end
 
-    --tab / button show helpers
+    -- tab / button show helpers
     local function bShow(b,yes)
         setShow(b.bg,yes)
         if not b.isLog then setShow(b.lbl,yes) end
@@ -267,7 +267,7 @@ function UILib.Window(titleA, titleB, gameName)
         end
     end
 
-    --updatePos (drag)
+    -- updatePos (drag)
     local dShadow,dMainBg,dGlow1,dGlow2,dBorder
     local dTopBar,dTopFill,dTopLine
     local dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR
@@ -491,7 +491,7 @@ function UILib.Window(titleA, titleB, gameName)
         table.insert(btns,b); return #btns
     end
 
-    -- ── Tab object
+    -- ── Tab object 
     local tabAPI = {}
     local tabRowY = {}  -- tracks current Y offset per tab
 
@@ -532,7 +532,7 @@ function UILib.Window(titleA, titleB, gameName)
         return api
     end
 
-    --Init build base UI and start loop
+    -- Init build base UI and start loop
     function win:Init(defaultTab, charLabelFn, notifFn)
         local notif = notifFn or function(msg,title,dur)
             pcall(function() notify(msg, title or titleA.." "..titleB, dur or 3) end)
@@ -612,6 +612,7 @@ function UILib.Window(titleA, titleB, gameName)
         currentTab=defaultTab
         showTab(defaultTab)
         notif("Loaded on "..(gameName or ""),"Check it Interface",4)
+
         --main loop
         spawn(function()
         while not destroyed do
@@ -678,6 +679,7 @@ function UILib.Window(titleA, titleB, gameName)
                 wasClicking=clicking
             else
                 -- full menu mode
+                for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
                 -- tab lerp
                 for _,t in ipairs(tabObjs) do
                     local tgt=t.sel and 1 or 0
@@ -801,14 +803,16 @@ function UILib.Window(titleA, titleB, gameName)
                 if charLabelFn then dCharLbl.Text=charLabelFn() end
             end
         end
-        end) 
+        end)
     end 
+
     -- Tab factory
     win._tabOrder = {}
     function win:Tab(name)
         table.insert(win._tabOrder, name)
         return getTabAPI(name)
     end
+
     -- Settings tab helper (auto-builds keybind + destroy)
     function win:SettingsTab(destroyCb)
         local s = self:Tab("Settings")
