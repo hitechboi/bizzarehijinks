@@ -646,9 +646,12 @@ function UILib.Window(titleA, titleB, gameName)
                 -- pulse active labels
                 local pt=os.clock()*0.8
                 for i,lb in ipairs(miniActiveLbls) do
-                    if lb.Visible then
+                    if lb.Text~="" then
+                        lb.Visible=true
                         local f=(math.sin(pt+miniActivePulse[i])+1)/2
                         lb.Color=lerpC(Color3.fromRGB(30,50,160),C.WHITE,f)
+                    else
+                        lb.Visible=false
                     end
                 end
                 -- mini clicks
