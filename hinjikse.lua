@@ -5,10 +5,6 @@
     star my post :p, have fun!
 ]]
 
-if game.GameId ~= 6809578891 then
-    notify("Check it", "This script is not supported for this game.", 5)
-    return
-end
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/Uilib.lua"))()
 repeat task.wait() until _G.UILib
@@ -144,4 +140,8 @@ while not destroyed do
         local rs=States:FindFirstChild("RunningSpeed")
         if rs then rs.Value=runSpeed end
     end
+    if game.GameId ~= 6809578891 then
+    notify("Check it", "This script is not supported for this game.", 5)
+    return
+end
 end
