@@ -686,11 +686,10 @@ function UILib.Window(titleA, titleB, gameName)
                     updateMiniPos()
                 end
                 wasClicking=clicking
-            else
+            end
+            if not minimized then
                 -- full menu mode
-                if not minimized then
-                    for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
-                end
+                for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
                 -- tab lerp
                 for _,t in ipairs(tabObjs) do
                     local tgt=t.sel and 1 or 0
