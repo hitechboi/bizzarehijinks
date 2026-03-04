@@ -140,8 +140,4 @@ while not destroyed do
         local rs=States:FindFirstChild("RunningSpeed")
         if rs then rs.Value=runSpeed end
     end
-    if game.GameId ~= 6809578891 then
-    notify("Check it", "This script is not supported for this game.", 5)
-    return
-end
 end
