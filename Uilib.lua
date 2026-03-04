@@ -995,12 +995,11 @@ function UILib.Window(titleA, titleB, gameName)
                                             ir2.bg.Color=(ir2.option==b.value) and C.OPTSEL or C.OPTROW
                                             ir2.lbl.Color=(ir2.option==b.value) and C.ACCENT or C.GRAY
                                         end
-                                                
                                         if b.cb then pcall(b.cb,b.value) end
                                         pcall(function() notify(b.baseLbl..": "..b.value,nil,2) end)
                                         closeInline(); reposTab(currentTab); clickHandled=true; break
                                     end
-                                end)
+                                end
                             end
 
                             -- main row click
