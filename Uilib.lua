@@ -89,12 +89,10 @@ kn[0x26]="Up" kn[0x28]="Down" kn[0x25]="Left" kn[0x27]="Right"
 kn[0xBC]="," kn[0xBE]="." kn[0xBF]="/" kn[0xBA]=";" kn[0xBB]="=" kn[0xBD]="-"
 kn[0xDB]="[" kn[0xDD]="]" kn[0xDC]="\\" kn[0xDE]="'" kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
-
 -- Window constructor
 function UILib.Window(titleA, titleB, gameName)
     local win = {}
     local mouse = game.Players.LocalPlayer:GetMouse()
-
     -- state
     local uiX, uiY       = 300, 200
     local dragging        = false
@@ -116,7 +114,6 @@ function UILib.Window(titleA, titleB, gameName)
     local miniDragging    = false
     local miniDragOffX, miniDragOffY = 0, 0
     local glowPhase       = {0, math.pi*0.6}
-
     -- drawing registry
     local allDrawings = {}
     local showSet     = {}
@@ -542,7 +539,6 @@ function UILib.Window(titleA, titleB, gameName)
         local notif = notifFn or function(msg,title,dur)
             pcall(function() notify(msg, title or titleA.." "..titleB, dur or 3) end)
         end
-
         -- build base UI
         dShadow  = mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,   C.SHADOW,true,0.5,0,nil,12))
         dMainBg  = mkD(mkSq(uiX,uiY,L.W,L.H,            C.BG,    true,1,1,nil,10))
@@ -638,7 +634,6 @@ function UILib.Window(titleA, titleB, gameName)
                 end
             end
             wasMenuKey=keyDown
-
             -- mini UI mode
             if minimized and not miniClosed then
                 -- animate mini glow
@@ -812,7 +807,7 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
         end) -- spawn
-    end -- Init
+    end -- Init :p
 
     -- Tab factory
     win._tabOrder = {}
