@@ -2,6 +2,7 @@
     UILib.lua
     Generic Drawing-based UI Library
     by hitechboi / nejrio
+    took off from da jet :p
 ]]
 
 local UILib = {}
@@ -566,7 +567,6 @@ function UILib.Window(titleA, titleB, gameName)
                 dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR,dSide,dSideLn,dContent,
                 dFooter,dFotLine,dCharLbl}
         for _,d in ipairs(baseUI) do setShow(d,true) end
-
         -- build tabs in sidebar
         local tabNames = {}
         for name,_ in pairs(tabAPI) do table.insert(tabNames,name) end
@@ -581,7 +581,6 @@ function UILib.Window(titleA, titleB, gameName)
             setShow(tlW,isSel); setShow(tlG,not isSel)
             table.insert(tabObjs,{bg=tbg,acc=tacc,lbl=tlW,lblG=tlG,name=name,sel=isSel,lt=isSel and 1 or 0,relTY=relTY})
         end
-
         -- mini UI
         dMiniShadow  = mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.SHADOW,true,0.5,0,nil,12)
         dMiniBg      = mkSq(uiX,uiY,L.W,L.MINI_H,         C.BG,    true,1,1,nil,10)
