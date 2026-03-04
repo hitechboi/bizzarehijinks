@@ -1,4 +1,4 @@
-heres my ui lib --[[
+--[[
     uilib.lua :3
     by hitechboi / nejrio >_<
     updated: dropdown, textinput, keybind rows,
