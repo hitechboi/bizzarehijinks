@@ -201,7 +201,7 @@ function UILib.Window(titleA, titleB, gameName)
     end
     local function screenY(b,bIdx) return uiY+b.ry+CONT_OFF+extraAbove(bIdx) end
 
-    -- ── FADE
+    -- -- FADE
     local function applyFade()
         if minimized then for _,d in ipairs(allDrawings) do d.Visible=false end; return end
         for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
@@ -407,7 +407,7 @@ function UILib.Window(titleA, titleB, gameName)
         for i,b in ipairs(btns) do if b.tab==name then bShow(b,true); bPos(b,i); tagFade(b,"next") end end
     end
 
-    -- ── drawing refs
+    -- -- drawing refs
     local dShadow,dMainBg,dGlow1,dGlow2,dBorder,dTopBar,dTopFill,dTopLine
     local dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR
     local dSide,dSideLn,dContent,dFooter,dFotLine,dFooterLbl,glowLines
@@ -533,7 +533,7 @@ function UILib.Window(titleA, titleB, gameName)
     end
     UILib.saveProfile=saveProfile; UILib.loadProfile=loadProfile
 
-    -- ── WIDGET BUILDERS
+    -- -- WIDGET BUILDERS
     local function addToggle(tab,lbl,relY,init,cb,tooltip,parentSec)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
@@ -697,7 +697,7 @@ function UILib.Window(titleA, titleB, gameName)
         table.insert(btns,b); b._selfIdx=#btns; return #btns
     end
 
-    -- ── TAB API
+    -- -- TAB API
     local tabAPI={}; local tabRowY={}
 
     local function getTabAPI(tabName)
@@ -742,7 +742,7 @@ function UILib.Window(titleA, titleB, gameName)
         tabAPI[tabName]=api; return api
     end
 
-    -- ── INIT
+    -- -- INIT
     function win:Init(defaultTab, footerFn)
         dShadow =mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,C.SHADOW,true,0.5,0,nil,12))
         dMainBg =mkD(mkSq(uiX,uiY,L.W,L.H,C.BG,true,1,1,nil,10))
