@@ -4,6 +4,10 @@
     github.com/hitechboi
     star my post :p, have fun!
 ]]
+if game.GameId ~= 6809578891 then
+    notify("Check it", "This script is not supported for this game.", 5)
+    return
+end
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/Uilib.lua"))()
 repeat task.wait() until _G.UILib
