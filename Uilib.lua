@@ -979,12 +979,14 @@ function UILib.Window(titleA, titleB, gameName)
                     end
 
                     -- content row clicks
+                    local clickHandled=false
                     for i,b in ipairs(btns) do
+                        if clickHandled then break end
                         if b.tab==currentTab and showSet[b.bg] then
                             local ax=uiX+b.rx; local ay=screenY(b,i)
 
                             -- dropdown option click (when this dropdown is open)
-                            if b.isDropdown and openInlineIdx==i and b.inlineRows then
+                            if not clickHandled and b.isDropdown and openInlineIdx==i and b.inlineRows then
                                 for oi,ir in ipairs(b.inlineRows) do
                                     local oy=ay+b.ch+(oi-1)*L.OPT_H
                                     if inBox(ax,oy,b.cw,L.OPT_H) then
@@ -995,13 +997,13 @@ function UILib.Window(titleA, titleB, gameName)
                                         end
                                         if b.cb then pcall(b.cb,b.value) end
                                         pcall(function() notify(b.baseLbl..": "..b.value,nil,2) end)
-                                        closeInline(); reposTab(currentTab); goto doneClick
+                                        closeInline(); reposTab(currentTab); clickHandled=true; break
                                     end
                                 end
                             end
 
                             -- main row click
-                            if inBox(ax,ay,b.cw,b.ch) then
+                            if not clickHandled and inBox(ax,ay,b.cw,b.ch) then
                                 if b.isTog then
                                     b.state=not b.state
                                     if b.cb then pcall(b.cb,b.state) end
@@ -1053,11 +1055,10 @@ function UILib.Window(titleA, titleB, gameName)
                                     end
                                     pcall(function() notify(b.sectionName.." "..(isOpen and "expanded" or "collapsed"),nil,2) end)
                                 end
-                                goto doneClick
+                                clickHandled=true
                             end
                         end
                     end
-                    ::doneClick::
                 end
 
                 -- sliders drag
