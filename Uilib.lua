@@ -161,8 +161,9 @@ function UILib.Window(titleA, titleB, gameName)
             for _,d in ipairs(allDrawings) do d.Visible=false end
             return
         end
-        -- ensure mini labels always hidden in full menu mode
-        for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
+        if not minimized then
+            for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
+        end
         local mf=1-(menuToggledAt-(os.clock()-FADE_DUR))/FADE_DUR
         if not menuOpen and mf>=1.1 then
             for _,d in ipairs(allDrawings) do d.Visible=false end
@@ -687,7 +688,9 @@ function UILib.Window(titleA, titleB, gameName)
                 wasClicking=clicking
             else
                 -- full menu mode
-                for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
+                if not minimized then
+                    for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
+                end
                 -- tab lerp
                 for _,t in ipairs(tabObjs) do
                     local tgt=t.sel and 1 or 0
@@ -835,6 +838,7 @@ function UILib.Window(titleA, titleB, gameName)
 
     function win:Destroy()
         destroyed=true
+        pcall(function() notify("UI destroyed.", titleA.." "..titleB, 3) end)
         for _,d in ipairs(allDrawings) do pcall(function() d:Remove() end) end
         for _,d in ipairs(miniDrawings) do pcall(function() d:Remove() end) end
         for _,l in ipairs(miniActiveLbls) do pcall(function() l:Remove() end) end
