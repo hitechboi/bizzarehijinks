@@ -129,7 +129,8 @@ function UILib.Window(titleA, titleB, gameName)
     local miniActivePulse= {}
     local MAX_MINI_LBLS  = 12
     for i=1,MAX_MINI_LBLS do
-        local lb = mkTx("",0,0,11,C.WHITE,false,8,false)
+        local lb = mkTx("",0,0,13,C.WHITE,false,9,false)
+        lb.Outline=true
         lb.Visible=false
         lb.Transparency=1
         table.insert(miniActiveLbls,lb)
@@ -367,6 +368,13 @@ function UILib.Window(titleA, titleB, gameName)
         local active={}
         for _,b in ipairs(btns) do
             if b.isTog and b.state then table.insert(active,b.toggleName) end
+        end
+        if #active==0 then
+            miniActiveLbls[1].Text="no active toggles"
+            miniActiveLbls[1].Position=Vector2.new(uiX+10, uiY+L.TOPBAR+6)
+            miniActiveLbls[1].Visible=true
+            for i=2,MAX_MINI_LBLS do miniActiveLbls[i].Text=""; miniActiveLbls[i].Visible=false end
+            return
         end
         local PAD=10; local SEP=14; local charW=7
         local ROW_H2=18
@@ -803,8 +811,8 @@ function UILib.Window(titleA, titleB, gameName)
                 if charLabelFn then dCharLbl.Text=charLabelFn() end
             end
         end
-        end) 
-    end 
+        end) -- spawn
+    end -- Init
 
     -- Tab factory
     win._tabOrder = {}
