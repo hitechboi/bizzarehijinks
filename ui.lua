@@ -1,6 +1,8 @@
--- UILib v1.4.6
--- Generic Drawing-based UI Library
+    [[  UILib v1.4.6
+    took off from da jet <_>
 
+
+        ]]
 local UILib = {}
 local _collapseSections = {}
 
