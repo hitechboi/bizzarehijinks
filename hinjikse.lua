@@ -77,16 +77,14 @@ local updates = win:Tab("Updates")
 updates:Div("UPDATE LOG")
 updates:Log({
     "STAR MY POST ! :D",
-    "> v1.0 - Initial release",
-    "> v1.1 - QOL features, and new menu",
-    "> v1.1 - No Stun now clears CantRun",
-    "> v1.1 - Ability Speed slider added",
-    "> v1.1 - Anti-Anticheat added to Misc",
-    "> v1.1 - Run Speed slider added to Misc",
-    "> v1.1 - No Stun removed (serverside)",
-    "> v1.2 - UILib refactor",
-    "> v1.2 - added minimize feature C:<",
-    "> v1.2 - Damage Multiplier slider added",
+    "> v1.1 - Anti-Anticheat added",
+    "> v1.1 - Run Speed + Ability Speed sliders",
+    "> v1.2 - UILib refactor, minimize bar",
+    "> v1.2 - Damage Multiplier slider",
+    "> v1.2 - Tooltip system + ? badges",
+    "> v1.2 - Collapsible sections",
+    "> v1.2 - Color picker + Searchbar",
+    "> v1.2 - Slider descriptions",
     "> hi :p"
 }, true)
 
