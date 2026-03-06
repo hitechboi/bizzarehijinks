@@ -70,7 +70,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.8 loaded")
+print("[UILib] v1.3.9 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -1428,11 +1428,19 @@ function UILib.Window(titleA, titleB, gameName)
                     local newH=math.max(MIN_H,math.min(MAX_H,resizeStartH+(mouse.Y-resizeStartY)))
                     L.W=newW; L.CONTENT_W=L.W-L.SIDEBAR
                     uiTargetH=newH; uiCurrentH=newH
-                    -- update widget widths
+                    -- update widget widths + actual drawing sizes
                     for _,b in ipairs(btns) do
                         local cw=L.CONTENT_W-L.ROW_PAD*2
                         b.cw=cw
-                        if b.isSlider then b.trackW=cw-16 end
+                        if b.bg then b.bg.Size=Vector2.new(cw,b.ch) end
+                        if b.isSlider then
+                            b.trackW=cw-16
+                            if b.track then b.track.To=Vector2.new(b.track.From.X+b.trackW, b.track.From.Y) end
+                            if b.fill  then b.fill.To=Vector2.new(b.fill.From.X+b.trackW*((b.value-b.minV)/(b.maxV-b.minV)), b.fill.From.Y) end
+                        end
+                        if b.isLog then b.bg.Size=Vector2.new(cw,b.ch) end
+                        -- reposition dividers and labels via bPos
+                        if showSet[b.bg] then bPos(b) end
                     end
                     updatePos()
                     applyWindowH(newH)
