@@ -1,4 +1,4 @@
--- UILib v1.5.0
+-- UILib v1.5.1
 -- Generic Drawing-based UI Library
 
 local UILib = {}
@@ -23,7 +23,7 @@ local THEMES = {
         ROWBG=Color3.fromRGB(16,14,30),     TABSEL=Color3.fromRGB(35,25,70),
         WHITE=Color3.fromRGB(210,205,240),  GRAY=Color3.fromRGB(110,100,155),
         DIMGRAY=Color3.fromRGB(30,25,55),
-        ON=Color3.fromRGB(90,60,200),       OFF=Color3.fromRGB(22,18,45),a
+        ON=Color3.fromRGB(90,60,200),       OFF=Color3.fromRGB(22,18,45),
         ONDOT=Color3.fromRGB(200,180,255),  OFFDOT=Color3.fromRGB(60,50,100),
         DIV=Color3.fromRGB(28,22,52),     MINIBAR=Color3.fromRGB(13,11,24),
     },
@@ -64,7 +64,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.5.0 loaded")
+print("[UILib] v1.5.1 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -172,10 +172,10 @@ function UILib.Window(titleA, titleB, gameName)
     local destroyed       = false
     local wasMenuKey      = false
     local menuOpen        = true
-    local menuToggledAt   = os.clock() - 1
+    local menuToggledAt   = tick() - 1
     local FADE_DUR        = 0.4
     local TAB_FADE_DUR    = 0.2
-    local tabSwitchedAt   = os.clock() - 1
+    local tabSwitchedAt   = tick() - 1
     local prevTab         = nil
     local minimized       = false
     local miniClosed      = false
@@ -183,7 +183,7 @@ function UILib.Window(titleA, titleB, gameName)
     local miniDragOffX, miniDragOffY = 0, 0
     local miniFadeIn    = false
     local miniFadeOut   = false
-    local miniFadedAt   = os.clock()-1
+    local miniFadedAt   = tick()-1
     local MINI_FADE_DUR = 0.25
     local glowPhase       = {0, math.pi*0.6}
 
@@ -231,7 +231,7 @@ function UILib.Window(titleA, titleB, gameName)
         if not minimized then
             for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
         end
-        local mf=1-(menuToggledAt-(os.clock()-FADE_DUR))/FADE_DUR
+        local mf=1-(menuToggledAt-(tick()-FADE_DUR))/FADE_DUR
         if not menuOpen and mf>=1.1 then
             for _,d in ipairs(allDrawings) do d.Visible=false end
             return
@@ -239,7 +239,7 @@ function UILib.Window(titleA, titleB, gameName)
         local mOp=mf<1.1
             and math.abs((menuOpen and 0 or 1)-clamp(mf,0,1))
             or  (menuOpen and 1 or 0)
-        local tp=clamp((os.clock()-tabSwitchedAt)/TAB_FADE_DUR,0,1)
+        local tp=clamp((tick()-tabSwitchedAt)/TAB_FADE_DUR,0,1)
         for _,d in ipairs(allDrawings) do
             if showSet[d] then
                 local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
@@ -377,7 +377,7 @@ function UILib.Window(titleA, titleB, gameName)
 
     local function switchTab(name)
         if name==currentTab then return end
-        prevTab=currentTab; currentTab=name; tabSwitchedAt=os.clock()
+        prevTab=currentTab; currentTab=name; tabSwitchedAt=tick()
         for _,t in ipairs(tabObjs) do
             t.sel=t.name==name
             setShow(t.lbl,t.sel); setShow(t.lblG,not t.sel)
@@ -416,7 +416,7 @@ function UILib.Window(titleA, titleB, gameName)
     local hoveredBtn = nil
     local tipFadeIn = false
     local tipFadeOut = false
-    local tipFadedAt = os.clock()-1
+    local tipFadedAt = tick()-1
     local TIP_FADE = 0.35
 
     local function updatePos()
@@ -562,7 +562,7 @@ function UILib.Window(titleA, titleB, gameName)
         end
         showTab(currentTab)
         updatePos()
-        menuOpen=true; menuToggledAt=os.clock()-FADE_DUR-0.01
+        menuOpen=true; menuToggledAt=tick()-FADE_DUR-0.01
     end
 
     local function addToggle(tab,lbl,relY,init,cb,desc)
@@ -990,7 +990,7 @@ function UILib.Window(titleA, titleB, gameName)
                     miniClosed=true
                     for _,d in ipairs(allDrawings) do d.Visible=false end
                 else
-                    menuOpen=not menuOpen; menuToggledAt=os.clock()
+                    menuOpen=not menuOpen; menuToggledAt=tick()
                 end
             end
             wasMenuKey=keyDown
@@ -998,7 +998,7 @@ function UILib.Window(titleA, titleB, gameName)
             -- mini UI mode
             if minimized and not miniClosed then
                 -- animate mini glow
-                local t=os.clock()*1.0
+                local t=tick()*1.0
                 for i,sq in ipairs(miniGlowLines) do
                     local p=t+glowPhase[i]
                     local r=math.floor(15+45*math.max(0,math.sin(p+1.0)))
@@ -1008,7 +1008,7 @@ function UILib.Window(titleA, titleB, gameName)
                     sq.Transparency=(i==1 and 0.6 or 0.75)+0.25*math.abs(math.sin(p*0.5))
                 end
                 -- pulse active labels
-                local pt=os.clock()*0.8
+                local pt=tick()*0.8
                 for i,lb in ipairs(miniActiveLbls) do
                     if lb.Text~="" then
                         lb.Visible=true
@@ -1019,7 +1019,7 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 -- mini clicks
-                local miniOp=clamp((os.clock()-miniFadedAt)/MINI_FADE_DUR,0,1)
+                local miniOp=clamp((tick()-miniFadedAt)/MINI_FADE_DUR,0,1)
                 if clicking and not wasClicking and (not miniFadeIn or miniOp>0.8) and not miniFadeOut then
                     if inBox(uiX+L.W-46,uiY+11,12,12) then
                         -- red: close mini
@@ -1068,7 +1068,7 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 -- glow animation
                 do
-                    local t=os.clock()*1.0
+                    local t=tick()*1.0
                     for i,sq in ipairs(glowLines) do
                         local p=t+glowPhase[i]
                         local r=math.floor(15+45*math.max(0,math.sin(p+1.0)))
@@ -1080,7 +1080,7 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 -- tooltip fade
                 if tipBg then
-                    local prog=clamp((os.clock()-tipFadedAt)/TIP_FADE,0,1)
+                    local prog=clamp((tick()-tipFadedAt)/TIP_FADE,0,1)
                     local op=tipFadeIn and prog or (tipFadeOut and (1-prog) or (tipFadeIn and 1 or 0))
                     if tipFadeOut and prog>=1 then
                         tipBg.Visible=false; tipBorder.Visible=false
@@ -1191,21 +1191,21 @@ function UILib.Window(titleA, titleB, gameName)
                             tipLbl.Position=Vector2.new(bx+8, by-30)
                             tipDesc.Text=hov.desc
                             tipDesc.Position=Vector2.new(bx+8, by-17)
-                            tipFadeIn=true; tipFadeOut=false; tipFadedAt=os.clock()
+                            tipFadeIn=true; tipFadeOut=false; tipFadedAt=tick()
                             tipBg.Visible=true; tipBorder.Visible=true
                             tipLbl.Visible=true; tipDesc.Visible=true
                         else
-                            tipFadeOut=true; tipFadeIn=false; tipFadedAt=os.clock()
+                            tipFadeOut=true; tipFadeIn=false; tipFadedAt=tick()
                         end
                     end
                 end
                 -- prev tab cleanup
-                if prevTab and (os.clock()-tabSwitchedAt)>=TAB_FADE_DUR then
+                if prevTab and (tick()-tabSwitchedAt)>=TAB_FADE_DUR then
                     for _,b in ipairs(btns) do if b.tab==prevTab then bShow(b,false) end end
                     for _,d in ipairs(allDrawings) do if tabSet[d]=="prev" then tabSet[d]=nil end end
                     prevTab=nil
                 end
-                local mfn=1-(menuToggledAt-(os.clock()-FADE_DUR))/FADE_DUR
+                local mfn=1-(menuToggledAt-(tick()-FADE_DUR))/FADE_DUR
                 local mOp=math.abs((menuOpen and 0 or 1)-clamp(mfn,0,1))
                 if clicking and not wasClicking and mOp>0.5 then
                     -- yellow dot: minimize
@@ -1217,7 +1217,7 @@ function UILib.Window(titleA, titleB, gameName)
                         for _,lb in ipairs(miniActiveLbls) do if lb.Text~="" then lb.Visible=true end end
                     -- red dot: close
                     elseif inBox(uiX+L.W-46,uiY+11,12,12) then
-                        menuOpen=false; menuToggledAt=os.clock()
+                        menuOpen=false; menuToggledAt=tick()
                     elseif inBox(uiX+L.W-20,uiY+uiCurrentH-L.FOOTER,20,L.FOOTER) then
                         resizing=true
                         resizeStartX=mouse.X; resizeStartY=mouse.Y
@@ -1257,7 +1257,7 @@ function UILib.Window(titleA, titleB, gameName)
                                     end
                                     b.open=not b.open
                                     b.arrow.Text=b.open and "^" or "v"
-                                    b.openedAt=os.clock()
+                                    b.openedAt=tick()
                                     openDropdown=b.open and b or nil
                                     resizeForDropdown(b, b.open)
                                     if b.open then
