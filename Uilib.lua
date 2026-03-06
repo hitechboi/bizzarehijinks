@@ -68,7 +68,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.1 loaded")
+print("[UILib] v1.3.2 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -649,26 +649,29 @@ function UILib.Window(titleA, titleB, gameName)
 
 
     local openDropdown = nil
-    local DDR_DUR = 0.18  -- dropdown row fade-in duration
+    local uiTargetH = L.H   -- target window height for animation
+    local uiCurrentH = L.H  -- current animated height
+    local UI_RESIZE_SPD = 12 -- lerp speed
+
+    local function applyWindowH(h)
+        if not dMainBg then return end
+        dMainBg.Size=Vector2.new(L.W,h)
+        dShadow.Size=Vector2.new(L.W+4,h+4)
+        dGlow1.Size=Vector2.new(L.W+2,h+2)
+        dGlow2.Size=Vector2.new(L.W+4,h+4)
+        dBorder.Size=Vector2.new(L.W,h)
+        dSide.Size=Vector2.new(L.SIDEBAR-1,h-L.TOPBAR-L.FOOTER-1)
+        dContent.Size=Vector2.new(L.CONTENT_W-1,h-L.TOPBAR-L.FOOTER-1)
+        dFooter.Position=Vector2.new(uiX+1,uiY+h-L.FOOTER)
+        dFotLine.From=Vector2.new(uiX+1,uiY+h-L.FOOTER)
+        dFotLine.To=Vector2.new(uiX+L.W-1,uiY+h-L.FOOTER)
+        dSideLn.To=Vector2.new(uiX+L.SIDEBAR,uiY+h-L.FOOTER)
+        dCharLbl.Position=Vector2.new(uiX+L.SIDEBAR+8,uiY+h-L.FOOTER+5)
+    end
 
     local function resizeForDropdown(dd, expanding)
-        -- expand/collapse the main window to fit open dropdown
         local extra = expanding and (#dd.options * dd.ch) or 0
-        local newH = L.H + extra
-        if dMainBg then
-            dMainBg.Size=Vector2.new(L.W, newH)
-            dShadow.Size=Vector2.new(L.W+4, newH+4)
-            dGlow1.Size=Vector2.new(L.W+2, newH+2)
-            dGlow2.Size=Vector2.new(L.W+4, newH+4)
-            dBorder.Size=Vector2.new(L.W, newH)
-            dSide.Size=Vector2.new(L.SIDEBAR-1, newH-L.TOPBAR-L.FOOTER-1)
-            dContent.Size=Vector2.new(L.CONTENT_W-1, newH-L.TOPBAR-L.FOOTER-1)
-            dFooter.Position=Vector2.new(uiX+1, uiY+newH-L.FOOTER)
-            dFotLine.From=Vector2.new(uiX+1, uiY+newH-L.FOOTER)
-            dFotLine.To=Vector2.new(uiX+L.W-1, uiY+newH-L.FOOTER)
-            dSideLn.To=Vector2.new(uiX+L.SIDEBAR, uiY+newH-L.FOOTER)
-            dCharLbl.Position=Vector2.new(uiX+L.SIDEBAR+8, uiY+newH-L.FOOTER+5)
-        end
+        uiTargetH = L.H + extra
     end
 
     local function addDropdown(tab,lbl,relY,options,initIdx,cb)
@@ -684,8 +687,8 @@ function UILib.Window(titleA, titleB, gameName)
         for i,opt in ipairs(options) do
             local oy2=ry+ch+((i-1)*ch)
             -- use raw drawings (not mkD) so applyFade doesn't touch them
-            local obg=mkSq(uiX+rx,uiY+oy2,cw,ch,Color3.fromRGB(10,13,24),true,0,10,nil,0)
-            local oln=mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,Color3.fromRGB(25,30,50),11,1)
+            local obg=mkSq(uiX+rx,uiY+oy2,cw,ch,C.ROWBG,true,0,10,nil,0)
+            local oln=mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,C.DIV,11,1)
             local olb=mkTx(opt,uiX+rx+14,uiY+oy2+ch/2-6,11,i==valIdx and C.ACCENT or C.WHITE,false,11)
             obg.Visible=false; oln.Visible=false; olb.Visible=false
             table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0})
@@ -843,6 +846,8 @@ function UILib.Window(titleA, titleB, gameName)
                     b.arrow.Color=C.GRAY
                     b.valLbl.Color=C.ACCENT
                     for j,o in ipairs(b.optBgs) do
+                        o.bg.Color=C.ROWBG
+                        o.ln.Color=C.DIV
                         o.lb.Color=j==b.selected and C.ACCENT or C.WHITE
                     end
                 elseif b.isColorPicker then
@@ -1073,6 +1078,14 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 applyFade()
+                -- animate window height for dropdown
+                if math.abs(uiCurrentH - uiTargetH) > 0.5 then
+                    uiCurrentH = uiCurrentH + (uiTargetH - uiCurrentH) * 0.2
+                    applyWindowH(math.floor(uiCurrentH))
+                elseif uiCurrentH ~= uiTargetH then
+                    uiCurrentH = uiTargetH
+                    applyWindowH(uiTargetH)
+                end
                 -- animate dropdown rows
                 for _,b in ipairs(btns) do
                     if b.isDropdown then
