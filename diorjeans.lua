@@ -1,4 +1,4 @@
--- UILib v1.5.1
+-- UILib v1.5.2
 -- Generic Drawing-based UI Library
 
 local UILib = {}
@@ -64,7 +64,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.5.1 loaded")
+print("[UILib] v1.5.2 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -159,12 +159,6 @@ function UILib.Window(titleA, titleB, gameName)
     local uiX, uiY       = 300, 200
     local dragging        = false
     local dragOffX, dragOffY = 0, 0
-    local resizing        = false
-    local resizeStartX, resizeStartY = 0, 0
-    local resizeStartW, resizeStartH = 0, 0
-    local MIN_W, MAX_W = 320, 700
-    local MIN_H, MAX_H = 280, 600
-    local dResizeHandle   = nil
     local wasClicking     = false
     local currentTab      = nil
     local menuKey         = 0x70
@@ -444,7 +438,6 @@ function UILib.Window(titleA, titleB, gameName)
         dFotLine.From     =Vector2.new(uiX+1,uiY+curH-L.FOOTER)
         dFotLine.To       =Vector2.new(uiX+L.W-1,uiY+curH-L.FOOTER)
         dCharLbl.Position =Vector2.new(uiX+L.SIDEBAR+8,uiY+curH-L.FOOTER+5)
-        if dResizeHandle then dResizeHandle.Position=Vector2.new(uiX+L.W-14,uiY+curH-L.FOOTER+4) end
         -- update sizes for width changes
         dTopBar.Size  =Vector2.new(L.W-2,L.TOPBAR)
         dTopFill.Size =Vector2.new(L.W-2,7)
@@ -685,7 +678,6 @@ function UILib.Window(titleA, titleB, gameName)
         dFotLine.To=Vector2.new(uiX+L.W-1,uiY+h-L.FOOTER)
         dSideLn.To=Vector2.new(uiX+L.SIDEBAR,uiY+h-L.FOOTER)
         dCharLbl.Position=Vector2.new(uiX+L.SIDEBAR+8,uiY+h-L.FOOTER+5)
-        if dResizeHandle then dResizeHandle.Position=Vector2.new(uiX+L.W-14,uiY+h-L.FOOTER+4) end
     end
 
     local function resizeForDropdown(dd, expanding)
@@ -907,8 +899,7 @@ function UILib.Window(titleA, titleB, gameName)
         dFooter  = mkD(mkSq(uiX+1,uiY+L.H-L.FOOTER,L.W-2,L.FOOTER-1,C.TOPBAR,true,1,3,nil,6))
         dFotLine = mkD(mkLn(uiX+1,uiY+L.H-L.FOOTER,uiX+L.W-1,uiY+L.H-L.FOOTER,C.BORDER,4,1))
         dCharLbl = mkD(mkTx("",uiX+L.SIDEBAR+8,uiY+L.H-L.FOOTER+5,10,C.GRAY,false,9))
-        -- resize handle triangle in bottom-right corner
-        dResizeHandle = mkD(mkTx("◢",uiX+L.W-14,uiY+L.H-L.FOOTER+4,11,C.GRAY,false,9))
+
 
         -- tooltip drawings (above everything, zi=12)
         tipBg   = mkSq(0,0,10,10,Color3.fromRGB(10,13,24),true,1,12,nil,4)
@@ -1103,14 +1094,7 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
-                -- resize handle hover highlight
-                if dResizeHandle then
-                    if inBox(uiX+L.W-20,uiY+uiCurrentH-L.FOOTER,20,L.FOOTER) or resizing then
-                        dResizeHandle.Color=C.ACCENT
-                    else
-                        dResizeHandle.Color=C.GRAY
-                    end
-                end
+
                 applyFade()
                 -- animate widget positions (collapse/expand)
                 for _,b in ipairs(btns) do
@@ -1218,10 +1202,7 @@ function UILib.Window(titleA, titleB, gameName)
                     -- red dot: close
                     elseif inBox(uiX+L.W-46,uiY+11,12,12) then
                         menuOpen=false; menuToggledAt=tick()
-                    elseif inBox(uiX+L.W-20,uiY+uiCurrentH-L.FOOTER,20,L.FOOTER) then
-                        resizing=true
-                        resizeStartX=mouse.X; resizeStartY=mouse.Y
-                        resizeStartW=L.W; resizeStartH=uiCurrentH
+
                     elseif inBox(uiX,uiY,L.W,L.TOPBAR) then
                         dragging=true; dragOffX=mouse.X-uiX; dragOffY=mouse.Y-uiY
                     end
@@ -1406,44 +1387,9 @@ function UILib.Window(titleA, titleB, gameName)
                 -- drag
                 if not clicking then
                     dragging=false
-                    if resizing then
-                        resizing=false
-                        updatePos()
-                        applyWindowH(uiCurrentH)
-                        for _,b in ipairs(btns) do
-                            if showSet[b.bg] then bPos(b) end
-                        end
-                    end
+
                 end
-                if resizing and clicking then
-                    local newW=math.max(MIN_W,math.min(MAX_W,resizeStartW+(mouse.X-resizeStartX)))
-                    local newH=math.max(MIN_H,math.min(MAX_H,resizeStartH+(mouse.Y-resizeStartY)))
-                    local oldContentH = resizeStartH - L.TOPBAR - L.FOOTER
-                    local newContentH = newH - L.TOPBAR - L.FOOTER
-                    local scaleY = newContentH / oldContentH
-                    L.W=newW; L.CONTENT_W=L.W-L.SIDEBAR
-                    uiTargetH=newH; uiCurrentH=newH
-                    -- update widget widths + scale Y positions
-                    for _,b in ipairs(btns) do
-                        local cw=L.CONTENT_W-L.ROW_PAD*2
-                        b.cw=cw
-                        -- scale baseRY proportionally
-                        local relY = b.baseRY - L.TOPBAR
-                        b.baseRY = L.TOPBAR + relY * scaleY
-                        b.ry = b.baseRY
-                        b.currentRY = b.baseRY
-                        if b.bg and not b.isDiv and not b.isLog then
-                            b.bg.Size=Vector2.new(cw,b.ch)
-                        end
-                        if b.isSlider then b.trackW=cw-16 end
-                        if b.isLog then b.bg.Size=Vector2.new(cw,b.ch) end
-                        if showSet[b.bg] then bPos(b) end
-                    end
-                    -- update the stored start so delta is always from current
-                    resizeStartW=newW; resizeStartH=newH
-                    updatePos()
-                    applyWindowH(newH)
-                end
+
                 if dragging and clicking then
                     uiX=mouse.X-dragOffX; uiY=mouse.Y-dragOffY
                     updatePos()
