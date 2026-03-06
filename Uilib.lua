@@ -393,9 +393,9 @@ function UILib.Window(titleA, titleB, gameName)
         -- reset collapse state for incoming tab so arrows show correctly
         for _,b in ipairs(btns) do
             if b.tab==name then
-                if b.isDiv and b.collapsible then
+                if b.isDiv and b.collapsible and b.sectionName then
                     collapseSections[b.sectionName]=false
-                    b.arrow.Text="v"
+                    if b.arrow then b.arrow.Text="v" end
                 end
                 bShow(b,true); bPos(b); tagBtnFade(b,"next")
             end
@@ -911,8 +911,10 @@ function UILib.Window(titleA, titleB, gameName)
         local uis=game:GetService("UserInputService")
         uis.InputBegan:Connect(function(inp,gp)
             if gp then return end
-            local k=inp.KeyCode.Value
-            if k then keyQueue[#keyQueue+1]=k end
+            pcall(function()
+                local k=inp.KeyCode.Value
+                if type(k)=="number" and k>0 then keyQueue[#keyQueue+1]=k end
+            end)
         end)
 
         spawn(function()
@@ -1153,7 +1155,7 @@ function UILib.Window(titleA, titleB, gameName)
                                 elseif b.isTextbox then
                                     b.focused=true
                                     b.inputBorder.Color=C.ACCENT
-                                elseif b.isDiv and b.collapsible then
+                                elseif b.isDiv and b.collapsible and b.sectionName then
                                     local sec=b.sectionName
                                     collapseSections[sec]=not collapseSections[sec]
                                     b.arrow.Text=collapseSections[sec] and ">" or "v"
