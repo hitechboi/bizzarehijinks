@@ -234,7 +234,7 @@ function UILib.Window(titleA, titleB, gameName)
                 b.dot.Position=Vector2.new(uiX+b.ox+2+(L.TOG_W-L.TOG_H)*b.lt,uiY+b.oy+2)
             end
             if b.qbg then
-                local qx=uiX+b.ox-22; local qy=uiY+b.ry+b.ch/2-4
+                local qx=uiX+b.ox-22; local qy=uiY+b.ry+b.ch/2+2
                 b.qbg.Position=Vector2.new(qx,qy)
                 if b.qlb then b.qlb.Position=Vector2.new(qx+7,qy+2) end
             end
@@ -470,7 +470,7 @@ function UILib.Window(titleA, titleB, gameName)
         -- ? badge (only if desc provided)
         local qbg, qlb
         if desc then
-            local qx=uiX+ox-22; local qy=uiY+ry+ch/2-4
+            local qx=uiX+ox-22; local qy=uiY+ry+ch/2+2
             qbg=mkD(mkSq(qx,qy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
             qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
         end
@@ -702,7 +702,7 @@ function UILib.Window(titleA, titleB, gameName)
             wasMenuKey=keyDown
 
             -- mini UI mode
-            if minimized or miniFadeOut then
+            if (minimized and not miniClosed) or miniFadeOut then
                 applyMiniFade()
             end
             if minimized and not miniClosed then
@@ -732,7 +732,10 @@ function UILib.Window(titleA, titleB, gameName)
                 if clicking and not wasClicking and (not miniFadeIn or miniOp>0.8) and not miniFadeOut then
                     if inBox(uiX+L.W-46,uiY+11,12,12) then
                         -- red: close mini
-                        showMiniUI(false); miniClosed=true
+                        miniClosed=true
+                        for _,d in ipairs(miniDrawings) do d.Visible=false end
+                        for _,l in ipairs(miniActiveLbls) do l.Visible=false end
+                        miniFadeIn=false; miniFadeOut=false
                         for _,d in ipairs(allDrawings) do d.Visible=false end
                     elseif inBox(uiX+L.W-59,uiY+11,12,12) then
                         -- green: restore full
@@ -743,7 +746,7 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 if not clicking then miniDragging=false end
-                if miniDragging and clicking then
+                if miniDragging and clicking and not miniFadeOut then
                     uiX=mouse.X-miniDragOffX; uiY=mouse.Y-miniDragOffY
                     updateMiniPos()
                 end
@@ -797,7 +800,7 @@ function UILib.Window(titleA, titleB, gameName)
                 -- ? badge glow on hover
                 for _,b in ipairs(btns) do
                     if b.tab==currentTab and b.qbg and b.qlb and showSet[b.qbg] then
-                        local qy2=uiY+b.ry+b.ch/2-4
+                        local qy2=uiY+b.ry+b.ch/2+2
                         if inBox(uiX+b.ox-22,qy2,14,14) then
                             b.qbg.Color=Color3.fromRGB(16,30,80)
                             b.qlb.Color=Color3.fromRGB(70,120,255)
@@ -813,7 +816,7 @@ function UILib.Window(titleA, titleB, gameName)
                     local hov=nil
                     for _,b in ipairs(btns) do
                         if b.tab==currentTab and b.desc and b.qbg and showSet[b.qbg] then
-                            local qy2=uiY+b.ry+b.ch/2-4
+                            local qy2=uiY+b.ry+b.ch/2+2
                             if inBox(uiX+b.ox-22,qy2,14,14) then hov=b; break end
                         end
                     end
