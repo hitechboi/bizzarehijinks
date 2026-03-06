@@ -341,6 +341,8 @@ function UILib.Window(titleA, titleB, gameName)
         end
     end
 
+    local collapseSections = {}  -- must be before switchTab
+
     local function switchTab(name)
         if name==currentTab then return end
         prevTab=currentTab; currentTab=name; tabSwitchedAt=os.clock()
@@ -543,8 +545,6 @@ function UILib.Window(titleA, titleB, gameName)
                  desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch}
         table.insert(btns,b); return #btns
     end
-
-    local collapseSections = {}  -- sectionName -> bool (collapsed)
 
     local function addDiv(tab,lbl,relY,collapsible)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
