@@ -70,7 +70,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.4.1 loaded")
+print("[UILib] v1.4.2 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -335,11 +335,15 @@ function UILib.Window(titleA, titleB, gameName)
             b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
             if b.tog then
-                b.tog.Position=Vector2.new(uiX+b.ox,uiY+b.oy)
-                b.dot.Position=Vector2.new(uiX+b.ox+2+(L.TOG_W-L.TOG_H)*b.lt,uiY+b.oy+2)
+                local dox=b.rx+b.cw-L.TOG_W-8
+                local doy=b.ry+b.ch/2-L.TOG_H/2
+                local dcy=b.currentRY or b.ry
+                b.tog.Position=Vector2.new(uiX+dox, uiY+dcy+b.ch/2-L.TOG_H/2)
+                b.dot.Position=Vector2.new(uiX+dox+2+(L.TOG_W-L.TOG_H)*b.lt, uiY+dcy+b.ch/2-L.TOG_H/2+2)
             end
             if b.qbg then
-                local qx=uiX+b.ox-22; local qy=uiY+(b.currentRY or b.ry)+b.ch/2-7
+                local dox2=b.rx+b.cw-L.TOG_W-8
+                local qx=uiX+dox2-22; local qy=uiY+(b.currentRY or b.ry)+b.ch/2-7
                 b.qbg.Position=Vector2.new(qx,qy)
                 if b.qlb then b.qlb.Position=Vector2.new(qx+7,qy+2) end
             end
@@ -752,7 +756,7 @@ function UILib.Window(titleA, titleB, gameName)
     local tabAPI = {}
     local tabRowY = {}  -- tracks current Y offset per tab
     local tabScroll = {}  -- scroll offset per tab (pixels)
-    local CONTENT_H = L.H - L.TOPBAR - L.FOOTER
+    local function CONTENT_H() return uiCurrentH - L.TOPBAR - L.FOOTER end
 
     local function getTabAPI(tabName)
         if tabAPI[tabName] then return tabAPI[tabName] end
@@ -1091,7 +1095,7 @@ function UILib.Window(titleA, titleB, gameName)
                 -- ? badge glow on hover
                 for _,b in ipairs(btns) do
                     if b.tab==currentTab and b.qbg and b.qlb and showSet[b.qbg] then
-                        if showSet[b.bg] and inBox(uiX+b.ox-22,uiY+(b.currentRY or b.ry)+b.ch/2-7,14,14) then
+                        if showSet[b.bg] and inBox(uiX+(b.rx+b.cw-L.TOG_W-8)-22,uiY+(b.currentRY or b.ry)+b.ch/2-7,14,14) then
                             b.qbg.Color=Color3.fromRGB(16,30,80)
                             b.qlb.Color=Color3.fromRGB(70,120,255)
                         else
@@ -1394,9 +1398,9 @@ function UILib.Window(titleA, titleB, gameName)
                 pcall(function()
                     local uis=game:GetService("UserInputService")
                     local wh=uis:GetLastInputObject(Enum.UserInputType.MouseWheel,true)
-                    if wh and inBox(uiX+L.SIDEBAR,uiY+L.TOPBAR,L.CONTENT_W,CONTENT_H) then
+                    if wh and inBox(uiX+L.SIDEBAR,uiY+L.TOPBAR,L.CONTENT_W,CONTENT_H()) then
                         local sc=(tabScroll[currentTab] or 0)-wh.Position.Z*28
-                        local maxSc=math.max(0,(tabRowY[currentTab] or 0)-CONTENT_H+20)
+                        local maxSc=math.max(0,(tabRowY[currentTab] or 0)-CONTENT_H()+20)
                         tabScroll[currentTab]=clamp(sc,0,maxSc)
                         for _,b in ipairs(btns) do
                             if b.tab==currentTab then
@@ -1404,7 +1408,7 @@ function UILib.Window(titleA, titleB, gameName)
                                 if showSet[b.bg] then
                                     b.bg.Position=Vector2.new(uiX+b.rx,by)
                                     bPos(b)
-                                    local vis=by+b.ch>uiY+L.TOPBAR and by<uiY+L.H-L.FOOTER
+                                    local vis=by+b.ch>uiY+L.TOPBAR and by<uiY+uiCurrentH-L.FOOTER
                                     b.bg.Visible=vis
                                 end
                             end
