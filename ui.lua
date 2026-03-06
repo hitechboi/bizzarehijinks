@@ -1,7 +1,6 @@
-    [[  UILib v1.4.6
+    --[[  UILib v1.4.6
     took off from da jet <_>
-
-
+    made by nejrio aka besosme
         ]]
 local UILib = {}
 local _collapseSections = {}
