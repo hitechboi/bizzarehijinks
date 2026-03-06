@@ -68,7 +68,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.4 loaded")
+print("[UILib] v1.3.5 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -331,7 +331,7 @@ function UILib.Window(titleA, titleB, gameName)
                 b.dot.Position=Vector2.new(uiX+b.ox+2+(L.TOG_W-L.TOG_H)*b.lt,uiY+b.oy+2)
             end
             if b.qbg then
-                local qx=uiX+b.ox-22; local qy=uiY+b.ry+b.ch/2-7
+                local qx=uiX+b.ox-22; local qy=uiY+(b.currentRY or b.ry)+b.ch/2-7
                 b.qbg.Position=Vector2.new(qx,qy)
                 if b.qlb then b.qlb.Position=Vector2.new(qx+7,qy+2) end
             end
@@ -1071,7 +1071,7 @@ function UILib.Window(titleA, titleB, gameName)
                 -- ? badge glow on hover
                 for _,b in ipairs(btns) do
                     if b.tab==currentTab and b.qbg and b.qlb and showSet[b.qbg] then
-                        if inBox(uiX+b.ox-22,uiY+b.ry+b.ch/2-7,14,14) then
+                        if showSet[b.bg] and inBox(uiX+b.ox-22,uiY+(b.currentRY or b.ry)+b.ch/2-7,14,14) then
                             b.qbg.Color=Color3.fromRGB(16,30,80)
                             b.qlb.Color=Color3.fromRGB(70,120,255)
                         else
@@ -1091,6 +1091,11 @@ function UILib.Window(titleA, titleB, gameName)
                         elseif b.currentRY ~= b.ry then
                             b.currentRY = b.ry
                             if showSet[b.bg] then bPos(b) end
+                            -- if finished sliding to collapsed position, hide it
+                            if b._hiding then
+                                b._hiding=false
+                                bShow(b,false)
+                            end
                         end
                     end
                 end
@@ -1131,7 +1136,7 @@ function UILib.Window(titleA, titleB, gameName)
                     local hov=nil
                     for _,b in ipairs(btns) do
                         if b.tab==currentTab and b.desc and b.qbg and showSet[b.qbg] then
-                            if inBox(uiX+b.ox-22,uiY+b.ry+b.ch/2-7,14,14) then hov=b; break end
+                            if showSet[b.bg] and inBox(uiX+b.ox-22,uiY+(b.currentRY or b.ry)+b.ch/2-7,14,14) then hov=b; break end
                         end
                     end
                     if hov~=hoveredBtn then
@@ -1183,8 +1188,8 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                     -- buttons
                     for i,b in ipairs(btns) do
-                        if b.tab==currentTab and not b.isSlider then
-                            if inBox(uiX+b.rx,uiY+b.ry,b.cw,b.ch) then
+                        if b.tab==currentTab and not b.isSlider and showSet[b.bg] then
+                            if inBox(uiX+b.rx,uiY+(b.currentRY or b.ry),b.cw,b.ch) then
                                 if b.isTog then
                                     b.state=not b.state
                                     if b.cb then b.cb(b.state) end
@@ -1251,42 +1256,42 @@ function UILib.Window(titleA, titleB, gameName)
                                     _collapseSections[sec]=not _collapseSections[sec]
                                     b.arrow.Text=_collapseSections[sec] and ">" or "v"
                                     local collapsing=_collapseSections[sec]
-                                    -- recalculate target ry for all widgets after this div on same tab
                                     local divRef=b
-                                    local inSection=false
-                                    local collapsedH=0
-                                    -- first pass: find total height of collapsed section
+                                    -- pass 1: measure total height of section items
+                                    local sectionH=0
+                                    local inSec=false
                                     for _,cb2 in ipairs(btns) do
-                                        if cb2==divRef then inSection=true
-                                        elseif inSection then
-                                            if cb2.isDiv then break end
+                                        if cb2==divRef then inSec=true
+                                        elseif inSec then
+                                            if cb2.isDiv and cb2.tab==currentTab then break end
                                             if cb2.tab==currentTab then
-                                                collapsedH=collapsedH+cb2.ch+2
+                                                sectionH=sectionH+cb2.ch+2
                                             end
                                         end
                                     end
-                                    -- second pass: shift ry targets for all widgets after the section
-                                    local afterSection=false
-                                    inSection=false
+                                    -- pass 2: hide/show items; shift ry of widgets below
+                                    inSec=false
+                                    local pastSection=false
                                     for _,cb2 in ipairs(btns) do
-                                        if cb2==divRef then inSection=true
-                                        elseif inSection then
+                                        if cb2==divRef then
+                                            inSec=true
+                                        elseif inSec and cb2.tab==currentTab then
                                             if cb2.isDiv then
-                                                inSection=false; afterSection=true
-                                            end
-                                            if cb2.tab==currentTab then
-                                                if not afterSection then
-                                                    -- hide/show section members
-                                                    bShow(cb2, not collapsing)
+                                                -- this div marks end of section → shift it and everything after
+                                                inSec=false; pastSection=true
+                                            else
+                                                -- section member: show/hide smoothly
+                                                if collapsing then
+                                                    -- keep visible while sliding, hide when currentRY reaches ry
+                                                    cb2._hiding=true
+                                                else
+                                                    cb2._hiding=false
+                                                    bShow(cb2,true)
                                                 end
                                             end
-                                        elseif afterSection and cb2.tab==currentTab then
-                                            -- shift widgets below by collapsedH
-                                            if collapsing then
-                                                cb2.ry = cb2.ry - collapsedH
-                                            else
-                                                cb2.ry = cb2.ry + collapsedH
-                                            end
+                                        end
+                                        if pastSection and cb2.tab==currentTab then
+                                            cb2.ry=collapsing and cb2.ry-sectionH or cb2.ry+sectionH
                                         end
                                     end
                                 end
