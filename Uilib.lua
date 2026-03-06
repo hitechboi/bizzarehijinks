@@ -10,40 +10,65 @@ local _collapseSections = {}
 
 local THEMES = {
     ["Check it"] = {
-        ACCENT=Color3.fromRGB(70,120,255), BG=Color3.fromRGB(9,11,20),
-        SIDEBAR=Color3.fromRGB(12,15,27),  CONTENT=Color3.fromRGB(11,13,23),
-        TOPBAR=Color3.fromRGB(7,9,17),     BORDER=Color3.fromRGB(30,40,72),
-        ROWBG=Color3.fromRGB(14,18,33),    TABSEL=Color3.fromRGB(20,35,85),
+        ACCENT=Color3.fromRGB(70,120,255),  BG=Color3.fromRGB(9,11,20),
+        SIDEBAR=Color3.fromRGB(12,15,27),   CONTENT=Color3.fromRGB(11,13,23),
+        TOPBAR=Color3.fromRGB(7,9,17),      BORDER=Color3.fromRGB(30,40,72),
+        ROWBG=Color3.fromRGB(14,18,33),     TABSEL=Color3.fromRGB(20,35,85),
+        WHITE=Color3.fromRGB(215,220,240),  GRAY=Color3.fromRGB(100,112,145),
+        DIMGRAY=Color3.fromRGB(28,33,52),
+        ON=Color3.fromRGB(45,85,195),       OFF=Color3.fromRGB(20,24,42),
+        ONDOT=Color3.fromRGB(175,198,255),  OFFDOT=Color3.fromRGB(55,65,95),
+        DIV=Color3.fromRGB(22,27,48),
     },
     ["Moon"] = {
         ACCENT=Color3.fromRGB(160,130,255), BG=Color3.fromRGB(10,9,18),
         SIDEBAR=Color3.fromRGB(14,12,26),   CONTENT=Color3.fromRGB(12,11,22),
         TOPBAR=Color3.fromRGB(7,6,14),      BORDER=Color3.fromRGB(45,35,80),
         ROWBG=Color3.fromRGB(16,14,30),     TABSEL=Color3.fromRGB(35,25,70),
+        WHITE=Color3.fromRGB(210,205,240),  GRAY=Color3.fromRGB(110,100,155),
+        DIMGRAY=Color3.fromRGB(30,25,55),
+        ON=Color3.fromRGB(90,60,200),       OFF=Color3.fromRGB(22,18,45),
+        ONDOT=Color3.fromRGB(200,180,255),  OFFDOT=Color3.fromRGB(60,50,100),
+        DIV=Color3.fromRGB(28,22,52),
     },
     ["Grass"] = {
         ACCENT=Color3.fromRGB(60,200,100),  BG=Color3.fromRGB(8,14,10),
         SIDEBAR=Color3.fromRGB(10,18,13),   CONTENT=Color3.fromRGB(9,16,11),
         TOPBAR=Color3.fromRGB(6,11,8),      BORDER=Color3.fromRGB(25,55,35),
         ROWBG=Color3.fromRGB(11,20,14),     TABSEL=Color3.fromRGB(18,45,25),
+        WHITE=Color3.fromRGB(200,235,210),  GRAY=Color3.fromRGB(90,130,105),
+        DIMGRAY=Color3.fromRGB(20,40,28),
+        ON=Color3.fromRGB(30,140,65),       OFF=Color3.fromRGB(15,30,20),
+        ONDOT=Color3.fromRGB(150,240,180),  OFFDOT=Color3.fromRGB(45,80,58),
+        DIV=Color3.fromRGB(18,35,24),
     },
     ["Light"] = {
         ACCENT=Color3.fromRGB(50,100,255),  BG=Color3.fromRGB(230,233,245),
         SIDEBAR=Color3.fromRGB(215,220,235),CONTENT=Color3.fromRGB(220,224,238),
         TOPBAR=Color3.fromRGB(200,205,225), BORDER=Color3.fromRGB(170,178,210),
         ROWBG=Color3.fromRGB(210,214,230),  TABSEL=Color3.fromRGB(190,205,240),
+        WHITE=Color3.fromRGB(25,30,60),     GRAY=Color3.fromRGB(90,100,140),
+        DIMGRAY=Color3.fromRGB(180,185,210),
+        ON=Color3.fromRGB(60,120,255),      OFF=Color3.fromRGB(180,185,210),
+        ONDOT=Color3.fromRGB(255,255,255),  OFFDOT=Color3.fromRGB(130,140,175),
+        DIV=Color3.fromRGB(185,190,215),
     },
     ["Dark"] = {
-        ACCENT=Color3.fromRGB(200,200,200), BG=Color3.fromRGB(4,4,6),
+        ACCENT=Color3.fromRGB(180,180,180), BG=Color3.fromRGB(4,4,6),
         SIDEBAR=Color3.fromRGB(6,6,9),      CONTENT=Color3.fromRGB(5,5,8),
         TOPBAR=Color3.fromRGB(3,3,5),       BORDER=Color3.fromRGB(20,20,28),
         ROWBG=Color3.fromRGB(7,7,10),       TABSEL=Color3.fromRGB(15,15,22),
+        WHITE=Color3.fromRGB(190,190,195),  GRAY=Color3.fromRGB(80,80,90),
+        DIMGRAY=Color3.fromRGB(15,15,20),
+        ON=Color3.fromRGB(100,100,110),     OFF=Color3.fromRGB(12,12,16),
+        ONDOT=Color3.fromRGB(220,220,225),  OFFDOT=Color3.fromRGB(45,45,55),
+        DIV=Color3.fromRGB(14,14,18),
     },
 }
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.2.9 loaded")
+print("[UILib] v1.3.0 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -756,9 +781,17 @@ function UILib.Window(titleA, titleB, gameName)
 
     local function applyTheme(name)
         local t=THEMES[name]; if not t then return end
-        C.ACCENT=t.ACCENT; C.BG=t.BG; C.SIDEBAR=t.SIDEBAR
+        C.ACCENT=t.ACCENT;  C.BG=t.BG;       C.SIDEBAR=t.SIDEBAR
         C.CONTENT=t.CONTENT; C.TOPBAR=t.TOPBAR; C.BORDER=t.BORDER
-        C.ROWBG=t.ROWBG; C.TABSEL=t.TABSEL
+        C.ROWBG=t.ROWBG;    C.TABSEL=t.TABSEL
+        if t.WHITE   then C.WHITE=t.WHITE     end
+        if t.GRAY    then C.GRAY=t.GRAY       end
+        if t.DIMGRAY then C.DIMGRAY=t.DIMGRAY end
+        if t.ON      then C.ON=t.ON           end
+        if t.OFF     then C.OFF=t.OFF         end
+        if t.ONDOT   then C.ONDOT=t.ONDOT     end
+        if t.OFFDOT  then C.OFFDOT=t.OFFDOT   end
+        if t.DIV     then C.DIV=t.DIV         end
         if dMainBg then
             dMainBg.Color=C.BG; dMiniBg.Color=C.BG
             dTopBar.Color=C.TOPBAR; dMiniTopBar.Color=C.TOPBAR
@@ -768,13 +801,35 @@ function UILib.Window(titleA, titleB, gameName)
             dTopLine.Color=C.BORDER; dMiniDivLn.Color=C.BORDER
             dSideLn.Color=C.BORDER; dFotLine.Color=C.BORDER
             dTitleA.Color=C.ACCENT; dMiniTitleA.Color=C.ACCENT
+            dTitleW.Color=C.WHITE;  dMiniTitleW.Color=C.WHITE
             for _,t2 in ipairs(tabObjs) do
                 t2.bg.Color=t2.sel and C.TABSEL or C.SIDEBAR
                 t2.acc.Color=t2.sel and C.ACCENT or C.SIDEBAR
+                t2.lbl.Color=C.WHITE; t2.lblG.Color=C.GRAY
             end
             for _,b in ipairs(btns) do
                 if b.bg and not b.isDiv then b.bg.Color=C.ROWBG end
-                if b.isTog then b.tog.Color=b.state and C.ON or C.OFF end
+                if b.lbl and not b.isLog then b.lbl.Color=C.WHITE end
+                if b.dlb  then b.dlb.Color=C.GRAY end
+                if b.qlb  then b.qlb.Color=C.GRAY end
+                if b.ln   then b.ln.Color=C.DIV   end
+                if b.isTog then
+                    b.tog.Color=b.state and C.ON or C.OFF
+                    b.dot.Color=b.state and C.ONDOT or C.OFFDOT
+                end
+                if b.isDiv then
+                    b.lbl.Color=C.GRAY
+                    if b.ln then b.ln.Color=C.DIV end
+                    if b.arrow then b.arrow.Color=C.GRAY end
+                end
+                if b.isDropdown then
+                    b.lbl.Color=C.WHITE
+                    b.arrow.Color=C.GRAY
+                    b.valLbl.Color=C.ACCENT
+                    for _,o in ipairs(b.optBgs) do
+                        o.lb.Color=b.selected==(b.optBgs and 1) and C.ACCENT or C.WHITE
+                    end
+                end
             end
         end
     end
