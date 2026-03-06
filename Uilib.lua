@@ -1,7 +1,8 @@
 --[[
-    uilib.lua :3
-    by hitechboi / nejrio >_< 
-    took off from da jet :p
+    UILib.lua
+    Generic Drawing-based UI Library
+    by hitechboi / nejrio
+    took off from da jet >_<
 ]]
 
 local UILib = {}
@@ -89,10 +90,12 @@ kn[0x26]="Up" kn[0x28]="Down" kn[0x25]="Left" kn[0x27]="Right"
 kn[0xBC]="," kn[0xBE]="." kn[0xBF]="/" kn[0xBA]=";" kn[0xBB]="=" kn[0xBD]="-"
 kn[0xDB]="[" kn[0xDD]="]" kn[0xDC]="\\" kn[0xDE]="'" kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
+
 -- Window constructor
 function UILib.Window(titleA, titleB, gameName)
     local win = {}
     local mouse = game.Players.LocalPlayer:GetMouse()
+
     -- state
     local uiX, uiY       = 300, 200
     local dragging        = false
@@ -113,7 +116,12 @@ function UILib.Window(titleA, titleB, gameName)
     local miniClosed      = false
     local miniDragging    = false
     local miniDragOffX, miniDragOffY = 0, 0
+    local miniFadeIn    = false
+    local miniFadeOut   = false
+    local miniFadedAt   = os.clock()-1
+    local MINI_FADE_DUR = 0.25
     local glowPhase       = {0, math.pi*0.6}
+
     -- drawing registry
     local allDrawings = {}
     local showSet     = {}
@@ -186,6 +194,8 @@ function UILib.Window(titleA, titleB, gameName)
         if b.fill   then setShow(b.fill,  yes) end
         if b.handle then setShow(b.handle,yes) end
         if b.lbls   then for _,l in ipairs(b.lbls) do setShow(l,yes) end end
+        if b.qbg    then setShow(b.qbg,  yes) end
+        if b.qlb    then setShow(b.qlb,  yes) end
     end
 
     local function bPos(b)
@@ -224,6 +234,8 @@ function UILib.Window(titleA, titleB, gameName)
                 b.tog.Position=Vector2.new(uiX+b.ox,uiY+b.oy)
                 b.dot.Position=Vector2.new(uiX+b.ox+2+(L.TOG_W-L.TOG_H)*b.lt,uiY+b.oy+2)
             end
+            if b.qbg then b.qbg.Position=Vector2.new(uiX+b.ox-22,uiY+b.oy) end
+            if b.qlb then b.qlb.Position=Vector2.new(uiX+b.ox-15,uiY+b.oy+1) end
         end
     end
 
@@ -237,6 +249,8 @@ function UILib.Window(titleA, titleB, gameName)
         if b.fill   then tabSet[b.fill]=group  end
         if b.handle then tabSet[b.handle]=group end
         if b.lbls   then for _,l in ipairs(b.lbls) do tabSet[l]=group end end
+        if b.qbg    then tabSet[b.qbg]=group end
+        if b.qlb    then tabSet[b.qlb]=group end
     end
 
     local function showTab(tab)
@@ -274,6 +288,9 @@ function UILib.Window(titleA, titleB, gameName)
     local miniGlowLines
     -- settings btns
     local iKeyInfo, iKeyBind
+    -- tooltip
+    local tipBg, tipLbl, tipDesc
+    local hoveredBtn = nil
 
     local function updatePos()
         dShadow.Position  =Vector2.new(uiX-2,uiY-2)
@@ -350,14 +367,36 @@ function UILib.Window(titleA, titleB, gameName)
         end
     end
 
-    local function showMiniUI(show)
-        for _,d in ipairs(miniDrawings) do d.Visible=show end
-        if not show then
-            for _,l in ipairs(miniActiveLbls) do l.Visible=false end
-        else
-            for _,l in ipairs(miniActiveLbls) do
-                if l.Text ~= "" then l.Visible=true end
+    local function applyMiniFade()
+        local t = os.clock()
+        local prog = clamp((t - miniFadedAt) / MINI_FADE_DUR, 0, 1)
+        local op = miniFadeIn and prog or (1 - prog)
+        for _,d in ipairs(miniDrawings) do
+            d.Visible   = op > 0.01
+            d.Transparency = op
+        end
+        for _,l in ipairs(miniActiveLbls) do
+            if l.Text ~= "" then
+                l.Visible = op > 0.01
+                l.Transparency = op
             end
+        end
+        if prog >= 1 then
+            if miniFadeOut then
+                miniFadeOut = false
+                for _,d in ipairs(miniDrawings) do d.Visible=false end
+                for _,l in ipairs(miniActiveLbls) do l.Visible=false end
+            end
+            miniFadeIn = false; miniFadeOut = false
+        end
+    end
+
+    local function showMiniUI(show)
+        if show then
+            miniFadeIn=true; miniFadeOut=false; miniFadedAt=os.clock()
+            for _,d in ipairs(miniDrawings) do d.Visible=true; d.Transparency=0 end
+        else
+            miniFadeOut=true; miniFadeIn=false; miniFadedAt=os.clock()
         end
     end
 
@@ -413,7 +452,7 @@ function UILib.Window(titleA, titleB, gameName)
         menuOpen=true; menuToggledAt=os.clock()-FADE_DUR-0.01
     end
 
-    local function addToggle(tab,lbl,relY,init,cb)
+    local function addToggle(tab,lbl,relY,init,cb,desc)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
         local ox=rx+cw-L.TOG_W-8; local oy=ry+ch/2-L.TOG_H/2
@@ -422,8 +461,15 @@ function UILib.Window(titleA, titleB, gameName)
         local lb  =mkD(mkTx(lbl,uiX+rx+10,uiY+ry+ch/2-6,12,C.WHITE,false,8))
         local tog =mkD(mkSq(uiX+ox,uiY+oy,L.TOG_W,L.TOG_H,init and C.ON or C.OFF,true,1,4,nil,L.TOG_H))
         local dot =mkD(mkSq(uiX+ox+(init and L.TOG_W-L.TOG_H+2 or 2),uiY+oy+2,L.TOG_H-4,L.TOG_H-4,init and C.ONDOT or C.OFFDOT,true,1,5,nil,L.TOG_H))
+        -- ? badge (only if desc provided)
+        local qbg, qlb
+        if desc then
+            qbg=mkD(mkSq(uiX+ox-22,uiY+oy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
+            qlb=mkD(mkTx("?",uiX+ox-15,uiY+oy+1,9,C.GRAY,true,7,true))
+        end
         local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,
-                 rx=rx,ry=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl}
+                 rx=rx,ry=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
+                 desc=desc,qbg=qbg,qlb=qlb}
         table.insert(btns,b); return #btns
     end
 
@@ -512,9 +558,9 @@ function UILib.Window(titleA, titleB, gameName)
         function api:Div(lbl)
             addDiv(tabName, lbl, nextY(20))
         end
-        function api:Toggle(lbl, init, cb)
+        function api:Toggle(lbl, init, cb, desc)
             local y = nextY(L.ROW_H + 2)
-            addToggle(tabName, lbl, y, init, cb)
+            addToggle(tabName, lbl, y, init, cb, desc)
         end
         function api:Slider(lbl, minV, maxV, initV, cb, isFloat)
             local y = nextY(L.ROW_H + 8)
@@ -539,6 +585,7 @@ function UILib.Window(titleA, titleB, gameName)
         local notif = notifFn or function(msg,title,dur)
             pcall(function() notify(msg, title or titleA.." "..titleB, dur or 3) end)
         end
+
         -- build base UI
         dShadow  = mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,   C.SHADOW,true,0.5,0,nil,12))
         dMainBg  = mkD(mkSq(uiX,uiY,L.W,L.H,            C.BG,    true,1,1,nil,10))
@@ -562,10 +609,23 @@ function UILib.Window(titleA, titleB, gameName)
         dFotLine = mkD(mkLn(uiX+1,uiY+L.H-L.FOOTER,uiX+L.W-1,uiY+L.H-L.FOOTER,C.BORDER,4,1))
         dCharLbl = mkD(mkTx("",uiX+L.SIDEBAR+8,uiY+L.H-L.FOOTER+5,10,C.GRAY,false,9))
 
+        -- tooltip drawings (above everything, zi=12)
+        tipBg   = mkSq(0,0,10,10,Color3.fromRGB(10,13,24),true,1,12,nil,4)
+        pcall(function() tipBg.Corner=4 end)
+        tipBg.Visible=false
+        local tipBorder=mkSq(0,0,10,10,C.ACCENT,false,0.7,12,1,4)
+        pcall(function() tipBorder.Corner=4 end)
+        tipBorder.Visible=false
+        tipLbl  = mkTx("",0,0,11,Color3.fromRGB(70,120,255),false,13,true)
+        tipLbl.Visible=false
+        tipDesc = mkTx("",0,0,10,Color3.fromRGB(130,140,170),false,13,false)
+        tipDesc.Visible=false
+
         baseUI={dShadow,dGlow2,dGlow1,dMainBg,dBorder,dTopBar,dTopFill,dTopLine,
                 dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR,dSide,dSideLn,dContent,
                 dFooter,dFotLine,dCharLbl}
         for _,d in ipairs(baseUI) do setShow(d,true) end
+
         -- build tabs in sidebar
         local tabNames = {}
         for name,_ in pairs(tabAPI) do table.insert(tabNames,name) end
@@ -580,6 +640,7 @@ function UILib.Window(titleA, titleB, gameName)
             setShow(tlW,isSel); setShow(tlG,not isSel)
             table.insert(tabObjs,{bg=tbg,acc=tacc,lbl=tlW,lblG=tlG,name=name,sel=isSel,lt=isSel and 1 or 0,relTY=relTY})
         end
+
         -- mini UI
         dMiniShadow  = mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.SHADOW,true,0.5,0,nil,12)
         dMiniBg      = mkSq(uiX,uiY,L.W,L.MINI_H,         C.BG,    true,1,1,nil,10)
@@ -632,7 +693,11 @@ function UILib.Window(titleA, titleB, gameName)
                 end
             end
             wasMenuKey=keyDown
+
             -- mini UI mode
+            if minimized or miniFadeOut then
+                applyMiniFade()
+            end
             if minimized and not miniClosed then
                 -- animate mini glow
                 local t=os.clock()*1.0
@@ -709,6 +774,34 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 applyFade()
+                -- tooltip hover
+                if tipBg then
+                    local hov=nil
+                    for _,b in ipairs(btns) do
+                        if b.tab==currentTab and b.desc and b.qbg and showSet[b.qbg] then
+                            if inBox(uiX+b.ox-22,uiY+b.oy,14,14) then hov=b; break end
+                        end
+                    end
+                    if hov~=hoveredBtn then
+                        hoveredBtn=hov
+                        if hov then
+                            local bx=uiX+hov.rx; local by=uiY+hov.ry
+                            local tw=math.max(#hov.toggleName,#hov.desc)*6+16
+                            tipBg.Position=Vector2.new(bx, by-32)
+                            tipBg.Size=Vector2.new(tw,28)
+                            tipBorder.Position=Vector2.new(bx,by-32)
+                            tipBorder.Size=Vector2.new(tw,28)
+                            tipBorder.Visible=true
+                            tipLbl.Text=hov.toggleName
+                            tipLbl.Position=Vector2.new(bx+8, by-30)
+                            tipDesc.Text=hov.desc
+                            tipDesc.Position=Vector2.new(bx+8, by-17)
+                            tipBg.Visible=true; tipLbl.Visible=true; tipDesc.Visible=true
+                        else
+                            tipBg.Visible=false; tipLbl.Visible=false; tipDesc.Visible=false; tipBorder.Visible=false
+                        end
+                    end
+                end
                 -- prev tab cleanup
                 if prevTab and (os.clock()-tabSwitchedAt)>=TAB_FADE_DUR then
                     for _,b in ipairs(btns) do if b.tab==prevTab then bShow(b,false) end end
@@ -805,7 +898,7 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
         end) -- spawn
-    end -- Init :p
+    end -- Init
 
     -- Tab factory
     win._tabOrder = {}
