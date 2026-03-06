@@ -234,8 +234,11 @@ function UILib.Window(titleA, titleB, gameName)
                 b.tog.Position=Vector2.new(uiX+b.ox,uiY+b.oy)
                 b.dot.Position=Vector2.new(uiX+b.ox+2+(L.TOG_W-L.TOG_H)*b.lt,uiY+b.oy+2)
             end
-            if b.qbg then b.qbg.Position=Vector2.new(uiX+b.ox-22,uiY+b.oy) end
-            if b.qlb then b.qlb.Position=Vector2.new(uiX+b.ox-15,uiY+b.oy+1) end
+            if b.qbg then
+                local qx=uiX+b.ox-22; local qy=uiY+b.ry+b.ch/2-7
+                b.qbg.Position=Vector2.new(qx,qy)
+                if b.qlb then b.qlb.Position=Vector2.new(qx+7,qy+2) end
+            end
         end
     end
 
@@ -291,6 +294,10 @@ function UILib.Window(titleA, titleB, gameName)
     -- tooltip
     local tipBg, tipLbl, tipDesc
     local hoveredBtn = nil
+    local tipFadeIn = false
+    local tipFadeOut = false
+    local tipFadedAt = os.clock()-1
+    local TIP_FADE = 0.15
 
     local function updatePos()
         dShadow.Position  =Vector2.new(uiX-2,uiY-2)
@@ -464,12 +471,13 @@ function UILib.Window(titleA, titleB, gameName)
         -- ? badge (only if desc provided)
         local qbg, qlb
         if desc then
-            qbg=mkD(mkSq(uiX+ox-22,uiY+oy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
-            qlb=mkD(mkTx("?",uiX+ox-15,uiY+oy+1,9,C.GRAY,true,7,true))
+            local qx=uiX+ox-22; local qy=uiY+ry+ch/2-7
+            qbg=mkD(mkSq(qx,qy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
+            qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
         end
         local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,
                  rx=rx,ry=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
-                 desc=desc,qbg=qbg,qlb=qlb}
+                 desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch}
         table.insert(btns,b); return #btns
     end
 
@@ -773,13 +781,40 @@ function UILib.Window(titleA, titleB, gameName)
                         sq.Transparency=(i==1 and 0.6 or 0.75)+0.25*math.abs(math.sin(p*0.5))
                     end
                 end
+                -- tooltip fade
+                if tipBg then
+                    local prog=clamp((os.clock()-tipFadedAt)/TIP_FADE,0,1)
+                    local op=tipFadeIn and prog or (tipFadeOut and (1-prog) or (tipFadeIn and 1 or 0))
+                    if tipFadeOut and prog>=1 then
+                        tipBg.Visible=false; tipBorder.Visible=false
+                        tipLbl.Visible=false; tipDesc.Visible=false
+                        tipFadeOut=false
+                    elseif tipBg.Visible then
+                        tipBg.Transparency=op; tipBorder.Transparency=op*0.7
+                        tipLbl.Transparency=op; tipDesc.Transparency=op
+                    end
+                end
+                -- ? badge glow on hover
+                for _,b in ipairs(btns) do
+                    if b.tab==currentTab and b.qbg and b.qlb and showSet[b.qbg] then
+                        local qy2=uiY+b.ry+b.ch/2-7
+                        if inBox(uiX+b.ox-22,qy2,14,14) then
+                            b.qbg.Color=Color3.fromRGB(16,30,80)
+                            b.qlb.Color=Color3.fromRGB(70,120,255)
+                        else
+                            b.qbg.Color=Color3.fromRGB(16,20,38)
+                            b.qlb.Color=C.GRAY
+                        end
+                    end
+                end
                 applyFade()
                 -- tooltip hover
                 if tipBg then
                     local hov=nil
                     for _,b in ipairs(btns) do
                         if b.tab==currentTab and b.desc and b.qbg and showSet[b.qbg] then
-                            if inBox(uiX+b.ox-22,uiY+b.oy,14,14) then hov=b; break end
+                            local qy2=uiY+b.ry+b.ch/2-7
+                            if inBox(uiX+b.ox-22,qy2,14,14) then hov=b; break end
                         end
                     end
                     if hov~=hoveredBtn then
@@ -791,14 +826,15 @@ function UILib.Window(titleA, titleB, gameName)
                             tipBg.Size=Vector2.new(tw,28)
                             tipBorder.Position=Vector2.new(bx,by-32)
                             tipBorder.Size=Vector2.new(tw,28)
-                            tipBorder.Visible=true
                             tipLbl.Text=hov.toggleName
                             tipLbl.Position=Vector2.new(bx+8, by-30)
                             tipDesc.Text=hov.desc
                             tipDesc.Position=Vector2.new(bx+8, by-17)
-                            tipBg.Visible=true; tipLbl.Visible=true; tipDesc.Visible=true
+                            tipFadeIn=true; tipFadeOut=false; tipFadedAt=os.clock()
+                            tipBg.Visible=true; tipBorder.Visible=true
+                            tipLbl.Visible=true; tipDesc.Visible=true
                         else
-                            tipBg.Visible=false; tipLbl.Visible=false; tipDesc.Visible=false; tipBorder.Visible=false
+                            tipFadeOut=true; tipFadeIn=false; tipFadedAt=os.clock()
                         end
                     end
                 end
