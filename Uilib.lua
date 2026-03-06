@@ -6,6 +6,7 @@
 ]]
 
 local UILib = {}
+local _collapseSections = {}
 
 local THEMES = {
     ["Check it"] = {
@@ -42,8 +43,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-local _collapseSections = {}
-print("[UILib] v1.2.5 loaded")
+print("[UILib] v1.2.6 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
