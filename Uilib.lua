@@ -68,7 +68,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.5 loaded")
+print("[UILib] v1.3.6 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -163,6 +163,12 @@ function UILib.Window(titleA, titleB, gameName)
     local uiX, uiY       = 300, 200
     local dragging        = false
     local dragOffX, dragOffY = 0, 0
+    local resizing        = false
+    local resizeStartX, resizeStartY = 0, 0
+    local resizeStartW, resizeStartH = 0, 0
+    local MIN_W, MAX_W = 320, 700
+    local MIN_H, MAX_H = 280, 600
+    local dResizeHandle   = nil
     local wasClicking     = false
     local currentTab      = nil
     local menuKey         = 0x70
@@ -384,7 +390,7 @@ function UILib.Window(titleA, titleB, gameName)
                     _collapseSections[b.sectionName]=false
                     if b.arrow then b.arrow.Text="v" end
                 end
-                b.currentRY=b.ry  -- snap position, no animation on tab switch
+                b.ry=b.baseRY; b.currentRY=b.baseRY; b._collapsing=false; b._collapseTarget=nil  -- snap on tab switch
                 bShow(b,true); bPos(b); tagBtnFade(b,"next")
             end
         end
@@ -434,6 +440,7 @@ function UILib.Window(titleA, titleB, gameName)
         dFotLine.From     =Vector2.new(uiX+1,uiY+L.H-L.FOOTER)
         dFotLine.To       =Vector2.new(uiX+L.W-1,uiY+L.H-L.FOOTER)
         dCharLbl.Position =Vector2.new(uiX+L.SIDEBAR+8,uiY+L.H-L.FOOTER+5)
+        if dResizeHandle then dResizeHandle.Position=Vector2.new(uiX+L.W-14,uiY+L.H-L.FOOTER+4) end
         for _,t in ipairs(tabObjs) do
             t.bg.Position =Vector2.new(uiX+7,uiY+t.relTY)
             t.acc.Position=Vector2.new(uiX+7,uiY+t.relTY)
@@ -565,7 +572,7 @@ function UILib.Window(titleA, titleB, gameName)
             qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
         end
         local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,
-                 rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
+                 rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
                  desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch}
         table.insert(btns,b); return #btns
     end
@@ -581,7 +588,7 @@ function UILib.Window(titleA, titleB, gameName)
             if _collapseSections[lbl]==nil then _collapseSections[lbl]=false end
         end
         table.insert(btns,{tab=tab,isDiv=true,bg=lb,lbl=lb,ln=dl,rx=rx,ry=ry,cw=cw,ch=14,
-                           collapsible=collapsible,sectionName=lbl,arrow=arrow,currentRY=ry})
+                           collapsible=collapsible,sectionName=lbl,arrow=arrow,currentRY=ry,baseRY=ry})
         return #btns
     end
 
@@ -591,7 +598,7 @@ function UILib.Window(titleA, titleB, gameName)
         local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,col or C.ROWBG,true,1,3,nil,4))
         local dl=mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
         local lb=mkD(mkTx(lbl,uiX+rx+cw/2,uiY+ry+ch/2-6,12,lblCol or C.WHITE,true,8))
-        local b={tab=tab,isAct=true,bg=bg,lbl=lb,ln=dl,rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,cb=cb}
+        local b={tab=tab,isAct=true,bg=bg,lbl=lb,ln=dl,rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,cb=cb}
         table.insert(btns,b); return #btns
     end
 
@@ -611,7 +618,7 @@ function UILib.Window(titleA, titleB, gameName)
         local fil =mkD(mkLn(uiX+rx+8,ty,fx,ty,C.ACCENT,6,3))
         local hdl =mkD(mkSq(fx-4,ty-4,L.HDL,L.HDL,C.WHITE,true,1,7,nil,3))
         local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,
-                 rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
+                 rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
                  value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb}
         table.insert(btns,b); return #btns
     end
@@ -643,7 +650,7 @@ function UILib.Window(titleA, titleB, gameName)
             table.insert(swatchBgs,{sq=s,border=border,col=col,x=sx,y=sy})
         end
         local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,
-                 rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,swatches=swatchBgs,
+                 rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,swatches=swatchBgs,
                  selected=selected,value=swatches[1],cb=cb}
         table.insert(btns,b); return #btns
     end
@@ -670,6 +677,7 @@ function UILib.Window(titleA, titleB, gameName)
         dFotLine.To=Vector2.new(uiX+L.W-1,uiY+h-L.FOOTER)
         dSideLn.To=Vector2.new(uiX+L.SIDEBAR,uiY+h-L.FOOTER)
         dCharLbl.Position=Vector2.new(uiX+L.SIDEBAR+8,uiY+h-L.FOOTER+5)
+        if dResizeHandle then dResizeHandle.Position=Vector2.new(uiX+L.W-14,uiY+h-L.FOOTER+4) end
     end
 
     local function resizeForDropdown(dd, expanding)
@@ -696,7 +704,7 @@ function UILib.Window(titleA, titleB, gameName)
             obg.Visible=false; oln.Visible=false; olb.Visible=false
             table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0})
         end
-        local b={tab=tab,isDropdown=true,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,
+        local b={tab=tab,isDropdown=true,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
                  selected=valIdx,open=false,openedAt=0,cb=cb}
         table.insert(btns,b); return #btns
@@ -726,7 +734,7 @@ function UILib.Window(titleA, titleB, gameName)
             table.insert(lbls,lb)
         end
         local b={tab=tab,isLog=true,bg=bg,lbl=bg,ln=nil,lbls=lbls,
-                 rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
+                 rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
                  starFirst=starFirst,starH=starH}
         table.insert(btns,b); return #btns
     end
@@ -889,6 +897,8 @@ function UILib.Window(titleA, titleB, gameName)
         dFooter  = mkD(mkSq(uiX+1,uiY+L.H-L.FOOTER,L.W-2,L.FOOTER-1,C.TOPBAR,true,1,3,nil,6))
         dFotLine = mkD(mkLn(uiX+1,uiY+L.H-L.FOOTER,uiX+L.W-1,uiY+L.H-L.FOOTER,C.BORDER,4,1))
         dCharLbl = mkD(mkTx("",uiX+L.SIDEBAR+8,uiY+L.H-L.FOOTER+5,10,C.GRAY,false,9))
+        -- resize handle triangle in bottom-right corner
+        dResizeHandle = mkD(mkTx("◢",uiX+L.W-14,uiY+L.H-L.FOOTER+4,11,C.GRAY,false,9))
 
         -- tooltip drawings (above everything, zi=12)
         tipBg   = mkSq(0,0,10,10,Color3.fromRGB(10,13,24),true,1,12,nil,4)
@@ -1080,21 +1090,38 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
+                -- resize handle hover highlight
+                if dResizeHandle then
+                    if inBox(uiX+L.W-20,uiY+uiCurrentH-L.FOOTER,20,L.FOOTER) or resizing then
+                        dResizeHandle.Color=C.ACCENT
+                    else
+                        dResizeHandle.Color=C.GRAY
+                    end
+                end
                 applyFade()
                 -- animate widget positions (collapse/expand)
                 for _,b in ipairs(btns) do
                     if b.currentRY ~= nil and b.tab==currentTab then
-                        local diff = b.ry - b.currentRY
-                        if math.abs(diff) > 0.3 then
-                            b.currentRY = b.currentRY + diff * 0.15
-                            if showSet[b.bg] then bPos(b) end
-                        elseif b.currentRY ~= b.ry then
-                            b.currentRY = b.ry
-                            if showSet[b.bg] then bPos(b) end
-                            -- if finished sliding to collapsed position, hide it
-                            if b._hiding then
-                                b._hiding=false
+                        if b._collapsing and b._collapseTarget then
+                            -- slide toward collapse target then hide
+                            local diff = b._collapseTarget - b.currentRY
+                            if math.abs(diff) > 0.5 then
+                                b.currentRY = b.currentRY + diff * 0.18
+                                bPos(b)
+                            else
+                                b.currentRY = b._collapseTarget
+                                b._collapsing=false; b._collapseTarget=nil
                                 bShow(b,false)
+                            end
+                        else
+                            -- normal position lerp (expand or shift)
+                            local diff = b.ry - b.currentRY
+                            if math.abs(diff) > 0.3 then
+                                b.currentRY = b.currentRY + diff * 0.15
+                                if showSet[b.bg] then bPos(b) end
+                            elseif b.currentRY ~= b.ry then
+                                b.currentRY = b.ry
+                                if showSet[b.bg] then bPos(b) end
                             end
                         end
                     end
@@ -1179,6 +1206,10 @@ function UILib.Window(titleA, titleB, gameName)
                     -- red dot: close
                     elseif inBox(uiX+L.W-46,uiY+11,12,12) then
                         menuOpen=false; menuToggledAt=os.clock()
+                    elseif inBox(uiX+L.W-20,uiY+L.H-L.FOOTER,20,L.FOOTER) then
+                        resizing=true
+                        resizeStartX=mouse.X; resizeStartY=mouse.Y
+                        resizeStartW=L.W; resizeStartH=uiCurrentH
                     elseif inBox(uiX,uiY,L.W,L.TOPBAR) then
                         dragging=true; dragOffX=mouse.X-uiX; dragOffY=mouse.Y-uiY
                     end
@@ -1257,7 +1288,8 @@ function UILib.Window(titleA, titleB, gameName)
                                     b.arrow.Text=_collapseSections[sec] and ">" or "v"
                                     local collapsing=_collapseSections[sec]
                                     local divRef=b
-                                    -- pass 1: measure total height of section items
+                                    -- collect section members and measure height
+                                    local members={}
                                     local sectionH=0
                                     local inSec=false
                                     for _,cb2 in ipairs(btns) do
@@ -1265,33 +1297,37 @@ function UILib.Window(titleA, titleB, gameName)
                                         elseif inSec then
                                             if cb2.isDiv and cb2.tab==currentTab then break end
                                             if cb2.tab==currentTab then
+                                                table.insert(members,cb2)
                                                 sectionH=sectionH+cb2.ch+2
                                             end
                                         end
                                     end
-                                    -- pass 2: hide/show items; shift ry of widgets below
+                                    -- show/hide members
+                                    for _,m in ipairs(members) do
+                                        if collapsing then
+                                            -- slide up into the div then hide
+                                            m._collapseTarget=divRef.ry+14
+                                            m._collapsing=true
+                                            bShow(m,true)
+                                        else
+                                            -- restore to base position and show
+                                            m._collapseTarget=nil
+                                            m._collapsing=false
+                                            m.ry=m.baseRY
+                                            m.currentRY=divRef.ry+14
+                                            bShow(m,true)
+                                        end
+                                    end
+                                    -- shift all same-tab widgets below the section
                                     inSec=false
                                     local pastSection=false
                                     for _,cb2 in ipairs(btns) do
-                                        if cb2==divRef then
-                                            inSec=true
+                                        if cb2==divRef then inSec=true
                                         elseif inSec and cb2.tab==currentTab then
-                                            if cb2.isDiv then
-                                                -- this div marks end of section → shift it and everything after
-                                                inSec=false; pastSection=true
-                                            else
-                                                -- section member: show/hide smoothly
-                                                if collapsing then
-                                                    -- keep visible while sliding, hide when currentRY reaches ry
-                                                    cb2._hiding=true
-                                                else
-                                                    cb2._hiding=false
-                                                    bShow(cb2,true)
-                                                end
-                                            end
+                                            if cb2.isDiv then inSec=false; pastSection=true end
                                         end
                                         if pastSection and cb2.tab==currentTab then
-                                            cb2.ry=collapsing and cb2.ry-sectionH or cb2.ry+sectionH
+                                            cb2.ry=collapsing and cb2.baseRY-sectionH or cb2.baseRY
                                         end
                                     end
                                 end
@@ -1366,7 +1402,41 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end)
                 -- drag
-                if not clicking then dragging=false end
+                if not clicking then
+                    dragging=false
+                    if resizing then
+                        resizing=false
+                        -- commit new L sizes
+                        L.W=math.max(MIN_W,math.min(MAX_W,resizeStartW+(mouse.X-resizeStartX)))
+                        L.CONTENT_W=L.W-L.SIDEBAR
+                        uiTargetH=math.max(MIN_H,math.min(MAX_H,resizeStartH+(mouse.Y-resizeStartY)))
+                        uiCurrentH=uiTargetH
+                        -- re-layout all widgets for new width
+                        for _,b in ipairs(btns) do
+                            local cw=L.CONTENT_W-L.ROW_PAD*2
+                            b.cw=cw
+                            if b.isSlider then
+                                b.trackW=cw-16
+                            end
+                        end
+                        updatePos()
+                        applyWindowH(uiCurrentH)
+                    end
+                end
+                if resizing and clicking then
+                    local newW=math.max(MIN_W,math.min(MAX_W,resizeStartW+(mouse.X-resizeStartX)))
+                    local newH=math.max(MIN_H,math.min(MAX_H,resizeStartH+(mouse.Y-resizeStartY)))
+                    L.W=newW; L.CONTENT_W=L.W-L.SIDEBAR
+                    uiTargetH=newH; uiCurrentH=newH
+                    for _,b in ipairs(btns) do
+                        local cw=L.CONTENT_W-L.ROW_PAD*2
+                        b.cw=cw
+                        if b.isSlider then b.trackW=cw-16 end
+                    end
+                    updatePos()
+                    applyWindowH(newH)
+                    if dResizeHandle then dResizeHandle.Position=Vector2.new(uiX+L.W-14,uiY+newH-L.FOOTER+4) end
+                end
                 if dragging and clicking then
                     uiX=mouse.X-dragOffX; uiY=mouse.Y-dragOffY
                     updatePos()
