@@ -1,4 +1,4 @@
--- UILib v1.4.9
+-- UILib v1.5.0
 -- Generic Drawing-based UI Library
 
 local UILib = {}
@@ -64,7 +64,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.4.9 loaded")
+print("[UILib] v1.5.0 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -1112,33 +1112,6 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 applyFade()
-                -- clip widgets outside content bounds (post-pass after applyFade)
-                do
-                    local ctop = uiY+L.TOPBAR
-                    local cbot = uiY+uiCurrentH-L.FOOTER
-                    for _,b in ipairs(btns) do
-                        if b.tab==currentTab and showSet[b.bg] then
-                            local wy = uiY+(b.currentRY or b.ry or 0)
-                            local vis = wy+b.ch > ctop and wy < cbot
-                            if not vis then
-                                b.bg.Visible=false
-                                if b.lbl and not b.isDiv then b.lbl.Visible=false end
-                                if b.ln     then b.ln.Visible=false end
-                                if b.tog    then b.tog.Visible=false end
-                                if b.dot    then b.dot.Visible=false end
-                                if b.track  then b.track.Visible=false end
-                                if b.fill   then b.fill.Visible=false end
-                                if b.handle then b.handle.Visible=false end
-                                if b.dlb    then b.dlb.Visible=false end
-                                if b.arrow  then b.arrow.Visible=false end
-                                if b.valLbl then b.valLbl.Visible=false end
-                                if b.qbg    then b.qbg.Visible=false end
-                                if b.qlb    then b.qlb.Visible=false end
-                                if b.lbls   then for _,l in ipairs(b.lbls) do l.Visible=false end end
-                            end
-                        end
-                    end
-                end
                 -- animate widget positions (collapse/expand)
                 for _,b in ipairs(btns) do
                     if b.currentRY ~= nil and b.tab==currentTab then
@@ -1427,14 +1400,7 @@ function UILib.Window(titleA, titleB, gameName)
                         local sc=(tabScroll[currentTab] or 0)-wh.Position.Z*28
                         local maxSc=math.max(0,(tabRowY[currentTab] or 0)-CONTENT_H()+20)
                         tabScroll[currentTab]=clamp(sc,0,maxSc)
-                        -- update ry for all current tab widgets based on scroll
-                        for _,b in ipairs(btns) do
-                            if b.tab==currentTab then
-                                b.ry=b.baseRY-(tabScroll[currentTab] or 0)
-                                b.currentRY=b.ry
-                                if showSet[b.bg] then bPos(b) end
-                            end
-                        end
+
                     end
                 end)
                 -- drag
@@ -1452,20 +1418,29 @@ function UILib.Window(titleA, titleB, gameName)
                 if resizing and clicking then
                     local newW=math.max(MIN_W,math.min(MAX_W,resizeStartW+(mouse.X-resizeStartX)))
                     local newH=math.max(MIN_H,math.min(MAX_H,resizeStartH+(mouse.Y-resizeStartY)))
+                    local oldContentH = resizeStartH - L.TOPBAR - L.FOOTER
+                    local newContentH = newH - L.TOPBAR - L.FOOTER
+                    local scaleY = newContentH / oldContentH
                     L.W=newW; L.CONTENT_W=L.W-L.SIDEBAR
                     uiTargetH=newH; uiCurrentH=newH
-                    -- update widget widths + actual drawing sizes
+                    -- update widget widths + scale Y positions
                     for _,b in ipairs(btns) do
                         local cw=L.CONTENT_W-L.ROW_PAD*2
                         b.cw=cw
+                        -- scale baseRY proportionally
+                        local relY = b.baseRY - L.TOPBAR
+                        b.baseRY = L.TOPBAR + relY * scaleY
+                        b.ry = b.baseRY
+                        b.currentRY = b.baseRY
                         if b.bg and not b.isDiv and not b.isLog then
                             b.bg.Size=Vector2.new(cw,b.ch)
                         end
                         if b.isSlider then b.trackW=cw-16 end
                         if b.isLog then b.bg.Size=Vector2.new(cw,b.ch) end
-                        -- reposition dividers and labels via bPos
                         if showSet[b.bg] then bPos(b) end
                     end
+                    -- update the stored start so delta is always from current
+                    resizeStartW=newW; resizeStartH=newH
                     updatePos()
                     applyWindowH(newH)
                 end
