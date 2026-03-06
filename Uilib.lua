@@ -43,7 +43,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.2.8 loaded")
+print("[UILib] v1.2.9 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -326,11 +326,7 @@ function UILib.Window(titleA, titleB, gameName)
         if b.dlb    then tabSet[b.dlb]=group end
         if b.arrow  then tabSet[b.arrow]=group end
         if b.valLbl  then tabSet[b.valLbl]=group end
-        if b.optBgs  then
-            for _,o in ipairs(b.optBgs) do
-                tabSet[o.bg]=group; tabSet[o.ln]=group; tabSet[o.lb]=group
-            end
-        end
+        -- optBgs are managed manually, not through applyFade
         if b.swatches then
             for _,sw in ipairs(b.swatches) do tabSet[sw.sq]=group; tabSet[sw.border]=group end
         end
@@ -662,11 +658,12 @@ function UILib.Window(titleA, titleB, gameName)
         local optBgs={}
         for i,opt in ipairs(options) do
             local oy2=ry+ch+((i-1)*ch)
-            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,Color3.fromRGB(10,13,24),true,0,10,nil,0))
-            local oln=mkD(mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,Color3.fromRGB(25,30,50),11,1))
-            local olb=mkD(mkTx(opt,uiX+rx+14,uiY+oy2+ch/2-6,11,i==valIdx and C.ACCENT or C.WHITE,false,11))
+            -- use raw drawings (not mkD) so applyFade doesn't touch them
+            local obg=mkSq(uiX+rx,uiY+oy2,cw,ch,Color3.fromRGB(10,13,24),true,0,10,nil,0)
+            local oln=mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,Color3.fromRGB(25,30,50),11,1)
+            local olb=mkTx(opt,uiX+rx+14,uiY+oy2+ch/2-6,11,i==valIdx and C.ACCENT or C.WHITE,false,11)
             obg.Visible=false; oln.Visible=false; olb.Visible=false
-            table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0,delay=i*0.04})
+            table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0})
         end
         local b={tab=tab,isDropdown=true,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
@@ -1277,6 +1274,15 @@ function UILib.Window(titleA, titleB, gameName)
     end
 
     function win:Destroy()
+        for _,b in ipairs(btns) do
+            if b.isDropdown then
+                for _,o in ipairs(b.optBgs) do
+                    pcall(function() o.bg:Remove() end)
+                    pcall(function() o.ln:Remove() end)
+                    pcall(function() o.lb:Remove() end)
+                end
+            end
+        end
         destroyed=true
         pcall(function() notify("UI destroyed.", titleA.." "..titleB, 3) end)
         for _,d in ipairs(allDrawings) do pcall(function() d:Remove() end) end
