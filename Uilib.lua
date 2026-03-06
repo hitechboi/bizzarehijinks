@@ -70,7 +70,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.4.0 loaded")
+print("[UILib] v1.4.1 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -1432,10 +1432,10 @@ function UILib.Window(titleA, titleB, gameName)
                     for _,b in ipairs(btns) do
                         local cw=L.CONTENT_W-L.ROW_PAD*2
                         b.cw=cw
-                        if b.bg then b.bg.Size=Vector2.new(cw,b.ch) end
-                        if b.isSlider then
-                            b.trackW=cw-16
+                        if b.bg and not b.isDiv and not b.isLog then
+                            b.bg.Size=Vector2.new(cw,b.ch)
                         end
+                        if b.isSlider then b.trackW=cw-16 end
                         if b.isLog then b.bg.Size=Vector2.new(cw,b.ch) end
                         -- reposition dividers and labels via bPos
                         if showSet[b.bg] then bPos(b) end
