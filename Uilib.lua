@@ -1,11 +1,6 @@
--- UILib v1.4.0 CACHE BUST 2
-
---[[
-    UILib.lua
-    Generic Drawing-based UI Library
-    by hitechboi / nejrio
-    v1.2.5
-]]
+-- UILib v1.4.4
+-- Generic Drawing-based UI Library
+-- by hitechboi / nejrio
 
 local UILib = {}
 local _collapseSections = {}
