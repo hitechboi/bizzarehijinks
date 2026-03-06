@@ -195,6 +195,7 @@ function UILib.Window(titleA, titleB, gameName)
         if b.lbls   then for _,l in ipairs(b.lbls) do setShow(l,yes) end end
         if b.qbg    then setShow(b.qbg,  yes) end
         if b.qlb    then setShow(b.qlb,  yes) end
+        if b.dlb    then setShow(b.dlb,  yes) end
     end
 
     local function bPos(b)
@@ -219,6 +220,7 @@ function UILib.Window(titleA, titleB, gameName)
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
         elseif b.isSlider then
             b.lbl.Position=Vector2.new(ax+8,ay+7)
+            if b.dlb then b.dlb.Position=Vector2.new(ax+8,ay+21) end
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
             local tx=ax+8; local ty=ay+b.ch-11
             b.track.From=Vector2.new(tx,ty); b.track.To=Vector2.new(tx+b.trackW,ty)
@@ -253,6 +255,7 @@ function UILib.Window(titleA, titleB, gameName)
         if b.lbls   then for _,l in ipairs(b.lbls) do tabSet[l]=group end end
         if b.qbg    then tabSet[b.qbg]=group end
         if b.qlb    then tabSet[b.qlb]=group end
+        if b.dlb    then tabSet[b.dlb]=group end
     end
 
     local function showTab(tab)
@@ -477,7 +480,7 @@ function UILib.Window(titleA, titleB, gameName)
         table.insert(btns,b); return #btns
     end
 
-    local function addSlider(tab,lbl,relY,minV,maxV,initV,cb,isFloat)
+    local function addSlider(tab,lbl,relY,minV,maxV,initV,cb,isFloat,desc)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H+6
         local trackW=cw-16
@@ -485,6 +488,7 @@ function UILib.Window(titleA, titleB, gameName)
         local bg  =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3,nil,4))
         local dl  =mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
         local lb  =mkD(mkTx(lbl..": "..initLbl,uiX+rx+8,uiY+ry+7,12,C.WHITE,false,8))
+        local dlb = desc and mkD(mkTx(desc,uiX+rx+8,uiY+ry+21,9,C.GRAY,false,8)) or nil
         local ty  =uiY+ry+ch-11
         local trk =mkD(mkLn(uiX+rx+8,ty,uiX+rx+8+trackW,ty,C.DIMGRAY,5,3))
         local frac=(initV-minV)/(maxV-minV)
@@ -493,7 +497,7 @@ function UILib.Window(titleA, titleB, gameName)
         local hdl =mkD(mkSq(fx-4,ty-4,L.HDL,L.HDL,C.WHITE,true,1,7,nil,3))
         local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,
                  rx=rx,ry=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
-                 value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false}
+                 value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb}
         table.insert(btns,b); return #btns
     end
 
@@ -547,9 +551,9 @@ function UILib.Window(titleA, titleB, gameName)
             local y = nextY(L.ROW_H + 2)
             addToggle(tabName, lbl, y, init, cb, desc)
         end
-        function api:Slider(lbl, minV, maxV, initV, cb, isFloat)
+        function api:Slider(lbl, minV, maxV, initV, cb, isFloat, desc)
             local y = nextY(L.ROW_H + 8)
-            addSlider(tabName, lbl, y, minV, maxV, initV, cb, isFloat)
+            addSlider(tabName, lbl, y, minV, maxV, initV, cb, isFloat, desc)
         end
         function api:Button(lbl, col, cb, lblCol)
             local y = nextY(L.ROW_H + 2)
