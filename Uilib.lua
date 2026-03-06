@@ -1,6 +1,5 @@
--- UILib v1.4.5
+-- UILib v1.4.6
 -- Generic Drawing-based UI Library
--- by hitechboi / nejrio
 
 local UILib = {}
 local _collapseSections = {}
@@ -65,7 +64,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.4.5 loaded")
+print("[UILib] v1.4.6 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
