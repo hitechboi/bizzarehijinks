@@ -41,6 +41,8 @@ local THEMES = {
 }
 UILib.Themes = THEMES
 _G.UILib = UILib
+
+local _collapseSections = {}
 print("[UILib] v1.2.5 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
@@ -341,8 +343,6 @@ function UILib.Window(titleA, titleB, gameName)
         end
     end
 
-    local collapseSections = {}  -- must be before switchTab
-
     local function switchTab(name)
         if name==currentTab then return end
         prevTab=currentTab; currentTab=name; tabSwitchedAt=os.clock()
@@ -358,7 +358,7 @@ function UILib.Window(titleA, titleB, gameName)
         for _,b in ipairs(btns) do
             if b.tab==name then
                 if b.isDiv and b.collapsible and b.sectionName then
-                    collapseSections[b.sectionName]=false
+                    _collapseSections[b.sectionName]=false
                     if b.arrow then b.arrow.Text="v" end
                 end
                 bShow(b,true); bPos(b); tagBtnFade(b,"next")
@@ -554,7 +554,7 @@ function UILib.Window(titleA, titleB, gameName)
         local arrow
         if collapsible then
             arrow=mkD(mkTx("v",uiX+rx+cw-6,uiY+ry,9,C.GRAY,false,8))
-            if collapseSections[lbl]==nil then collapseSections[lbl]=false end
+            if _collapseSections[lbl]==nil then _collapseSections[lbl]=false end
         end
         table.insert(btns,{tab=tab,isDiv=true,bg=lb,lbl=lb,ln=dl,rx=rx,ry=ry,cw=cw,ch=14,
                            collapsible=collapsible,sectionName=lbl,arrow=arrow})
@@ -1091,8 +1091,8 @@ function UILib.Window(titleA, titleB, gameName)
                                     end
                                 elseif b.isDiv and b.collapsible and b.sectionName then
                                     local sec=b.sectionName
-                                    collapseSections[sec]=not collapseSections[sec]
-                                    b.arrow.Text=collapseSections[sec] and ">" or "v"
+                                    _collapseSections[sec]=not _collapseSections[sec]
+                                    b.arrow.Text=_collapseSections[sec] and ">" or "v"
                                     local divRef=b
                                     local hiding=false
                                     for _,cb2 in ipairs(btns) do
@@ -1100,8 +1100,8 @@ function UILib.Window(titleA, titleB, gameName)
                                         elseif hiding then
                                             if cb2.isDiv then break end
                                             if cb2.tab==currentTab then
-                                                bShow(cb2, not collapseSections[sec])
-                                                if not collapseSections[sec] then bPos(cb2) end
+                                                bShow(cb2, not _collapseSections[sec])
+                                                if not _collapseSections[sec] then bPos(cb2) end
                                             end
                                         end
                                     end
