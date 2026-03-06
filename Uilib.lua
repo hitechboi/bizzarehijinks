@@ -39,6 +39,7 @@ local THEMES = {
     },
 }
 UILib.Themes = THEMES
+_G.UILib = UILib
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -1344,5 +1345,3 @@ function UILib.Window(titleA, titleB, gameName)
 
     return win
 end
-
-_G.UILib = UILib
