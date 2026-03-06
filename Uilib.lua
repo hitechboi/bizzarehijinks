@@ -68,7 +68,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.6 loaded")
+print("[UILib] v1.3.7 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -417,6 +417,7 @@ function UILib.Window(titleA, titleB, gameName)
     local TIP_FADE = 0.35
 
     local function updatePos()
+        local curH = uiCurrentH  -- use animated/current height not fixed L.H
         dShadow.Position  =Vector2.new(uiX-2,uiY-2)
         dMainBg.Position  =Vector2.new(uiX,uiY)
         dBorder.Position  =Vector2.new(uiX,uiY)
@@ -434,13 +435,19 @@ function UILib.Window(titleA, titleB, gameName)
         dDotR.Position    =Vector2.new(uiX+L.W-42,uiY+15)
         dSide.Position    =Vector2.new(uiX+1,uiY+L.TOPBAR)
         dSideLn.From      =Vector2.new(uiX+L.SIDEBAR,uiY+L.TOPBAR)
-        dSideLn.To        =Vector2.new(uiX+L.SIDEBAR,uiY+L.H-L.FOOTER)
+        dSideLn.To        =Vector2.new(uiX+L.SIDEBAR,uiY+curH-L.FOOTER)
         dContent.Position =Vector2.new(uiX+L.SIDEBAR,uiY+L.TOPBAR)
-        dFooter.Position  =Vector2.new(uiX+1,uiY+L.H-L.FOOTER)
-        dFotLine.From     =Vector2.new(uiX+1,uiY+L.H-L.FOOTER)
-        dFotLine.To       =Vector2.new(uiX+L.W-1,uiY+L.H-L.FOOTER)
-        dCharLbl.Position =Vector2.new(uiX+L.SIDEBAR+8,uiY+L.H-L.FOOTER+5)
-        if dResizeHandle then dResizeHandle.Position=Vector2.new(uiX+L.W-14,uiY+L.H-L.FOOTER+4) end
+        dFooter.Position  =Vector2.new(uiX+1,uiY+curH-L.FOOTER)
+        dFotLine.From     =Vector2.new(uiX+1,uiY+curH-L.FOOTER)
+        dFotLine.To       =Vector2.new(uiX+L.W-1,uiY+curH-L.FOOTER)
+        dCharLbl.Position =Vector2.new(uiX+L.SIDEBAR+8,uiY+curH-L.FOOTER+5)
+        if dResizeHandle then dResizeHandle.Position=Vector2.new(uiX+L.W-14,uiY+curH-L.FOOTER+4) end
+        -- update sizes for width changes
+        dTopBar.Size  =Vector2.new(L.W-2,L.TOPBAR)
+        dTopFill.Size =Vector2.new(L.W-2,7)
+        dSide.Size    =Vector2.new(L.SIDEBAR-1,curH-L.TOPBAR-L.FOOTER-1)
+        dContent.Size =Vector2.new(L.CONTENT_W-1,curH-L.TOPBAR-L.FOOTER-1)
+        dFooter.Size  =Vector2.new(L.W-2,L.FOOTER-1)
         for _,t in ipairs(tabObjs) do
             t.bg.Position =Vector2.new(uiX+7,uiY+t.relTY)
             t.acc.Position=Vector2.new(uiX+7,uiY+t.relTY)
@@ -1206,7 +1213,7 @@ function UILib.Window(titleA, titleB, gameName)
                     -- red dot: close
                     elseif inBox(uiX+L.W-46,uiY+11,12,12) then
                         menuOpen=false; menuToggledAt=os.clock()
-                    elseif inBox(uiX+L.W-20,uiY+L.H-L.FOOTER,20,L.FOOTER) then
+                    elseif inBox(uiX+L.W-20,uiY+uiCurrentH-L.FOOTER,20,L.FOOTER) then
                         resizing=true
                         resizeStartX=mouse.X; resizeStartY=mouse.Y
                         resizeStartW=L.W; resizeStartH=uiCurrentH
@@ -1406,21 +1413,11 @@ function UILib.Window(titleA, titleB, gameName)
                     dragging=false
                     if resizing then
                         resizing=false
-                        -- commit new L sizes
-                        L.W=math.max(MIN_W,math.min(MAX_W,resizeStartW+(mouse.X-resizeStartX)))
-                        L.CONTENT_W=L.W-L.SIDEBAR
-                        uiTargetH=math.max(MIN_H,math.min(MAX_H,resizeStartH+(mouse.Y-resizeStartY)))
-                        uiCurrentH=uiTargetH
-                        -- re-layout all widgets for new width
-                        for _,b in ipairs(btns) do
-                            local cw=L.CONTENT_W-L.ROW_PAD*2
-                            b.cw=cw
-                            if b.isSlider then
-                                b.trackW=cw-16
-                            end
-                        end
                         updatePos()
                         applyWindowH(uiCurrentH)
+                        for _,b in ipairs(btns) do
+                            if showSet[b.bg] then bPos(b) end
+                        end
                     end
                 end
                 if resizing and clicking then
@@ -1428,6 +1425,7 @@ function UILib.Window(titleA, titleB, gameName)
                     local newH=math.max(MIN_H,math.min(MAX_H,resizeStartH+(mouse.Y-resizeStartY)))
                     L.W=newW; L.CONTENT_W=L.W-L.SIDEBAR
                     uiTargetH=newH; uiCurrentH=newH
+                    -- update widget widths
                     for _,b in ipairs(btns) do
                         local cw=L.CONTENT_W-L.ROW_PAD*2
                         b.cw=cw
@@ -1435,7 +1433,6 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                     updatePos()
                     applyWindowH(newH)
-                    if dResizeHandle then dResizeHandle.Position=Vector2.new(uiX+L.W-14,uiY+newH-L.FOOTER+4) end
                 end
                 if dragging and clicking then
                     uiX=mouse.X-dragOffX; uiY=mouse.Y-dragOffY
