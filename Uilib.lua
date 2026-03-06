@@ -68,7 +68,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.3 loaded")
+print("[UILib] v1.3.4 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -268,7 +268,9 @@ function UILib.Window(titleA, titleB, gameName)
     end
 
     local function bPos(b)
-        local ax,ay=uiX+b.rx,uiY+b.ry
+        -- use animated currentRY if available, else ry
+        local animY = b.currentRY ~= nil and b.currentRY or b.ry
+        local ax,ay=uiX+b.rx,uiY+animY
         b.bg.Position=Vector2.new(ax,ay)
         if b.isLog then
             for i,lb in ipairs(b.lbls) do
@@ -382,6 +384,7 @@ function UILib.Window(titleA, titleB, gameName)
                     _collapseSections[b.sectionName]=false
                     if b.arrow then b.arrow.Text="v" end
                 end
+                b.currentRY=b.ry  -- snap position, no animation on tab switch
                 bShow(b,true); bPos(b); tagBtnFade(b,"next")
             end
         end
@@ -562,7 +565,7 @@ function UILib.Window(titleA, titleB, gameName)
             qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
         end
         local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,
-                 rx=rx,ry=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
+                 rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
                  desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch}
         table.insert(btns,b); return #btns
     end
@@ -578,7 +581,7 @@ function UILib.Window(titleA, titleB, gameName)
             if _collapseSections[lbl]==nil then _collapseSections[lbl]=false end
         end
         table.insert(btns,{tab=tab,isDiv=true,bg=lb,lbl=lb,ln=dl,rx=rx,ry=ry,cw=cw,ch=14,
-                           collapsible=collapsible,sectionName=lbl,arrow=arrow})
+                           collapsible=collapsible,sectionName=lbl,arrow=arrow,currentRY=ry})
         return #btns
     end
 
@@ -588,7 +591,7 @@ function UILib.Window(titleA, titleB, gameName)
         local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,col or C.ROWBG,true,1,3,nil,4))
         local dl=mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
         local lb=mkD(mkTx(lbl,uiX+rx+cw/2,uiY+ry+ch/2-6,12,lblCol or C.WHITE,true,8))
-        local b={tab=tab,isAct=true,bg=bg,lbl=lb,ln=dl,rx=rx,ry=ry,cw=cw,ch=ch,cb=cb}
+        local b={tab=tab,isAct=true,bg=bg,lbl=lb,ln=dl,rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,cb=cb}
         table.insert(btns,b); return #btns
     end
 
@@ -608,7 +611,7 @@ function UILib.Window(titleA, titleB, gameName)
         local fil =mkD(mkLn(uiX+rx+8,ty,fx,ty,C.ACCENT,6,3))
         local hdl =mkD(mkSq(fx-4,ty-4,L.HDL,L.HDL,C.WHITE,true,1,7,nil,3))
         local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,
-                 rx=rx,ry=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
+                 rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
                  value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb}
         table.insert(btns,b); return #btns
     end
@@ -640,7 +643,7 @@ function UILib.Window(titleA, titleB, gameName)
             table.insert(swatchBgs,{sq=s,border=border,col=col,x=sx,y=sy})
         end
         local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,
-                 rx=rx,ry=ry,cw=cw,ch=ch,swatches=swatchBgs,
+                 rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,swatches=swatchBgs,
                  selected=selected,value=swatches[1],cb=cb}
         table.insert(btns,b); return #btns
     end
@@ -693,7 +696,7 @@ function UILib.Window(titleA, titleB, gameName)
             obg.Visible=false; oln.Visible=false; olb.Visible=false
             table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0})
         end
-        local b={tab=tab,isDropdown=true,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,
+        local b={tab=tab,isDropdown=true,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
                  selected=valIdx,open=false,openedAt=0,cb=cb}
         table.insert(btns,b); return #btns
@@ -723,7 +726,7 @@ function UILib.Window(titleA, titleB, gameName)
             table.insert(lbls,lb)
         end
         local b={tab=tab,isLog=true,bg=bg,lbl=bg,ln=nil,lbls=lbls,
-                 rx=rx,ry=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
+                 rx=rx,ry=ry,currentRY=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
                  starFirst=starFirst,starH=starH}
         table.insert(btns,b); return #btns
     end
@@ -1078,6 +1081,19 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 applyFade()
+                -- animate widget positions (collapse/expand)
+                for _,b in ipairs(btns) do
+                    if b.currentRY ~= nil and b.tab==currentTab then
+                        local diff = b.ry - b.currentRY
+                        if math.abs(diff) > 0.3 then
+                            b.currentRY = b.currentRY + diff * 0.15
+                            if showSet[b.bg] then bPos(b) end
+                        elseif b.currentRY ~= b.ry then
+                            b.currentRY = b.ry
+                            if showSet[b.bg] then bPos(b) end
+                        end
+                    end
+                end
                 -- animate window height for dropdown
                 if math.abs(uiCurrentH - uiTargetH) > 0.5 then
                     uiCurrentH = uiCurrentH + (uiTargetH - uiCurrentH) * 0.08
@@ -1234,15 +1250,42 @@ function UILib.Window(titleA, titleB, gameName)
                                     local sec=b.sectionName
                                     _collapseSections[sec]=not _collapseSections[sec]
                                     b.arrow.Text=_collapseSections[sec] and ">" or "v"
+                                    local collapsing=_collapseSections[sec]
+                                    -- recalculate target ry for all widgets after this div on same tab
                                     local divRef=b
-                                    local hiding=false
+                                    local inSection=false
+                                    local collapsedH=0
+                                    -- first pass: find total height of collapsed section
                                     for _,cb2 in ipairs(btns) do
-                                        if cb2==divRef then hiding=true
-                                        elseif hiding then
+                                        if cb2==divRef then inSection=true
+                                        elseif inSection then
                                             if cb2.isDiv then break end
                                             if cb2.tab==currentTab then
-                                                bShow(cb2, not _collapseSections[sec])
-                                                if not _collapseSections[sec] then bPos(cb2) end
+                                                collapsedH=collapsedH+cb2.ch+2
+                                            end
+                                        end
+                                    end
+                                    -- second pass: shift ry targets for all widgets after the section
+                                    local afterSection=false
+                                    inSection=false
+                                    for _,cb2 in ipairs(btns) do
+                                        if cb2==divRef then inSection=true
+                                        elseif inSection then
+                                            if cb2.isDiv then
+                                                inSection=false; afterSection=true
+                                            end
+                                            if cb2.tab==currentTab then
+                                                if not afterSection then
+                                                    -- hide/show section members
+                                                    bShow(cb2, not collapsing)
+                                                end
+                                            end
+                                        elseif afterSection and cb2.tab==currentTab then
+                                            -- shift widgets below by collapsedH
+                                            if collapsing then
+                                                cb2.ry = cb2.ry - collapsedH
+                                            else
+                                                cb2.ry = cb2.ry + collapsedH
                                             end
                                         end
                                     end
