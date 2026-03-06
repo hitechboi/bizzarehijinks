@@ -43,7 +43,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.2.7 loaded")
+print("[UILib] v1.2.8 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -1005,20 +1005,22 @@ function UILib.Window(titleA, titleB, gameName)
                 for _,b in ipairs(btns) do
                     if b.isDropdown then
                         for _,o in ipairs(b.optBgs) do
-                            if o.alpha ~= o.targetAlpha then
-                                local spd=10
-                                if o.targetAlpha > o.alpha then
-                                    o.alpha=math.min(o.targetAlpha, o.alpha+spd*0.016)
-                                else
-                                    o.alpha=math.max(o.targetAlpha, o.alpha-spd*0.016)
-                                end
-                                local vis=o.alpha>0.01
+                            local diff=o.targetAlpha-o.alpha
+                            if math.abs(diff)>0.01 then
+                                o.alpha=o.alpha+diff*0.25  -- smooth lerp
+                                local vis=o.alpha>0.02
                                 o.bg.Visible=vis; o.ln.Visible=vis; o.lb.Visible=vis
                                 if vis then
                                     o.bg.Transparency=o.alpha
                                     o.ln.Transparency=o.alpha
                                     o.lb.Transparency=o.alpha
                                 end
+                            elseif o.targetAlpha==0 and o.alpha<0.02 then
+                                o.alpha=0
+                                o.bg.Visible=false; o.ln.Visible=false; o.lb.Visible=false
+                            elseif o.targetAlpha==1 and o.alpha>0.98 then
+                                o.alpha=1
+                                o.bg.Transparency=1; o.ln.Transparency=1; o.lb.Transparency=1
                             end
                         end
                     end
@@ -1110,9 +1112,16 @@ function UILib.Window(titleA, titleB, gameName)
                                     openDropdown=b.open and b or nil
                                     resizeForDropdown(b, b.open)
                                     if b.open then
-                                        bPos(b)
-                                        for _,o in ipairs(b.optBgs) do
-                                            o.targetAlpha=1
+                                        -- position options correctly first
+                                        local ax=uiX+b.rx; local ay=uiY+b.ry
+                                        for i,o in ipairs(b.optBgs) do
+                                            local oy2=ay+b.ch+((i-1)*b.ch)
+                                            o.bg.Position=Vector2.new(ax,oy2); o.bg.Size=Vector2.new(b.cw,b.ch)
+                                            o.ln.From=Vector2.new(ax,oy2+b.ch); o.ln.To=Vector2.new(ax+b.cw,oy2+b.ch)
+                                            o.lb.Position=Vector2.new(ax+14,oy2+b.ch/2-6)
+                                            o.ry=b.ry+b.ch+((i-1)*b.ch)
+                                            o.alpha=0; o.targetAlpha=1
+                                            o.bg.Transparency=0; o.ln.Transparency=0; o.lb.Transparency=0
                                             o.bg.Visible=true; o.ln.Visible=true; o.lb.Visible=true
                                         end
                                     else
