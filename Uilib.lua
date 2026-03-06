@@ -70,7 +70,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.4.2 loaded")
+print("[UILib] v1.4.3 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -247,11 +247,26 @@ function UILib.Window(titleA, titleB, gameName)
             if showSet[d] then
                 local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
                 local op=mOp*tOp
+                -- clip widgets to content area vertically
+                local pos=d.Position
+                if pos then
+                    local dy=pos.Y
+                    local contentTop=uiY+L.TOPBAR
+                    local contentBot=uiY+uiCurrentH-L.FOOTER
+                    if dy~=nil and (dy+1<contentTop or dy>contentBot) then
+                        -- only clip actual widget rows, not base UI panels
+                        if tabSet[d] and tabSet[d]~=nil and tabSet[d]~="next" and tabSet[d]~="prev" then
+                            d.Visible=false
+                            goto continue
+                        end
+                    end
+                end
                 d.Visible=op>0.01
                 d.Transparency=op
             else
                 d.Visible=false
             end
+            ::continue::
         end
     end
 
@@ -1059,12 +1074,15 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 -- toggle lerp
                 for _,b in ipairs(btns) do
-                    if b.isTog and b.tog then
+                    if b.isTog and b.tog and b.tab==currentTab then
                         local tgt=b.state and 1 or 0
                         b.lt=b.lt+(tgt-b.lt)*0.18
                         b.tog.Color=lerpC(C.OFF,   C.ON,   b.lt)
                         b.dot.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt)
-                        b.dot.Position=Vector2.new(uiX+b.ox+2+(L.TOG_W-L.TOG_H)*b.lt,uiY+b.oy+2)
+                        local dox=b.rx+b.cw-L.TOG_W-8
+                        local dcy=b.currentRY or b.ry
+                        b.tog.Position=Vector2.new(uiX+dox, uiY+dcy+b.ch/2-L.TOG_H/2)
+                        b.dot.Position=Vector2.new(uiX+dox+2+(L.TOG_W-L.TOG_H)*b.lt, uiY+dcy+b.ch/2-L.TOG_H/2+2)
                     end
                 end
                 -- glow animation
