@@ -638,6 +638,8 @@ function UILib.Window(titleA, titleB, gameName)
 
     local tabAPI = {}
     local tabRowY = {}  -- tracks current Y offset per tab
+    local tabScroll = {}  -- scroll offset per tab (pixels)
+    local CONTENT_H = L.H - L.TOPBAR - L.FOOTER
 
     local function getTabAPI(tabName)
         if tabAPI[tabName] then return tabAPI[tabName] end
@@ -968,7 +970,7 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                     -- buttons
                     for i,b in ipairs(btns) do
-                        if b.tab==currentTab and not b.isDiv and not b.isSlider then
+                        if b.tab==currentTab and not b.isSlider then
                             if inBox(uiX+b.rx,uiY+b.ry,b.cw,b.ch) then
                                 if b.isTog then
                                     b.state=not b.state
@@ -982,9 +984,14 @@ function UILib.Window(titleA, titleB, gameName)
                                         btns[iKeyBind].lbl.Text="Press any key..."
                                     elseif b.cb then b.cb() end
                                 elseif b.isColorPicker then
+                                    local ax2=uiX+b.rx; local ay2=uiY+b.ry
+                                    local totalW=(#b.swatches*19)-5
+                                    local startX=ax2+b.cw-totalW-10
                                     for j,sw in ipairs(b.swatches) do
-                                        if inBox(sw.x,sw.y,14,14) then
+                                        local sx=startX+(j-1)*19; local sy=ay2+b.ch/2-7
+                                        if inBox(sx,sy,14,14) then
                                             b.selected=j; b.value=sw.col
+                                            sw.x=sx; sw.y=sy
                                             for k,sw2 in ipairs(b.swatches) do
                                                 sw2.border.Color=k==j and C.WHITE or C.DIMGRAY
                                             end
@@ -999,13 +1006,16 @@ function UILib.Window(titleA, titleB, gameName)
                                     local sec=b.sectionName
                                     collapseSections[sec]=not collapseSections[sec]
                                     b.arrow.Text=collapseSections[sec] and ">" or "v"
-                                    -- show/hide all btns after this div until next div
+                                    local divRef=b
                                     local hiding=false
-                                    for _,bb in ipairs(btns) do
-                                        if bb==b then hiding=true
+                                    for _,cb2 in ipairs(btns) do
+                                        if cb2==divRef then hiding=true
                                         elseif hiding then
-                                            if bb.isDiv then break end
-                                            bShow(bb, not collapseSections[sec] and bb.tab==currentTab)
+                                            if cb2.isDiv then break end
+                                            if cb2.tab==currentTab then
+                                                bShow(cb2, not collapseSections[sec])
+                                                if not collapseSections[sec] then bPos(cb2) end
+                                            end
                                         end
                                     end
                                 end
@@ -1038,6 +1048,27 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
+                -- scroll (mousewheel)
+                pcall(function()
+                    local uis=game:GetService("UserInputService")
+                    local wh=uis:GetLastInputObject(Enum.UserInputType.MouseWheel,true)
+                    if wh and inBox(uiX+L.SIDEBAR,uiY+L.TOPBAR,L.CONTENT_W,CONTENT_H) then
+                        local sc=(tabScroll[currentTab] or 0)-wh.Position.Z*28
+                        local maxSc=math.max(0,(tabRowY[currentTab] or 0)-CONTENT_H+20)
+                        tabScroll[currentTab]=clamp(sc,0,maxSc)
+                        for _,b in ipairs(btns) do
+                            if b.tab==currentTab then
+                                local by=uiY+b.ry-(tabScroll[currentTab])
+                                if showSet[b.bg] then
+                                    b.bg.Position=Vector2.new(uiX+b.rx,by)
+                                    bPos(b)
+                                    local vis=by+b.ch>uiY+L.TOPBAR and by<uiY+L.H-L.FOOTER
+                                    b.bg.Visible=vis
+                                end
+                            end
+                        end
+                    end
+                end)
                 -- drag
                 -- unfocus textbox on click outside
                 if clicking and not wasClicking then
@@ -1060,37 +1091,52 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 wasClicking=clicking
                 -- textbox key input
-                for _,b in ipairs(btns) do
-                    if b.isTextbox and b.focused and b.tab==currentTab then
-                        for k=0x08,0xDD do
-                            if iskeypressed(k) then
-                                if k==0x08 then -- backspace
-                                    b.text=b.text:sub(1,-2)
-                                elseif k==0x0D or k==0x1B then -- enter/esc
-                                    b.focused=false; b.inputBorder.Color=C.BORDER
-                                    if b.isSearch then searchQuery[b.tab]=b.text end
-                                    if b.cb then b.cb(b.text) end
-                                elseif kn[k] and #b.text<40 then
-                                    b.text=b.text..kn[k]:lower()
-                                end
-                                b.lbl.Text=b.text=="" and b.placeholder or b.text
-                                b.lbl.Color=b.text=="" and C.GRAY or C.WHITE
-                                if b.isSearch then
-                                    searchQuery[b.tab]=b.text
-                                    -- filter btns
-                                    local q=b.text:lower()
-                                    for _,bb in ipairs(btns) do
-                                        if bb.tab==currentTab and not bb.isTextbox and not bb.isDiv then
-                                            local match=q=="" or bb.toggleName and bb.toggleName:lower():find(q,1,true)
-                                                        or bb.baseLbl and bb.baseLbl:lower():find(q,1,true)
-                                            if match then bShow(bb,true); bPos(bb)
-                                            else bShow(bb,false) end
+                do
+                    local anyFocused=false
+                    for _,b in ipairs(btns) do
+                        if b.isTextbox and b.focused and b.tab==currentTab then
+                            anyFocused=true
+                            if not b._lastKey then b._lastKey=0; b._lastKeyAt=0; b._keyHeld=0 end
+                            local fired=false
+                            for k=0x08,0xDD do
+                                if iskeypressed(k) then
+                                    local now=os.clock()
+                                    local isNew=k~=b._lastKey
+                                    local held=isNew and 0 or b._keyHeld+(now-b._lastKeyAt)
+                                    local delay=isNew and 0 or (held<0.5 and 999 or 0.05)
+                                    b._lastKeyAt=now
+                                    if isNew or (now-b._lastFire>(delay)) then
+                                        b._lastKey=k; b._lastFire=now; b._keyHeld=held
+                                        if k==0x08 then
+                                            b.text=b.text:sub(1,-2)
+                                        elseif k==0x0D or k==0x1B then
+                                            b.focused=false; b.inputBorder.Color=C.BORDER
+                                            if b.isSearch then searchQuery[b.tab]=b.text end
+                                            if b.cb then b.cb(b.text) end
+                                        elseif kn[k] and #b.text<40 then
+                                            b.text=b.text..kn[k]:lower()
                                         end
+                                        b.lbl.Text=b.text=="" and b.placeholder or b.text
+                                        b.lbl.Color=b.text=="" and C.GRAY or C.WHITE
+                                        if b.isSearch then
+                                            local q=b.text:lower()
+                                            for _,bb in ipairs(btns) do
+                                                if bb.tab==currentTab and not bb.isTextbox and not bb.isDiv then
+                                                    local match=q=="" or
+                                                        (bb.toggleName and bb.toggleName:lower():find(q,1,true)) or
+                                                        (bb.baseLbl and bb.baseLbl:lower():find(q,1,true))
+                                                    if match then bShow(bb,true); bPos(bb)
+                                                    else bShow(bb,false) end
+                                                end
+                                            end
+                                        end
+                                        fired=true
                                     end
+                                    break
                                 end
-                                task.wait(0.08)
-                                break
                             end
+                            if not fired then b._lastKey=0; b._keyHeld=0 end
+                            break
                         end
                     end
                 end
