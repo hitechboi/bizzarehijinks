@@ -257,7 +257,7 @@ function UILib.Window(titleA, titleB, gameName)
                 local op=mOp*tOp
                 local clipped=false
                 local owner=drawingOwner[d]
-                if owner and tabSet[d]~="next" and tabSet[d]~="prev" then
+                if owner and owner.ch and tabSet[d]~="next" and tabSet[d]~="prev" then
                     local wy=uiY+(owner.currentRY or owner.ry)
                     if wy+owner.ch <= contentTop or wy >= contentBot then
                         clipped=true
@@ -623,9 +623,9 @@ function UILib.Window(titleA, titleB, gameName)
             arrow=mkD(mkTx("v",uiX+rx+cw-6,uiY+ry,9,C.GRAY,false,8))
             if _collapseSections[lbl]==nil then _collapseSections[lbl]=false end
         end
-        table.insert(btns,{tab=tab,isDiv=true,bg=lb,lbl=lb,ln=dl,rx=rx,ry=ry,cw=cw,ch=14,
-                           collapsible=collapsible,sectionName=lbl,arrow=arrow,currentRY=ry,baseRY=ry})
-        return #btns
+        local db={tab=tab,isDiv=true,bg=lb,lbl=lb,ln=dl,rx=rx,ry=ry,cw=cw,ch=14,
+                  collapsible=collapsible,sectionName=lbl,arrow=arrow,currentRY=ry,baseRY=ry}
+        table.insert(btns,db); registerOwner(db); return #btns
     end
 
     local function addAct(tab,lbl,relY,col,cb,lblCol)
