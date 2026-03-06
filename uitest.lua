@@ -257,7 +257,11 @@ function UILib.Window(titleA, titleB, gameName)
                 local clipped=false
                 local owner=drawingOwner[d]
                 if owner and owner.ch and tabSet[d]~="next" and tabSet[d]~="prev" then
-                    local wy=uiY+(owner.currentRY or owner.ry)
+                    local ry_val = (owner.currentRY or owner.ry) or 0
+                    if owner.currentRY == nil and owner.ry == nil then
+                        print("[UILib] clip debug: owner has nil ry, tab="..tostring(owner.tab).." isDiv="..tostring(owner.isDiv).." isTog="..tostring(owner.isTog).." isAct="..tostring(owner.isAct).." isDropdown="..tostring(owner.isDropdown))
+                    end
+                    local wy=uiY+ry_val
                     if wy+owner.ch <= contentTop or wy >= contentBot then
                         clipped=true
                     end
