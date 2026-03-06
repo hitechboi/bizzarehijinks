@@ -264,9 +264,6 @@ function UILib.Window(titleA, titleB, gameName)
         if b.swatches then
             for _,sw in ipairs(b.swatches) do setShow(sw.sq,yes); setShow(sw.border,yes) end
         end
-        if b.inputBg     then setShow(b.inputBg,    yes) end
-        if b.inputBorder then setShow(b.inputBorder,yes) end
-        if b.icon        then setShow(b.icon,        yes) end
     end
 
     local function bPos(b)
@@ -302,12 +299,6 @@ function UILib.Window(titleA, titleB, gameName)
                 o.lb.Position=Vector2.new(ax+10,oy2+b.ch/2-6)
                 o.ry=b.ry+b.ch+((i-1)*b.ch)
             end
-        elseif b.isTextbox then
-            b.lbl.Position=Vector2.new(ax+24,ay+b.ch/2-6)
-            if b.inputBg then b.inputBg.Position=Vector2.new(ax+8,ay+b.ch/2-8); b.inputBg.Size=Vector2.new(b.cw-16,16) end
-            if b.inputBorder then b.inputBorder.Position=Vector2.new(ax+8,ay+b.ch/2-8); b.inputBorder.Size=Vector2.new(b.cw-16,16) end
-            if b.icon then b.icon.Position=Vector2.new(ax+10,ay+b.ch/2-6) end
-            if b.ln then b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch) end
         elseif b.isColorPicker then
             b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
@@ -367,9 +358,6 @@ function UILib.Window(titleA, titleB, gameName)
         if b.swatches then
             for _,sw in ipairs(b.swatches) do tabSet[sw.sq]=group; tabSet[sw.border]=group end
         end
-        if b.inputBg     then tabSet[b.inputBg]=group end
-        if b.inputBorder then tabSet[b.inputBorder]=group end
-        if b.icon        then tabSet[b.icon]=group end
     end
 
     local function showTab(tab)
@@ -662,39 +650,8 @@ function UILib.Window(titleA, titleB, gameName)
         table.insert(btns,b); return #btns
     end
 
-    local searchQuery = {}  -- tabName -> string
 
-    local function addTextbox(tab,lbl,relY,placeholder,cb)
-        local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
-        local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
-        local bg =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3,nil,4))
-        local dl =mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
-        local inputBg=mkD(mkSq(uiX+rx+8,uiY+ry+ch/2-8,cw-16,16,Color3.fromRGB(8,10,20),true,1,5,nil,3))
-        local inputBorder=mkD(mkSq(uiX+rx+8,uiY+ry+ch/2-8,cw-16,16,C.BORDER,false,1,5,1,3))
-        local inputLbl=mkD(mkTx(placeholder or "",uiX+rx+14,uiY+ry+ch/2-6,11,C.GRAY,false,8))
-        local b={tab=tab,isTextbox=true,bg=bg,lbl=inputLbl,ln=dl,
-                 inputBg=inputBg,inputBorder=inputBorder,
-                 rx=rx,ry=ry,cw=cw,ch=ch,
-                 text="",placeholder=placeholder or "",
-                 focused=false,cb=cb,isSearch=false}
-        table.insert(btns,b); return #btns
-    end
 
-    local function addSearchbar(tab,relY)
-        local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
-        local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=22
-        local bg =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,Color3.fromRGB(8,10,20),true,1,6,nil,4))
-        local border=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.BORDER,false,1,6,1,4))
-        local icon=mkD(mkTx("?",uiX+rx+10,uiY+ry+4,11,C.GRAY,false,7))
-        icon.Text=string.char(0xF0)  -- search icon fallback to plain text
-        local lb=mkD(mkTx("Search...",uiX+rx+24,uiY+ry+4,11,C.GRAY,false,8))
-        if not searchQuery[tab] then searchQuery[tab]="" end
-        local b={tab=tab,isTextbox=true,isSearch=true,bg=bg,lbl=lb,ln=nil,
-                 inputBg=bg,inputBorder=border,icon=icon,
-                 rx=rx,ry=ry,cw=cw,ch=ch,
-                 text="",placeholder="Search...",focused=false,cb=nil}
-        table.insert(btns,b); return #btns
-    end
 
     local openDropdown = nil  -- reference to currently open dropdown btn
 
@@ -792,14 +749,6 @@ function UILib.Window(titleA, titleB, gameName)
         function api:ColorPicker(lbl, initCol, cb)
             local y = nextY(L.ROW_H + 2)
             addColorPicker(tabName, lbl, y, initCol, cb)
-        end
-        function api:Textbox(lbl, placeholder, cb)
-            local y = nextY(L.ROW_H + 2)
-            addTextbox(tabName, lbl, y, placeholder, cb)
-        end
-        function api:Searchbar()
-            local y = nextY(28)
-            addSearchbar(tabName, y)
         end
         function api:Dropdown(lbl, options, initIdx, cb)
             local y = nextY(L.ROW_H + 2)
@@ -906,16 +855,6 @@ function UILib.Window(titleA, titleB, gameName)
         showTab(defaultTab)
         notif("Loaded on "..(gameName or ""),"Check it Interface",4)
 
-        -- input event for textbox (one char per physical press)
-        keyQueue={}
-        local uis=game:GetService("UserInputService")
-        uis.InputBegan:Connect(function(inp,gp)
-            if gp then return end
-            local k=inp.KeyCode
-            if type(k)=="number" and k>0 then
-                keyQueue[#keyQueue+1]=k
-            elseif type(k)~="number" then
-                pcall(function() keyQueue[#keyQueue+1]=k.Value end)
             end
         end)
 
@@ -1154,9 +1093,6 @@ function UILib.Window(titleA, titleB, gameName)
                                             break
                                         end
                                     end
-                                elseif b.isTextbox then
-                                    b.focused=true
-                                    b.inputBorder.Color=C.ACCENT
                                 elseif b.isDiv and b.collapsible and b.sectionName then
                                     local sec=b.sectionName
                                     collapseSections[sec]=not collapseSections[sec]
@@ -1246,59 +1182,12 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end)
                 -- drag
-                -- unfocus textbox on click outside
-                if clicking and not wasClicking then
-                    for _,b in ipairs(btns) do
-                        if b.isTextbox and b.focused and b.tab==currentTab then
-                            if not inBox(uiX+b.rx+8,uiY+b.ry+b.ch/2-8,b.cw-16,16) then
-                                b.focused=false
-                                b.inputBorder.Color=C.BORDER
-                                if b.isSearch then
-                                    searchQuery[b.tab]=b.text
-                                end
-                            end
-                        end
-                    end
-                end
                 if not clicking then dragging=false end
                 if dragging and clicking then
                     uiX=mouse.X-dragOffX; uiY=mouse.Y-dragOffY
                     updatePos()
                 end
                 wasClicking=clicking
-                -- textbox key input: drain event queue
-                if #keyQueue > 0 then
-                    for _,b in ipairs(btns) do
-                        if b.isTextbox and b.focused and b.tab==currentTab then
-                            for _,k in ipairs(keyQueue) do
-                                if k==0x08 then
-                                    b.text=b.text:sub(1,-2)
-                                elseif k==0x0D or k==0x1B then
-                                    b.focused=false; b.inputBorder.Color=C.BORDER
-                                    if b.cb then b.cb(b.text) end
-                                elseif kn[k] and #b.text<40 then
-                                    b.text=b.text..kn[k]:lower()
-                                end
-                            end
-                            b.lbl.Text=b.text=="" and b.placeholder or b.text
-                            b.lbl.Color=b.text=="" and C.GRAY or C.WHITE
-                            if b.isSearch then
-                                local q=b.text:lower()
-                                for _,bb in ipairs(btns) do
-                                    if bb.tab==currentTab and not bb.isTextbox and not bb.isDiv then
-                                        local match=q=="" or
-                                            (bb.toggleName and bb.toggleName:lower():find(q,1,true)) or
-                                            (bb.baseLbl and bb.baseLbl:lower():find(q,1,true))
-                                        if match then bShow(bb,true); bPos(bb)
-                                        else bShow(bb,false) end
-                                    end
-                                end
-                            end
-                            break
-                        end
-                    end
-                    keyQueue={}
-                end
                 -- key rebind
                 if listenKey then
                     for k=0x08,0xDD do
