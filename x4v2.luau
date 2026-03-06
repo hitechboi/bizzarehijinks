@@ -65,7 +65,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.5.4 loaded")
+print("[UILib] v1.5.5 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -427,7 +427,7 @@ function UILib.Window(titleA, titleB, gameName)
         dTopLine.To       =Vector2.new(uiX+L.W-1,uiY+L.TOPBAR)
         dTitleW.Position  =Vector2.new(uiX+14,uiY+12)
         dTitleA.Position  =Vector2.new(uiX+14+(#titleA*9)+6,uiY+12)
-        dTitleG.Position  =Vector2.new(uiX+14+(#titleA*9)+6+(#titleB*9)+4,uiY+12)
+        dTitleG.Position  =Vector2.new(uiX+14+(#titleA*9)+6+(#titleB*9)-8,uiY+12)
         dKeyLbl.Position  =Vector2.new(uiX+L.W-22,uiY+14)
         dDotY.Position    =Vector2.new(uiX+L.W-55,uiY+15)
         dDotR.Position    =Vector2.new(uiX+L.W-42,uiY+15)
@@ -470,7 +470,7 @@ function UILib.Window(titleA, titleB, gameName)
         dMiniTopBar.Position =Vector2.new(uiX+1,uiY+1)
         dMiniTitleW.Position =Vector2.new(uiX+14,uiY+12)
         dMiniTitleA.Position =Vector2.new(uiX+14+(#titleA*9)+6,uiY+12)
-        dMiniTitleG.Position =Vector2.new(uiX+14+(#titleA*9)+6+(#titleB*9)+4,uiY+12)
+        dMiniTitleG.Position =Vector2.new(uiX+14+(#titleA*9)+6+(#titleB*9)-8,uiY+12)
         dMiniKeyLbl.Position =Vector2.new(uiX+L.W-22,uiY+14)
         dMiniDotG.Position   =Vector2.new(uiX+L.W-55,uiY+15)
         dMiniDotR.Position   =Vector2.new(uiX+L.W-42,uiY+15)
@@ -889,7 +889,7 @@ function UILib.Window(titleA, titleB, gameName)
         dTitleW  = mkD(mkTx(titleA,  uiX+14,     uiY+12,14,C.WHITE, false,9,true))
         dTitleA  = mkD(mkTx(titleB,  uiX+14+(#titleA*9)+6, uiY+12,14,C.ACCENT,false,9,true))
         local gameNameShort = gameName or ""
-        local titlesEndX = 14+(#titleA*9)+6+(#titleB*9)+4
+        local titlesEndX = 14+(#titleA*9)+6+(#titleB*9)-8
         dTitleG  = mkD(mkTx(gameNameShort,uiX+titlesEndX, uiY+12,13,C.ORANGE,false,9,false))
         dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
         dDotY    = mkD(mkSq(uiX+L.W-55,uiY+15,8,8,C.YELLOW,true,1,9,nil,3))
