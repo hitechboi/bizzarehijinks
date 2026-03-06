@@ -70,7 +70,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.9 loaded")
+print("[UILib] v1.4.0 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -1435,8 +1435,6 @@ function UILib.Window(titleA, titleB, gameName)
                         if b.bg then b.bg.Size=Vector2.new(cw,b.ch) end
                         if b.isSlider then
                             b.trackW=cw-16
-                            if b.track then b.track.To=Vector2.new(b.track.From.X+b.trackW, b.track.From.Y) end
-                            if b.fill  then b.fill.To=Vector2.new(b.fill.From.X+b.trackW*((b.value-b.minV)/(b.maxV-b.minV)), b.fill.From.Y) end
                         end
                         if b.isLog then b.bg.Size=Vector2.new(cw,b.ch) end
                         -- reposition dividers and labels via bPos
