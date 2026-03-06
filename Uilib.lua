@@ -2,6 +2,7 @@
     UILib.lua
     Generic Drawing-based UI Library
     by hitechboi / nejrio
+    v1.2.5
 ]]
 
 local UILib = {}
@@ -40,6 +41,7 @@ local THEMES = {
 }
 UILib.Themes = THEMES
 _G.UILib = UILib
+print("[UILib] v1.2.5 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
