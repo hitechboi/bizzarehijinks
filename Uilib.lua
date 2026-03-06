@@ -68,7 +68,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.2 loaded")
+print("[UILib] v1.3.3 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -105,7 +105,7 @@ local C = {
 UILib.Colors = C
 
 local L = {
-    W        = 440, H        = 380,
+    W        = 440, H        = 400,
     SIDEBAR  = 128, TOPBAR   = 40,
     FOOTER   = 22,  ROW_H    = 40,
     ROW_PAD  = 10,  TOG_W    = 34,
@@ -1080,7 +1080,7 @@ function UILib.Window(titleA, titleB, gameName)
                 applyFade()
                 -- animate window height for dropdown
                 if math.abs(uiCurrentH - uiTargetH) > 0.5 then
-                    uiCurrentH = uiCurrentH + (uiTargetH - uiCurrentH) * 0.2
+                    uiCurrentH = uiCurrentH + (uiTargetH - uiCurrentH) * 0.08
                     applyWindowH(math.floor(uiCurrentH))
                 elseif uiCurrentH ~= uiTargetH then
                     uiCurrentH = uiTargetH
