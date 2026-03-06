@@ -1,7 +1,6 @@
-    --[[  UILib v1.4.6
-    took off from da jet <_>
-    made by nejrio aka besosme
-        ]]
+-- UILib v1.4.8
+-- Generic Drawing-based UI Library
+
 local UILib = {}
 local _collapseSections = {}
 
@@ -65,7 +64,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.4.6 loaded")
+print("[UILib] v1.4.8 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -221,17 +220,6 @@ function UILib.Window(titleA, titleB, gameName)
         return mouse.X>=x and mouse.X<=x+w and mouse.Y>=y and mouse.Y<=y+h
     end
 
-    -- maps each drawing -> its owner widget for content clipping
-    local drawingOwner = {}
-    local function registerOwner(b)
-        local function reg(d) if d then drawingOwner[d]=b end end
-        reg(b.bg); reg(b.lbl); reg(b.ln); reg(b.tog); reg(b.dot)
-        reg(b.track); reg(b.fill); reg(b.handle); reg(b.dlb)
-        reg(b.arrow); reg(b.valLbl); reg(b.qbg); reg(b.qlb)
-        if b.lbls then for _,l in ipairs(b.lbls) do reg(l) end end
-        if b.swatches then for _,sw in ipairs(b.swatches) do reg(sw.sq); reg(sw.border) end end
-    end
-
     local uiTargetH = L.H
     local uiCurrentH = L.H
 
@@ -252,30 +240,12 @@ function UILib.Window(titleA, titleB, gameName)
             and math.abs((menuOpen and 0 or 1)-clamp(mf,0,1))
             or  (menuOpen and 1 or 0)
         local tp=clamp((os.clock()-tabSwitchedAt)/TAB_FADE_DUR,0,1)
-        local contentTop = uiY+L.TOPBAR+1
-        local contentBot = uiY+uiCurrentH-L.FOOTER-1
         for _,d in ipairs(allDrawings) do
             if showSet[d] then
                 local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
                 local op=mOp*tOp
-                local clipped=false
-                local owner=drawingOwner[d]
-                if owner and owner.ch and tabSet[d]~="next" and tabSet[d]~="prev" then
-                    local ry_val = (owner.currentRY or owner.ry) or 0
-                    if owner.currentRY == nil and owner.ry == nil then
-                        print("[UILib] clip debug: owner has nil ry, tab="..tostring(owner.tab).." isDiv="..tostring(owner.isDiv).." isTog="..tostring(owner.isTog).." isAct="..tostring(owner.isAct).." isDropdown="..tostring(owner.isDropdown))
-                    end
-                    local wy=uiY+ry_val
-                    if wy+owner.ch <= contentTop or wy >= contentBot then
-                        clipped=true
-                    end
-                end
-                if clipped then
-                    d.Visible=false
-                else
-                    d.Visible=op>0.01
-                    d.Transparency=op
-                end
+                d.Visible=op>0.01
+                d.Transparency=op
             else
                 d.Visible=false
             end
@@ -614,7 +584,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
                  desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch}
-        table.insert(btns,b); registerOwner(b); return #btns
+        table.insert(btns,b); return #btns
     end
 
     local function addDiv(tab,lbl,relY,collapsible)
@@ -629,7 +599,7 @@ function UILib.Window(titleA, titleB, gameName)
         end
         local db={tab=tab,isDiv=true,bg=lb,lbl=lb,ln=dl,rx=rx,ry=ry,cw=cw,ch=14,
                   collapsible=collapsible,sectionName=lbl,arrow=arrow,currentRY=ry,baseRY=ry}
-        table.insert(btns,db); registerOwner(db); return #btns
+        table.insert(btns,db); return #btns
     end
 
     local function addAct(tab,lbl,relY,col,cb,lblCol)
@@ -639,7 +609,7 @@ function UILib.Window(titleA, titleB, gameName)
         local dl=mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
         local lb=mkD(mkTx(lbl,uiX+rx+cw/2,uiY+ry+ch/2-6,12,lblCol or C.WHITE,true,8))
         local b={tab=tab,isAct=true,bg=bg,lbl=lb,ln=dl,rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,cb=cb}
-        table.insert(btns,b); registerOwner(b); return #btns
+        table.insert(btns,b); return #btns
     end
 
     local function addSlider(tab,lbl,relY,minV,maxV,initV,cb,isFloat,desc)
@@ -660,7 +630,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
                  value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb}
-        table.insert(btns,b); registerOwner(b); return #btns
+        table.insert(btns,b); return #btns
     end
 
     local function addColorPicker(tab,lbl,relY,initCol,cb)
@@ -692,7 +662,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,swatches=swatchBgs,
                  selected=selected,value=swatches[1],cb=cb}
-        table.insert(btns,b); registerOwner(b); return #btns
+        table.insert(btns,b); return #btns
     end
 
 
@@ -745,7 +715,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isDropdown=true,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
                  selected=valIdx,open=false,openedAt=0,cb=cb}
-        table.insert(btns,b); registerOwner(b); return #btns
+        table.insert(btns,b); return #btns
     end
 
     local function addLog(tab,lines,relY,starFirst)
@@ -774,7 +744,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isLog=true,bg=bg,lbl=bg,ln=nil,lbls=lbls,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
                  starFirst=starFirst,starH=starH}
-        table.insert(btns,b); registerOwner(b); return #btns
+        table.insert(btns,b); return #btns
     end
 
     local tabAPI = {}
@@ -925,7 +895,9 @@ function UILib.Window(titleA, titleB, gameName)
         dTopLine = mkD(mkLn(uiX+1,uiY+L.TOPBAR,uiX+L.W-1,uiY+L.TOPBAR,C.BORDER,4,1))
         dTitleW  = mkD(mkTx(titleA,  uiX+14,     uiY+12,14,C.WHITE, false,9,true))
         dTitleA  = mkD(mkTx(titleB,  uiX+78,     uiY+12,14,C.ACCENT,false,9,true))
-        dTitleG  = mkD(mkTx(gameName,uiX+154,    uiY+12,13,C.ORANGE,false,9,false))
+        local gameNameShort = gameName or ""
+        if #gameNameShort > 18 then gameNameShort = gameNameShort:sub(1,16).."..." end
+        dTitleG  = mkD(mkTx(gameNameShort,uiX+154,    uiY+12,13,C.ORANGE,false,9,false))
         dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
         dDotY    = mkD(mkSq(uiX+L.W-55,uiY+15,8,8,C.YELLOW,true,1,9,nil,3))
         dDotR    = mkD(mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3))
@@ -980,7 +952,7 @@ function UILib.Window(titleA, titleB, gameName)
         dMiniTopBar  = mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR,   C.TOPBAR,true,1,3,nil,9)
         dMiniTitleW  = mkTx(titleA,  uiX+14,    uiY+12,14,C.WHITE, false,9,true)
         dMiniTitleA  = mkTx(titleB,  uiX+78,    uiY+12,14,C.ACCENT,false,9,true)
-        dMiniTitleG  = mkTx(gameName,uiX+154,   uiY+12,13,C.ORANGE,false,9,false)
+        dMiniTitleG  = mkTx(gameNameShort,uiX+154,   uiY+12,13,C.ORANGE,false,9,false)
         dMiniKeyLbl  = mkTx("F1",    uiX+L.W-22,uiY+14,11,C.GRAY,  false,9)
         dMiniDotG    = mkSq(uiX+L.W-55,uiY+15,8,8,C.GREEN,true,1,9,nil,3)
         dMiniDotR    = mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3)
@@ -1163,7 +1135,25 @@ function UILib.Window(titleA, titleB, gameName)
                                 if showSet[b.bg] then bPos(b) end
                             end
                         end
-
+                        -- clip widgets outside content area
+                        if showSet[b.bg] then
+                            local wy = uiY + b.currentRY
+                            local inBounds = wy + b.ch > uiY+L.TOPBAR and wy < uiY+uiCurrentH-L.FOOTER
+                            b.bg.Visible = inBounds
+                            if b.lbl and not b.isDiv then b.lbl.Visible = inBounds end
+                            if b.ln     then b.ln.Visible     = inBounds end
+                            if b.tog    then b.tog.Visible    = inBounds end
+                            if b.dot    then b.dot.Visible    = inBounds end
+                            if b.track  then b.track.Visible  = inBounds end
+                            if b.fill   then b.fill.Visible   = inBounds end
+                            if b.handle then b.handle.Visible = inBounds end
+                            if b.dlb    then b.dlb.Visible    = inBounds end
+                            if b.arrow  then b.arrow.Visible  = inBounds end
+                            if b.valLbl then b.valLbl.Visible = inBounds end
+                            if b.qbg    then b.qbg.Visible    = inBounds end
+                            if b.qlb    then b.qlb.Visible    = inBounds end
+                            if b.lbls   then for _,l in ipairs(b.lbls) do l.Visible=inBounds end end
+                        end
                     end
                 end
                 -- animate window height for dropdown
@@ -1428,15 +1418,12 @@ function UILib.Window(titleA, titleB, gameName)
                         local sc=(tabScroll[currentTab] or 0)-wh.Position.Z*28
                         local maxSc=math.max(0,(tabRowY[currentTab] or 0)-CONTENT_H()+20)
                         tabScroll[currentTab]=clamp(sc,0,maxSc)
+                        -- update ry for all current tab widgets based on scroll
                         for _,b in ipairs(btns) do
                             if b.tab==currentTab then
-                                local by=uiY+b.ry-(tabScroll[currentTab])
-                                if showSet[b.bg] then
-                                    b.bg.Position=Vector2.new(uiX+b.rx,by)
-                                    bPos(b)
-                                    local vis=by+b.ch>uiY+L.TOPBAR and by<uiY+uiCurrentH-L.FOOTER
-                                    b.bg.Visible=vis
-                                end
+                                b.ry=b.baseRY-(tabScroll[currentTab] or 0)
+                                b.currentRY=b.ry
+                                if showSet[b.bg] then bPos(b) end
                             end
                         end
                     end
