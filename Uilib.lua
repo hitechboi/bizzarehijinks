@@ -308,8 +308,15 @@ function UILib.Window(titleA, titleB, gameName)
         for _,b in ipairs(btns) do
             if b.tab==prevTab then bShow(b,true); bPos(b); tagBtnFade(b,"prev") end
         end
+        -- reset collapse state for incoming tab so arrows show correctly
         for _,b in ipairs(btns) do
-            if b.tab==name then bShow(b,true); bPos(b); tagBtnFade(b,"next") end
+            if b.tab==name then
+                if b.isDiv and b.collapsible then
+                    collapseSections[b.sectionName]=false
+                    b.arrow.Text="v"
+                end
+                bShow(b,true); bPos(b); tagBtnFade(b,"next")
+            end
         end
     end
 
@@ -563,8 +570,8 @@ function UILib.Window(titleA, titleB, gameName)
         for i,col in ipairs(swatches) do
             local sx=startX+(i-1)*(swatchW+swatchPad)
             local sy=uiY+ry+ch/2-swatchH/2
-            local s=mkD(mkSq(sx,sy,swatchW,swatchH,col,true,1,5,nil,3))
-            local border=mkD(mkSq(sx-1,sy-1,swatchW+2,swatchH+2,i==1 and C.WHITE or C.DIMGRAY,false,1,4,1,3))
+            local s=mkD(mkSq(sx,sy,swatchW,swatchH,col,true,1,6,nil,3))
+            local border=mkD(mkSq(sx-1,sy-1,swatchW+2,swatchH+2,i==1 and C.WHITE or C.BORDER,false,1,7,1,3))
             table.insert(swatchBgs,{sq=s,border=border,col=col,x=sx,y=sy})
         end
         local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,
@@ -1096,17 +1103,13 @@ function UILib.Window(titleA, titleB, gameName)
                     for _,b in ipairs(btns) do
                         if b.isTextbox and b.focused and b.tab==currentTab then
                             anyFocused=true
-                            if not b._lastKey then b._lastKey=0; b._lastKeyAt=0; b._keyHeld=0 end
+                            if not b._lastKey then b._lastKey=0 end
+                            if not b._prevDown then b._prevDown=false end
                             local fired=false
                             for k=0x08,0xDD do
                                 if iskeypressed(k) then
-                                    local now=os.clock()
-                                    local isNew=k~=b._lastKey
-                                    local held=isNew and 0 or b._keyHeld+(now-b._lastKeyAt)
-                                    local delay=isNew and 0 or (held<0.5 and 999 or 0.05)
-                                    b._lastKeyAt=now
-                                    if isNew or (now-b._lastFire>(delay)) then
-                                        b._lastKey=k; b._lastFire=now; b._keyHeld=held
+                                    if not b._prevDown or b._lastKey~=k then
+                                        b._lastKey=k; b._prevDown=true
                                         if k==0x08 then
                                             b.text=b.text:sub(1,-2)
                                         elseif k==0x0D or k==0x1B then
@@ -1135,7 +1138,7 @@ function UILib.Window(titleA, titleB, gameName)
                                     break
                                 end
                             end
-                            if not fired then b._lastKey=0; b._keyHeld=0 end
+                            if not fired then b._prevDown=false end
                             break
                         end
                     end
