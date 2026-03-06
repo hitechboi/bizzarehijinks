@@ -68,7 +68,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.7 loaded")
+print("[UILib] v1.3.8 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -416,6 +416,9 @@ function UILib.Window(titleA, titleB, gameName)
     local tipFadedAt = os.clock()-1
     local TIP_FADE = 0.35
 
+    local uiTargetH = L.H   -- target window height for animation
+    local uiCurrentH = L.H  -- current animated height
+
     local function updatePos()
         local curH = uiCurrentH  -- use animated/current height not fixed L.H
         dShadow.Position  =Vector2.new(uiX-2,uiY-2)
@@ -666,8 +669,6 @@ function UILib.Window(titleA, titleB, gameName)
 
 
     local openDropdown = nil
-    local uiTargetH = L.H   -- target window height for animation
-    local uiCurrentH = L.H  -- current animated height
     local UI_RESIZE_SPD = 12 -- lerp speed
 
     local function applyWindowH(h)
