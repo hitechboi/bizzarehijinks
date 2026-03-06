@@ -18,7 +18,7 @@ local THEMES = {
         DIMGRAY=Color3.fromRGB(28,33,52),
         ON=Color3.fromRGB(45,85,195),       OFF=Color3.fromRGB(20,24,42),
         ONDOT=Color3.fromRGB(175,198,255),  OFFDOT=Color3.fromRGB(55,65,95),
-        DIV=Color3.fromRGB(22,27,48),
+        DIV=Color3.fromRGB(22,27,48),     MINIBAR=Color3.fromRGB(11,13,22),
     },
     ["Moon"] = {
         ACCENT=Color3.fromRGB(160,130,255), BG=Color3.fromRGB(10,9,18),
@@ -29,7 +29,7 @@ local THEMES = {
         DIMGRAY=Color3.fromRGB(30,25,55),
         ON=Color3.fromRGB(90,60,200),       OFF=Color3.fromRGB(22,18,45),
         ONDOT=Color3.fromRGB(200,180,255),  OFFDOT=Color3.fromRGB(60,50,100),
-        DIV=Color3.fromRGB(28,22,52),
+        DIV=Color3.fromRGB(28,22,52),     MINIBAR=Color3.fromRGB(13,11,24),
     },
     ["Grass"] = {
         ACCENT=Color3.fromRGB(60,200,100),  BG=Color3.fromRGB(8,14,10),
@@ -40,7 +40,7 @@ local THEMES = {
         DIMGRAY=Color3.fromRGB(20,40,28),
         ON=Color3.fromRGB(30,140,65),       OFF=Color3.fromRGB(15,30,20),
         ONDOT=Color3.fromRGB(150,240,180),  OFFDOT=Color3.fromRGB(45,80,58),
-        DIV=Color3.fromRGB(18,35,24),
+        DIV=Color3.fromRGB(18,35,24),     MINIBAR=Color3.fromRGB(10,18,13),
     },
     ["Light"] = {
         ACCENT=Color3.fromRGB(50,100,255),  BG=Color3.fromRGB(230,233,245),
@@ -51,7 +51,7 @@ local THEMES = {
         DIMGRAY=Color3.fromRGB(180,185,210),
         ON=Color3.fromRGB(60,120,255),      OFF=Color3.fromRGB(180,185,210),
         ONDOT=Color3.fromRGB(255,255,255),  OFFDOT=Color3.fromRGB(130,140,175),
-        DIV=Color3.fromRGB(185,190,215),
+        DIV=Color3.fromRGB(185,190,215),  MINIBAR=Color3.fromRGB(205,210,228),
     },
     ["Dark"] = {
         ACCENT=Color3.fromRGB(180,180,180), BG=Color3.fromRGB(4,4,6),
@@ -62,13 +62,13 @@ local THEMES = {
         DIMGRAY=Color3.fromRGB(15,15,20),
         ON=Color3.fromRGB(100,100,110),     OFF=Color3.fromRGB(12,12,16),
         ONDOT=Color3.fromRGB(220,220,225),  OFFDOT=Color3.fromRGB(45,45,55),
-        DIV=Color3.fromRGB(14,14,18),
+        DIV=Color3.fromRGB(14,14,18),     MINIBAR=Color3.fromRGB(6,6,8),
     },
 }
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.3.0 loaded")
+print("[UILib] v1.3.1 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -792,43 +792,63 @@ function UILib.Window(titleA, titleB, gameName)
         if t.ONDOT   then C.ONDOT=t.ONDOT     end
         if t.OFFDOT  then C.OFFDOT=t.OFFDOT   end
         if t.DIV     then C.DIV=t.DIV         end
+        if t.MINIBAR then C.MINIBAR=t.MINIBAR   end
         if dMainBg then
-            dMainBg.Color=C.BG; dMiniBg.Color=C.BG
+            -- main window
+            dMainBg.Color=C.BG;     dMiniBg.Color=C.BG
             dTopBar.Color=C.TOPBAR; dMiniTopBar.Color=C.TOPBAR
-            dSide.Color=C.SIDEBAR; dContent.Color=C.CONTENT
+            dSide.Color=C.SIDEBAR;  dContent.Color=C.CONTENT
             dFooter.Color=C.TOPBAR
             dBorder.Color=C.BORDER; dMiniBorder.Color=C.BORDER
             dTopLine.Color=C.BORDER; dMiniDivLn.Color=C.BORDER
             dSideLn.Color=C.BORDER; dFotLine.Color=C.BORDER
-            dTitleA.Color=C.ACCENT; dMiniTitleA.Color=C.ACCENT
-            dTitleW.Color=C.WHITE;  dMiniTitleW.Color=C.WHITE
+            -- title text
+            dTitleA.Color=C.ACCENT;     dMiniTitleA.Color=C.ACCENT
+            dTitleW.Color=C.WHITE;      dMiniTitleW.Color=C.WHITE
+            dTitleG.Color=C.ORANGE;     dMiniTitleG.Color=C.ORANGE
+            dKeyLbl.Color=C.GRAY;       dMiniKeyLbl.Color=C.GRAY
+            dCharLbl.Color=C.GRAY
+            -- mini bar active bg
+            if dMiniActiveBg then dMiniActiveBg.Color=C.MINIBAR end
+            -- mini active labels
+            for _,lb in ipairs(miniActiveLbls) do lb.Color=C.WHITE end
+            -- tabs
             for _,t2 in ipairs(tabObjs) do
                 t2.bg.Color=t2.sel and C.TABSEL or C.SIDEBAR
                 t2.acc.Color=t2.sel and C.ACCENT or C.SIDEBAR
                 t2.lbl.Color=C.WHITE; t2.lblG.Color=C.GRAY
             end
+            -- widgets
             for _,b in ipairs(btns) do
                 if b.bg and not b.isDiv then b.bg.Color=C.ROWBG end
-                if b.lbl and not b.isLog then b.lbl.Color=C.WHITE end
-                if b.dlb  then b.dlb.Color=C.GRAY end
-                if b.qlb  then b.qlb.Color=C.GRAY end
-                if b.ln   then b.ln.Color=C.DIV   end
+                if b.ln then b.ln.Color=C.DIV end
                 if b.isTog then
+                    b.lbl.Color=C.WHITE
                     b.tog.Color=b.state and C.ON or C.OFF
                     b.dot.Color=b.state and C.ONDOT or C.OFFDOT
-                end
-                if b.isDiv then
+                    if b.qlb  then b.qlb.Color=C.GRAY end
+                    if b.qbg  then b.qbg.Color=Color3.fromRGB(16,20,38) end
+                elseif b.isSlider then
+                    b.lbl.Color=C.WHITE
+                    if b.dlb   then b.dlb.Color=C.GRAY end
+                    if b.track then b.track.Color=C.DIMGRAY end
+                elseif b.isAct then
+                    -- button color stays as set, only update if default
+                elseif b.isDiv then
                     b.lbl.Color=C.GRAY
-                    if b.ln then b.ln.Color=C.DIV end
+                    if b.ln    then b.ln.Color=C.DIV end
                     if b.arrow then b.arrow.Color=C.GRAY end
-                end
-                if b.isDropdown then
+                elseif b.isDropdown then
                     b.lbl.Color=C.WHITE
                     b.arrow.Color=C.GRAY
                     b.valLbl.Color=C.ACCENT
-                    for _,o in ipairs(b.optBgs) do
-                        o.lb.Color=b.selected==(b.optBgs and 1) and C.ACCENT or C.WHITE
+                    for j,o in ipairs(b.optBgs) do
+                        o.lb.Color=j==b.selected and C.ACCENT or C.WHITE
                     end
+                elseif b.isColorPicker then
+                    b.lbl.Color=C.WHITE
+                elseif b.isLog then
+                    -- log colors stay as-is
                 end
             end
         end
