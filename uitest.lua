@@ -231,6 +231,9 @@ function UILib.Window(titleA, titleB, gameName)
         if b.swatches then for _,sw in ipairs(b.swatches) do reg(sw.sq); reg(sw.border) end end
     end
 
+    local uiTargetH = L.H
+    local uiCurrentH = L.H
+
     local function applyFade()
         if minimized then
             for _,d in ipairs(allDrawings) do d.Visible=false end
@@ -444,9 +447,6 @@ function UILib.Window(titleA, titleB, gameName)
     local tipFadeOut = false
     local tipFadedAt = os.clock()-1
     local TIP_FADE = 0.35
-
-    local uiTargetH = L.H   -- target window height for animation
-    local uiCurrentH = L.H  -- current animated height
 
     local function updatePos()
         local curH = uiCurrentH  -- use animated/current height not fixed L.H
