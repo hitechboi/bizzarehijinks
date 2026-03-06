@@ -857,9 +857,6 @@ function UILib.Window(titleA, titleB, gameName)
         showTab(defaultTab)
         notif("Loaded on "..(gameName or ""),"Check it Interface",4)
 
-            end
-        end)
-
         spawn(function()
         while not destroyed do
             task.wait()
