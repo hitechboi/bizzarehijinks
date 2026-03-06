@@ -448,7 +448,7 @@ function UILib.Window(titleA, titleB, gameName)
         -- ? badge (only if desc provided)
         local qbg, qlb
         if desc then
-            local qx=uiX+ox-22; local qy=uiY+oy
+            local qx=uiX+ox-22; local qy=uiY+oy+N -- lower ? mark: change uiY+oy to uiY+oy+N
             qbg=mkD(mkSq(qx,qy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
             qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
         end
