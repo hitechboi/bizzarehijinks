@@ -4,25 +4,30 @@
     github.com/hitechboi
     star my post :p, have fun!
 ]]
+
 if game.GameId ~= 6809578891 then
     notify("Check it", "This script is not supported for this game.", 5)
     return
 end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/Uilib.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/ui.lua"))()
 repeat task.wait() until _G.UILib
 local UILib = _G.UILib
+
 local user = game.Players.LocalPlayer.Name
 local gameName = getgamename()
+
 local noevasive, nocombowait, noragdoll, nostun = false, false, false, false
 local infSpecial, stateBypass, chantLock, antiAC = false, false, false, false
 local abilitySpeed = 1
 local runSpeed = 1
 local damageMultiplierValue = 1
+
 local States, AbilitySpeed, Special, Combo, DamageMultiplier, Chant
 local Character, Humanoid
 local isDead = false
 local destroyed = false
+
 local function grabRefs()
     pcall(function()
         States           = game.Workspace.Live[user].Combat.States
@@ -44,39 +49,44 @@ spawn(function()
 end)
 
 local win = UILib.Window("Check it", "Interface", gameName)
+
 local combat = win:Tab("Combat")
-combat:Div("COMBAT")
-combat:Toggle("No Evasive",   false, function(s) noevasive=s end)
-combat:Toggle("No ComboWait", false, function(s) nocombowait=s end)
-combat:Toggle("No Ragdoll",   false, function(s) noragdoll=s end)
-combat:Toggle("No Stun",      false, function(s) nostun=s end)
+combat:Div("COMBAT", true)
+combat:Toggle("No Evasive",   false, function(s) noevasive=s end, "Disables evade cooldown")
+combat:Toggle("No ComboWait", false, function(s) nocombowait=s end, "Removes delay between combos")
+combat:Toggle("No Ragdoll",   false, function(s) noragdoll=s end, "Prevents ragdoll state")
+combat:Toggle("No Stun",      false, function(s) nostun=s end, "Clears stun states every frame")
+
 local boosts = win:Tab("Boosts")
-boosts:Div("BOOSTS")
-boosts:Toggle("Inf Special",         false, function(s) infSpecial=s end)
-boosts:Toggle("StateChecker Bypass", false, function(s) stateBypass=s end)
-boosts:Slider("Ability Speed", 1, 100, 1,   function(v) abilitySpeed=v end, false)
-boosts:Toggle("KOC Chant Lock",      false, function(s) chantLock=s end)
+boosts:Div("BOOSTS", true)
+boosts:Toggle("Inf Special",         false, function(s) infSpecial=s end, "Keeps Special at 100")
+boosts:Toggle("StateChecker Bypass", false, function(s) stateBypass=s end, "Clears all BoolValue states")
+boosts:Slider("Ability Speed", 1, 100, 1, function(v) abilitySpeed=v end, false, "Tweaks the speed of cooldown")
+boosts:Toggle("KOC Chant Lock",      false, function(s) chantLock=s end, "Locks Chant at 3 for Sukuna")
+
 local misc = win:Tab("Misc")
-misc:Div("MISCELLANEOUS")
+misc:Div("MISCELLANEOUS", true)
 misc:Button("Auto-reapply: ON", Color3.fromRGB(12,26,16), nil, UILib.Colors.GREEN)
-misc:Toggle("Anti-Anticheat", false, function(s) antiAC=s end)
-misc:Slider("Run Speed", 1, 100, 1, function(v) runSpeed=v end, true)
-misc:Slider("Damage Multiplier", 1, 10, 1, function(v) damageMultiplierValue=v end, true)
+misc:Toggle("Anti-Anticheat", false, function(s) antiAC=s end, "Clamps Y velocity to max 8")
+misc:Slider("Run Speed", 1, 100, 1, function(v) runSpeed=v end, true, "Sets RunningSpeed value")
+misc:Slider("Damage Multiplier", 1, 10, 1, function(v) damageMultiplierValue=v end, true, "Multiplies Damage")
+misc:Div("APPEARANCE")
+misc:Dropdown("Theme", {"Check it","Moon","Grass","Light","Dark"}, 1, function(name)
+    win:ApplyTheme(name)
+end)
 misc:Div("INFO")
-misc:Button("v1.2  |  github.com/hitechboi", UILib.Colors.ROWBG, nil, UILib.Colors.GRAY)
+misc:Button("v1.4.7  |  github.com/hitechboi", UILib.Colors.ROWBG, nil, UILib.Colors.GRAY)
+
 local updates = win:Tab("Updates")
 updates:Div("UPDATE LOG")
 updates:Log({
     "STAR MY POST ! :D",
-    "> v1.0 - Initial release",
-    "> v1.1 - QOL features, and new menu",
-    "> v1.1 - No Stun now clears CantRun",
-    "> v1.1 - Ability Speed slider added",
-    "> v1.1 - Anti-Anticheat added to Misc",
-    "> v1.1 - Run Speed slider added to Misc",
-    "> v1.2 - UILib refactor",
-    "> v1.2 - Added minimize feature C:<",
-    "> v1.2 - Damage multi slider added to Misc",
+	"> v1.4.6 - Added themes, dropdowns etc",
+    "> v1.4.7 - Content clipping fix on Xaxis",
+	"> v1.4.7 - Contents clipping on Yaxis not fixxed",
+    "> v1.4.1 - Resize handle + widget widths",
+    "> v1.4.7 - Smooth window resize + collapse",
+	"> wondering why theres a jump in versions, don't.",
     "> hi :p"
 }, true)
 
