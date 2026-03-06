@@ -30,7 +30,6 @@ local THEMES = {
         ROWBG=Color3.fromRGB(7,7,10),       TABSEL=Color3.fromRGB(15,15,22),
     },
 }
-UILib.Themes = THEMES
 --[[
     UILib.lua
     Generic Drawing-based UI Library
@@ -38,6 +37,7 @@ UILib.Themes = THEMES
 ]]
 
 local UILib = {}
+UILib.Themes = THEMES
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
