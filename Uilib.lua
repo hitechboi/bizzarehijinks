@@ -1,3 +1,11 @@
+--[[
+    UILib.lua
+    Generic Drawing-based UI Library
+    by hitechboi / nejrio
+]]
+
+local UILib = {}
+
 local THEMES = {
     ["Check it"] = {
         ACCENT=Color3.fromRGB(70,120,255), BG=Color3.fromRGB(9,11,20),
@@ -30,13 +38,6 @@ local THEMES = {
         ROWBG=Color3.fromRGB(7,7,10),       TABSEL=Color3.fromRGB(15,15,22),
     },
 }
---[[
-    UILib.lua
-    Generic Drawing-based UI Library
-    by hitechboi / nejrio
-]]
-
-local UILib = {}
 UILib.Themes = THEMES
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
