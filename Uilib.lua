@@ -2,7 +2,6 @@
     UILib.lua
     Generic Drawing-based UI Library
     by hitechboi / nejrio
-    took off from da jet >_<
 ]]
 
 local UILib = {}
@@ -235,7 +234,7 @@ function UILib.Window(titleA, titleB, gameName)
                 b.dot.Position=Vector2.new(uiX+b.ox+2+(L.TOG_W-L.TOG_H)*b.lt,uiY+b.oy+2)
             end
             if b.qbg then
-                local qx=uiX+b.ox-22; local qy=uiY+b.ry+b.ch/2-7
+                local qx=uiX+b.ox-22; local qy=uiY+b.ry+b.ch/2-4
                 b.qbg.Position=Vector2.new(qx,qy)
                 if b.qlb then b.qlb.Position=Vector2.new(qx+7,qy+2) end
             end
@@ -297,7 +296,7 @@ function UILib.Window(titleA, titleB, gameName)
     local tipFadeIn = false
     local tipFadeOut = false
     local tipFadedAt = os.clock()-1
-    local TIP_FADE = 0.15
+    local TIP_FADE = 0.35
 
     local function updatePos()
         dShadow.Position  =Vector2.new(uiX-2,uiY-2)
@@ -471,7 +470,7 @@ function UILib.Window(titleA, titleB, gameName)
         -- ? badge (only if desc provided)
         local qbg, qlb
         if desc then
-            local qx=uiX+ox-22; local qy=uiY+ry+ch/2-7
+            local qx=uiX+ox-22; local qy=uiY+ry+ch/2-4
             qbg=mkD(mkSq(qx,qy,14,14,Color3.fromRGB(16,20,38),true,1,6,nil,3))
             qlb=mkD(mkTx("?",qx+7,qy+2,9,C.GRAY,true,7,true))
         end
@@ -729,7 +728,8 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 -- mini clicks
-                if clicking and not wasClicking then
+                local miniOp=clamp((os.clock()-miniFadedAt)/MINI_FADE_DUR,0,1)
+                if clicking and not wasClicking and (not miniFadeIn or miniOp>0.8) and not miniFadeOut then
                     if inBox(uiX+L.W-46,uiY+11,12,12) then
                         -- red: close mini
                         showMiniUI(false); miniClosed=true
@@ -797,7 +797,7 @@ function UILib.Window(titleA, titleB, gameName)
                 -- ? badge glow on hover
                 for _,b in ipairs(btns) do
                     if b.tab==currentTab and b.qbg and b.qlb and showSet[b.qbg] then
-                        local qy2=uiY+b.ry+b.ch/2-7
+                        local qy2=uiY+b.ry+b.ch/2-4
                         if inBox(uiX+b.ox-22,qy2,14,14) then
                             b.qbg.Color=Color3.fromRGB(16,30,80)
                             b.qlb.Color=Color3.fromRGB(70,120,255)
@@ -813,7 +813,7 @@ function UILib.Window(titleA, titleB, gameName)
                     local hov=nil
                     for _,b in ipairs(btns) do
                         if b.tab==currentTab and b.desc and b.qbg and showSet[b.qbg] then
-                            local qy2=uiY+b.ry+b.ch/2-7
+                            local qy2=uiY+b.ry+b.ch/2-4
                             if inBox(uiX+b.ox-22,qy2,14,14) then hov=b; break end
                         end
                     end
