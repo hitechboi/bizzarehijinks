@@ -911,10 +911,12 @@ function UILib.Window(titleA, titleB, gameName)
         local uis=game:GetService("UserInputService")
         uis.InputBegan:Connect(function(inp,gp)
             if gp then return end
-            pcall(function()
-                local k=inp.KeyCode.Value
-                if type(k)=="number" and k>0 then keyQueue[#keyQueue+1]=k end
-            end)
+            local k=inp.KeyCode
+            if type(k)=="number" and k>0 then
+                keyQueue[#keyQueue+1]=k
+            elseif type(k)~="number" then
+                pcall(function() keyQueue[#keyQueue+1]=k.Value end)
+            end
         end)
 
         spawn(function()
