@@ -1,3 +1,36 @@
+local THEMES = {
+    ["Check it"] = {
+        ACCENT=Color3.fromRGB(70,120,255), BG=Color3.fromRGB(9,11,20),
+        SIDEBAR=Color3.fromRGB(12,15,27),  CONTENT=Color3.fromRGB(11,13,23),
+        TOPBAR=Color3.fromRGB(7,9,17),     BORDER=Color3.fromRGB(30,40,72),
+        ROWBG=Color3.fromRGB(14,18,33),    TABSEL=Color3.fromRGB(20,35,85),
+    },
+    ["Moon"] = {
+        ACCENT=Color3.fromRGB(160,130,255), BG=Color3.fromRGB(10,9,18),
+        SIDEBAR=Color3.fromRGB(14,12,26),   CONTENT=Color3.fromRGB(12,11,22),
+        TOPBAR=Color3.fromRGB(7,6,14),      BORDER=Color3.fromRGB(45,35,80),
+        ROWBG=Color3.fromRGB(16,14,30),     TABSEL=Color3.fromRGB(35,25,70),
+    },
+    ["Grass"] = {
+        ACCENT=Color3.fromRGB(60,200,100),  BG=Color3.fromRGB(8,14,10),
+        SIDEBAR=Color3.fromRGB(10,18,13),   CONTENT=Color3.fromRGB(9,16,11),
+        TOPBAR=Color3.fromRGB(6,11,8),      BORDER=Color3.fromRGB(25,55,35),
+        ROWBG=Color3.fromRGB(11,20,14),     TABSEL=Color3.fromRGB(18,45,25),
+    },
+    ["Light"] = {
+        ACCENT=Color3.fromRGB(50,100,255),  BG=Color3.fromRGB(230,233,245),
+        SIDEBAR=Color3.fromRGB(215,220,235),CONTENT=Color3.fromRGB(220,224,238),
+        TOPBAR=Color3.fromRGB(200,205,225), BORDER=Color3.fromRGB(170,178,210),
+        ROWBG=Color3.fromRGB(210,214,230),  TABSEL=Color3.fromRGB(190,205,240),
+    },
+    ["Dark"] = {
+        ACCENT=Color3.fromRGB(200,200,200), BG=Color3.fromRGB(4,4,6),
+        SIDEBAR=Color3.fromRGB(6,6,9),      CONTENT=Color3.fromRGB(5,5,8),
+        TOPBAR=Color3.fromRGB(3,3,5),       BORDER=Color3.fromRGB(20,20,28),
+        ROWBG=Color3.fromRGB(7,7,10),       TABSEL=Color3.fromRGB(15,15,22),
+    },
+}
+UILib.Themes = THEMES
 --[[
     UILib.lua
     Generic Drawing-based UI Library
@@ -141,6 +174,34 @@ function UILib.Window(titleA, titleB, gameName)
         table.insert(miniActivePulse,i*0.7)
     end
 
+    local function applyTheme(name)
+        local t=THEMES[name]; if not t then return end
+        C.ACCENT=t.ACCENT; C.BG=t.BG; C.SIDEBAR=t.SIDEBAR
+        C.CONTENT=t.CONTENT; C.TOPBAR=t.TOPBAR; C.BORDER=t.BORDER
+        C.ROWBG=t.ROWBG; C.TABSEL=t.TABSEL
+        -- recolor base UI if built
+        if dMainBg then
+            dMainBg.Color=C.BG; dMiniBg.Color=C.BG
+            dTopBar.Color=C.TOPBAR; dMiniTopBar.Color=C.TOPBAR
+            dSide.Color=C.SIDEBAR; dContent.Color=C.CONTENT
+            dFooter.Color=C.TOPBAR
+            dBorder.Color=C.BORDER; dMiniBorder.Color=C.BORDER
+            dTopLine.Color=C.BORDER; dMiniDivLn.Color=C.BORDER
+            dSideLn.Color=C.BORDER; dFotLine.Color=C.BORDER
+            dTitleA.Color=C.ACCENT; dMiniTitleA.Color=C.ACCENT
+            for _,t2 in ipairs(tabObjs) do
+                t2.bg.Color=t2.sel and C.TABSEL or C.SIDEBAR
+                t2.acc.Color=t2.sel and C.ACCENT or C.SIDEBAR
+            end
+            for _,b in ipairs(btns) do
+                if b.bg and not b.isDiv then b.bg.Color=C.ROWBG end
+                if b.isTog then
+                    b.tog.Color=b.state and C.ON or C.OFF
+                end
+            end
+        end
+    end
+
     local function mkD(d)
         table.insert(allDrawings,d)
         d.Visible=false
@@ -197,6 +258,7 @@ function UILib.Window(titleA, titleB, gameName)
         if b.qlb    then setShow(b.qlb,  yes) end
         if b.dlb    then setShow(b.dlb,  yes) end
         if b.arrow  then setShow(b.arrow, yes) end
+        if b.valLbl  then setShow(b.valLbl, yes) end
         if b.swatches then
             for _,sw in ipairs(b.swatches) do setShow(sw.sq,yes); setShow(sw.border,yes) end
         end
@@ -226,6 +288,18 @@ function UILib.Window(titleA, titleB, gameName)
         elseif b.isAct then
             b.lbl.Position=Vector2.new(ax+b.cw/2,ay+b.ch/2-6)
             b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
+        elseif b.isDropdown then
+            b.lbl.Position=Vector2.new(ax+10,ay+b.ch/2-6)
+            b.ln.From=Vector2.new(ax,ay+b.ch); b.ln.To=Vector2.new(ax+b.cw,ay+b.ch)
+            b.valLbl.Position=Vector2.new(ax+b.cw-60,ay+b.ch/2-6)
+            b.arrow.Position=Vector2.new(ax+b.cw-14,ay+b.ch/2-6)
+            for i,o in ipairs(b.optBgs) do
+                local oy2=ay+b.ch+((i-1)*b.ch)
+                o.bg.Position=Vector2.new(ax,oy2); o.bg.Size=Vector2.new(b.cw,b.ch)
+                o.ln.From=Vector2.new(ax,oy2+b.ch); o.ln.To=Vector2.new(ax+b.cw,oy2+b.ch)
+                o.lb.Position=Vector2.new(ax+10,oy2+b.ch/2-6)
+                o.ry=b.ry+b.ch+((i-1)*b.ch)
+            end
         elseif b.isTextbox then
             b.lbl.Position=Vector2.new(ax+24,ay+b.ch/2-6)
             if b.inputBg then b.inputBg.Position=Vector2.new(ax+8,ay+b.ch/2-8); b.inputBg.Size=Vector2.new(b.cw-16,16) end
@@ -282,6 +356,12 @@ function UILib.Window(titleA, titleB, gameName)
         if b.qlb    then tabSet[b.qlb]=group end
         if b.dlb    then tabSet[b.dlb]=group end
         if b.arrow  then tabSet[b.arrow]=group end
+        if b.valLbl  then tabSet[b.valLbl]=group end
+        if b.optBgs  then
+            for _,o in ipairs(b.optBgs) do
+                tabSet[o.bg]=group; tabSet[o.ln]=group; tabSet[o.lb]=group
+            end
+        end
         if b.swatches then
             for _,sw in ipairs(b.swatches) do tabSet[sw.sq]=group; tabSet[sw.border]=group end
         end
@@ -614,6 +694,35 @@ function UILib.Window(titleA, titleB, gameName)
         table.insert(btns,b); return #btns
     end
 
+    local openDropdown = nil  -- reference to currently open dropdown btn
+
+    local function addDropdown(tab,lbl,relY,options,initIdx,cb)
+        local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
+        local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
+        local bg =mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.ROWBG,true,1,3,nil,4))
+        local dl =mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
+        local lb =mkD(mkTx(lbl,uiX+rx+10,uiY+ry+ch/2-6,12,C.WHITE,false,8))
+        local valIdx=initIdx or 1
+        local val =mkD(mkTx(options[valIdx] or "",uiX+rx+cw-8,uiY+ry+ch/2-6,11,C.ACCENT,false,8))
+        -- right-align value label
+        val.Center=false
+        local arrow=mkD(mkTx("v",uiX+rx+cw-14,uiY+ry+ch/2-6,9,C.GRAY,false,8))
+        -- option list drawings (hidden by default)
+        local optBgs={}; local optLbls={}
+        for i,opt in ipairs(options) do
+            local oy2=ry+ch+((i-1)*ch)
+            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,Color3.fromRGB(8,10,20),true,1,10,nil,0))
+            local oln=mkD(mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,Color3.fromRGB(20,24,40),11,1))
+            local olb=mkD(mkTx(opt,uiX+rx+10,uiY+oy2+ch/2-6,11,i==valIdx and C.ACCENT or C.WHITE,false,11))
+            setShow(obg,false); setShow(oln,false); setShow(olb,false)
+            table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2})
+        end
+        local b={tab=tab,isDropdown=true,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,
+                 rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
+                 selected=valIdx,open=false,cb=cb}
+        table.insert(btns,b); return #btns
+    end
+
     local function addLog(tab,lines,relY,starFirst)
         local rx=L.SIDEBAR+L.ROW_PAD
         local cw=L.CONTENT_W-L.ROW_PAD*2
@@ -689,6 +798,10 @@ function UILib.Window(titleA, titleB, gameName)
         function api:Searchbar()
             local y = nextY(28)
             addSearchbar(tabName, y)
+        end
+        function api:Dropdown(lbl, options, initIdx, cb)
+            local y = nextY(L.ROW_H + 2)
+            addDropdown(tabName, lbl, y, options, initIdx, cb)
         end
         function api:Log(lines, starFirst)
             local lineH = 18
@@ -790,6 +903,15 @@ function UILib.Window(titleA, titleB, gameName)
         currentTab=defaultTab
         showTab(defaultTab)
         notif("Loaded on "..(gameName or ""),"Check it Interface",4)
+
+        -- input event for textbox (one char per physical press)
+        keyQueue={}
+        local uis=game:GetService("UserInputService")
+        uis.InputBegan:Connect(function(inp,gp)
+            if gp then return end
+            local k=inp.KeyCode.Value
+            if k then keyQueue[#keyQueue+1]=k end
+        end)
 
         spawn(function()
         while not destroyed do
@@ -990,6 +1112,26 @@ function UILib.Window(titleA, titleB, gameName)
                                         listenKey=true
                                         btns[iKeyBind].lbl.Text="Press any key..."
                                     elseif b.cb then b.cb() end
+                                elseif b.isDropdown then
+                                    -- toggle open/close
+                                    b.open=not b.open
+                                    b.arrow.Text=b.open and "^" or "v"
+                                    if openDropdown and openDropdown~=b then
+                                        openDropdown.open=false
+                                        openDropdown.arrow.Text="v"
+                                        for _,o in ipairs(openDropdown.optBgs) do
+                                            setShow(o.bg,false); setShow(o.ln,false); setShow(o.lb,false)
+                                        end
+                                    end
+                                    openDropdown=b.open and b or nil
+                                    for _,o in ipairs(b.optBgs) do
+                                        setShow(o.bg,b.open); setShow(o.ln,b.open); setShow(o.lb,b.open)
+                                        if b.open then
+                                            local ax=uiX+b.rx; local ay=uiY+b.ry
+                                            o.bg.Position=Vector2.new(ax, ay+b.ch+((b.optBgs and 1 or 0)*b.ch))
+                                        end
+                                    end
+                                    if b.open then bPos(b) end
                                 elseif b.isColorPicker then
                                     local ax2=uiX+b.rx; local ay2=uiY+b.ry
                                     local totalW=(#b.swatches*19)-5
@@ -1055,6 +1197,27 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
+                -- dropdown option clicks
+                if clicking and not wasClicking and openDropdown then
+                    local bd=openDropdown
+                    for i,o in ipairs(bd.optBgs) do
+                        local ox=uiX+bd.rx; local oy=uiY+o.ry
+                        if inBox(ox,oy,bd.cw,bd.ch) then
+                            bd.selected=i
+                            bd.valLbl.Text=bd.options[i]
+                            for j,o2 in ipairs(bd.optBgs) do
+                                o2.lb.Color=j==i and C.ACCENT or C.WHITE
+                            end
+                            bd.open=false; bd.arrow.Text="v"
+                            for _,o2 in ipairs(bd.optBgs) do
+                                setShow(o2.bg,false); setShow(o2.ln,false); setShow(o2.lb,false)
+                            end
+                            openDropdown=nil
+                            if bd.cb then bd.cb(bd.options[i],i) end
+                            break
+                        end
+                    end
+                end
                 -- scroll (mousewheel)
                 pcall(function()
                     local uis=game:GetService("UserInputService")
@@ -1097,51 +1260,38 @@ function UILib.Window(titleA, titleB, gameName)
                     updatePos()
                 end
                 wasClicking=clicking
-                -- textbox key input
-                do
-                    local anyFocused=false
+                -- textbox key input: drain event queue
+                if #keyQueue > 0 then
                     for _,b in ipairs(btns) do
                         if b.isTextbox and b.focused and b.tab==currentTab then
-                            anyFocused=true
-                            if not b._lastKey then b._lastKey=0 end
-                            if not b._prevDown then b._prevDown=false end
-                            local fired=false
-                            for k=0x08,0xDD do
-                                if iskeypressed(k) then
-                                    if not b._prevDown or b._lastKey~=k then
-                                        b._lastKey=k; b._prevDown=true
-                                        if k==0x08 then
-                                            b.text=b.text:sub(1,-2)
-                                        elseif k==0x0D or k==0x1B then
-                                            b.focused=false; b.inputBorder.Color=C.BORDER
-                                            if b.isSearch then searchQuery[b.tab]=b.text end
-                                            if b.cb then b.cb(b.text) end
-                                        elseif kn[k] and #b.text<40 then
-                                            b.text=b.text..kn[k]:lower()
-                                        end
-                                        b.lbl.Text=b.text=="" and b.placeholder or b.text
-                                        b.lbl.Color=b.text=="" and C.GRAY or C.WHITE
-                                        if b.isSearch then
-                                            local q=b.text:lower()
-                                            for _,bb in ipairs(btns) do
-                                                if bb.tab==currentTab and not bb.isTextbox and not bb.isDiv then
-                                                    local match=q=="" or
-                                                        (bb.toggleName and bb.toggleName:lower():find(q,1,true)) or
-                                                        (bb.baseLbl and bb.baseLbl:lower():find(q,1,true))
-                                                    if match then bShow(bb,true); bPos(bb)
-                                                    else bShow(bb,false) end
-                                                end
-                                            end
-                                        end
-                                        fired=true
-                                    end
-                                    break
+                            for _,k in ipairs(keyQueue) do
+                                if k==0x08 then
+                                    b.text=b.text:sub(1,-2)
+                                elseif k==0x0D or k==0x1B then
+                                    b.focused=false; b.inputBorder.Color=C.BORDER
+                                    if b.cb then b.cb(b.text) end
+                                elseif kn[k] and #b.text<40 then
+                                    b.text=b.text..kn[k]:lower()
                                 end
                             end
-                            if not fired then b._prevDown=false end
+                            b.lbl.Text=b.text=="" and b.placeholder or b.text
+                            b.lbl.Color=b.text=="" and C.GRAY or C.WHITE
+                            if b.isSearch then
+                                local q=b.text:lower()
+                                for _,bb in ipairs(btns) do
+                                    if bb.tab==currentTab and not bb.isTextbox and not bb.isDiv then
+                                        local match=q=="" or
+                                            (bb.toggleName and bb.toggleName:lower():find(q,1,true)) or
+                                            (bb.baseLbl and bb.baseLbl:lower():find(q,1,true))
+                                        if match then bShow(bb,true); bPos(bb)
+                                        else bShow(bb,false) end
+                                    end
+                                end
+                            end
                             break
                         end
                     end
+                    keyQueue={}
                 end
                 -- key rebind
                 if listenKey then
@@ -1187,6 +1337,9 @@ function UILib.Window(titleA, titleB, gameName)
         for _,d in ipairs(miniDrawings) do pcall(function() d:Remove() end) end
         for _,l in ipairs(miniActiveLbls) do pcall(function() l:Remove() end) end
     end
+
+    function win:ApplyTheme(name) applyTheme(name) end
+    UILib.applyTheme = function(name) applyTheme(name) end
 
     return win
 end
