@@ -43,7 +43,7 @@ local THEMES = {
 UILib.Themes = THEMES
 _G.UILib = UILib
 
-print("[UILib] v1.2.6 loaded")
+print("[UILib] v1.2.7 loaded")
 
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -627,7 +627,28 @@ function UILib.Window(titleA, titleB, gameName)
 
 
 
-    local openDropdown = nil  -- reference to currently open dropdown btn
+    local openDropdown = nil
+    local DDR_DUR = 0.18  -- dropdown row fade-in duration
+
+    local function resizeForDropdown(dd, expanding)
+        -- expand/collapse the main window to fit open dropdown
+        local extra = expanding and (#dd.options * dd.ch) or 0
+        local newH = L.H + extra
+        if dMainBg then
+            dMainBg.Size=Vector2.new(L.W, newH)
+            dShadow.Size=Vector2.new(L.W+4, newH+4)
+            dGlow1.Size=Vector2.new(L.W+2, newH+2)
+            dGlow2.Size=Vector2.new(L.W+4, newH+4)
+            dBorder.Size=Vector2.new(L.W, newH)
+            dSide.Size=Vector2.new(L.SIDEBAR-1, newH-L.TOPBAR-L.FOOTER-1)
+            dContent.Size=Vector2.new(L.CONTENT_W-1, newH-L.TOPBAR-L.FOOTER-1)
+            dFooter.Position=Vector2.new(uiX+1, uiY+newH-L.FOOTER)
+            dFotLine.From=Vector2.new(uiX+1, uiY+newH-L.FOOTER)
+            dFotLine.To=Vector2.new(uiX+L.W-1, uiY+newH-L.FOOTER)
+            dSideLn.To=Vector2.new(uiX+L.SIDEBAR, uiY+newH-L.FOOTER)
+            dCharLbl.Position=Vector2.new(uiX+L.SIDEBAR+8, uiY+newH-L.FOOTER+5)
+        end
+    end
 
     local function addDropdown(tab,lbl,relY,options,initIdx,cb)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
@@ -636,23 +657,20 @@ function UILib.Window(titleA, titleB, gameName)
         local dl =mkD(mkLn(uiX+rx,uiY+ry+ch,uiX+rx+cw,uiY+ry+ch,C.DIV,4,1))
         local lb =mkD(mkTx(lbl,uiX+rx+10,uiY+ry+ch/2-6,12,C.WHITE,false,8))
         local valIdx=initIdx or 1
-        local val =mkD(mkTx(options[valIdx] or "",uiX+rx+cw-8,uiY+ry+ch/2-6,11,C.ACCENT,false,8))
-        -- right-align value label
-        val.Center=false
+        local val=mkD(mkTx(options[valIdx] or "",uiX+rx+cw-60,uiY+ry+ch/2-6,11,C.ACCENT,false,8))
         local arrow=mkD(mkTx("v",uiX+rx+cw-14,uiY+ry+ch/2-6,9,C.GRAY,false,8))
-        -- option list drawings (hidden by default)
-        local optBgs={}; local optLbls={}
+        local optBgs={}
         for i,opt in ipairs(options) do
             local oy2=ry+ch+((i-1)*ch)
-            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,Color3.fromRGB(8,10,20),true,1,10,nil,0))
-            local oln=mkD(mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,Color3.fromRGB(20,24,40),11,1))
-            local olb=mkD(mkTx(opt,uiX+rx+10,uiY+oy2+ch/2-6,11,i==valIdx and C.ACCENT or C.WHITE,false,11))
-            setShow(obg,false); setShow(oln,false); setShow(olb,false)
-            table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2})
+            local obg=mkD(mkSq(uiX+rx,uiY+oy2,cw,ch,Color3.fromRGB(10,13,24),true,0,10,nil,0))
+            local oln=mkD(mkLn(uiX+rx,uiY+oy2+ch,uiX+rx+cw,uiY+oy2+ch,Color3.fromRGB(25,30,50),11,1))
+            local olb=mkD(mkTx(opt,uiX+rx+14,uiY+oy2+ch/2-6,11,i==valIdx and C.ACCENT or C.WHITE,false,11))
+            obg.Visible=false; oln.Visible=false; olb.Visible=false
+            table.insert(optBgs,{bg=obg,ln=oln,lb=olb,ry=oy2,alpha=0,targetAlpha=0,delay=i*0.04})
         end
         local b={tab=tab,isDropdown=true,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
-                 selected=valIdx,open=false,cb=cb}
+                 selected=valIdx,open=false,openedAt=0,cb=cb}
         table.insert(btns,b); return #btns
     end
 
@@ -983,6 +1001,28 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 applyFade()
+                -- animate dropdown rows
+                for _,b in ipairs(btns) do
+                    if b.isDropdown then
+                        for _,o in ipairs(b.optBgs) do
+                            if o.alpha ~= o.targetAlpha then
+                                local spd=10
+                                if o.targetAlpha > o.alpha then
+                                    o.alpha=math.min(o.targetAlpha, o.alpha+spd*0.016)
+                                else
+                                    o.alpha=math.max(o.targetAlpha, o.alpha-spd*0.016)
+                                end
+                                local vis=o.alpha>0.01
+                                o.bg.Visible=vis; o.ln.Visible=vis; o.lb.Visible=vis
+                                if vis then
+                                    o.bg.Transparency=o.alpha
+                                    o.ln.Transparency=o.alpha
+                                    o.lb.Transparency=o.alpha
+                                end
+                            end
+                        end
+                    end
+                end
                 -- tooltip hover
                 if tipBg then
                     local hov=nil
@@ -1054,25 +1094,32 @@ function UILib.Window(titleA, titleB, gameName)
                                         btns[iKeyBind].lbl.Text="Press any key..."
                                     elseif b.cb then b.cb() end
                                 elseif b.isDropdown then
-                                    -- toggle open/close
-                                    b.open=not b.open
-                                    b.arrow.Text=b.open and "^" or "v"
+                                    -- close any other open dropdown first
                                     if openDropdown and openDropdown~=b then
                                         openDropdown.open=false
                                         openDropdown.arrow.Text="v"
                                         for _,o in ipairs(openDropdown.optBgs) do
-                                            setShow(o.bg,false); setShow(o.ln,false); setShow(o.lb,false)
+                                            o.targetAlpha=0
                                         end
+                                        resizeForDropdown(openDropdown,false)
+                                        openDropdown=nil
                                     end
+                                    b.open=not b.open
+                                    b.arrow.Text=b.open and "^" or "v"
+                                    b.openedAt=os.clock()
                                     openDropdown=b.open and b or nil
-                                    for _,o in ipairs(b.optBgs) do
-                                        setShow(o.bg,b.open); setShow(o.ln,b.open); setShow(o.lb,b.open)
-                                        if b.open then
-                                            local ax=uiX+b.rx; local ay=uiY+b.ry
-                                            o.bg.Position=Vector2.new(ax, ay+b.ch+((b.optBgs and 1 or 0)*b.ch))
+                                    resizeForDropdown(b, b.open)
+                                    if b.open then
+                                        bPos(b)
+                                        for _,o in ipairs(b.optBgs) do
+                                            o.targetAlpha=1
+                                            o.bg.Visible=true; o.ln.Visible=true; o.lb.Visible=true
+                                        end
+                                    else
+                                        for _,o in ipairs(b.optBgs) do
+                                            o.targetAlpha=0
                                         end
                                     end
-                                    if b.open then bPos(b) end
                                 elseif b.isColorPicker then
                                     local ax2=uiX+b.rx; local ay2=uiY+b.ry
                                     local totalW=(#b.swatches*19)-5
@@ -1145,12 +1192,11 @@ function UILib.Window(titleA, titleB, gameName)
                             bd.valLbl.Text=bd.options[i]
                             for j,o2 in ipairs(bd.optBgs) do
                                 o2.lb.Color=j==i and C.ACCENT or C.WHITE
+                                o2.targetAlpha=0
                             end
                             bd.open=false; bd.arrow.Text="v"
-                            for _,o2 in ipairs(bd.optBgs) do
-                                setShow(o2.bg,false); setShow(o2.ln,false); setShow(o2.lb,false)
-                            end
                             openDropdown=nil
+                            resizeForDropdown(bd,false)
                             if bd.cb then bd.cb(bd.options[i],i) end
                             break
                         end
