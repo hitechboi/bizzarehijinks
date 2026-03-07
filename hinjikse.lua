@@ -10,7 +10,7 @@ if game.GameId ~= 6809578891 then
     return
 end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/rangerover.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/Uilib.lua?t="..tostring(os.time())))()
 repeat task.wait() until _G.UILib
 local UILib = _G.UILib
 
@@ -80,13 +80,15 @@ misc:Button("v1.5.6  |  github.com/hitechboi", UILib.Colors.ROWBG, nil, UILib.Co
 local updates = win:Tab("Updates")
 updates:Div("UPDATE LOG")
 updates:Log({
-    "STAR MY POST !",
+    "STAR MY POST ! :D",
     "> v1.5.6 - Dynamic title positioning",
-    "> v1.5.6 - Removed resize handle",
-    "> v1.5.6 - Added themes in Misc",
-    "> v1.5.6 - Widgets scale with menu",
-    "> v1.5.6 - Slider close fix",
-    "> v1.5.6 - Smooth collapse + minimize bar",
+    "> v1.5.2 - Removed resize handle",
+    "> v1.5.1 - Matcha tick() fix",
+    "> v1.5.0 - Widgets scale with menu",
+    "> v1.4.9 - Slider close fix + no flicker",
+    "> v1.4.8 - Content clipping + scrolling",
+    "> v1.4.7 - Arithmetic nil crash fix",
+    "> v1.4.0 - Smooth collapse + minimize bar",
     "> hi :p"
 }, true)
 
