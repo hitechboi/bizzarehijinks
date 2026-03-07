@@ -1,7 +1,6 @@
---[[
-    Feel like we back in action, let's make it happen.
-    made by nejrio/aka/besosme
-    ]]
+-- UILib v1.5.6
+-- Generic Drawing-based UI Library
+
 local UILib = {}
 local _collapseSections = {}
 
