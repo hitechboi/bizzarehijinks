@@ -4,7 +4,7 @@
     github.com/hitechboi
     star my post :p, have fun!
 ]]
-
+-- bro github fix this shit wtf
 if game.GameId ~= 6809578891 then
     notify("Check it", "This script is not supported for this game.", 5)
     return
