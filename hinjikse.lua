@@ -81,10 +81,9 @@ local updates = win:Tab("Updates")
 updates:Div("UPDATE LOG")
 updates:Log({
     "STAR MY POST ! :D",
-    "> v1.5.6 - Dynamic title positioning",
+    "> v1.5.6 - Dynamic title positioning + themes",
     "> v1.5.6 - Removed resize handle",
     "> v1.5.6 - Slider close fix + no flicker",
-	"> v1.5.6 - Themes etc check it out",
     "> hi :p"
 }, true)
 
