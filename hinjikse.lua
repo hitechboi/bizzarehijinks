@@ -84,7 +84,7 @@ updates:Log({
     "> v1.5.6 - Dynamic title positioning",
     "> v1.5.6 - Removed resize handle",
     "> v1.5.6 - Slider close fix + no flicker",
-	"> v1.5.6 - Themes etc check it out"
+	"> v1.5.6 - Themes etc check it out",
     "> hi :p"
 }, true)
 
