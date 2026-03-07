@@ -82,13 +82,7 @@ updates:Div("UPDATE LOG")
 updates:Log({
     "STAR MY POST ! :D",
     "> v1.5.6 - Dynamic title positioning",
-    "> v1.5.2 - Removed resize handle",
-    "> v1.5.1 - Matcha tick() fix",
-    "> v1.5.0 - Widgets scale with menu",
-    "> v1.4.9 - Slider close fix + no flicker",
-    "> v1.4.8 - Content clipping + scrolling",
-    "> v1.4.7 - Arithmetic nil crash fix",
-    "> v1.4.0 - Smooth collapse + minimize bar",
+    "> 1.5.6  - Added Themes in Misc",
     "> hi :p"
 }, true)
 
