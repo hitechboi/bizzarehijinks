@@ -991,10 +991,8 @@ function UILib.Window(titleA, titleB, gameName)
         spawn(function()
         while not destroyed do
             task.wait()
-            if not pcall(function() return isrbxactive() end) or not isrbxactive() then
-                wasClicking=false; wasMenuKey=false
-                goto _continue
-            end
+            local _rbxOk, _rbxActive = pcall(function() return isrbxactive() end)
+            if not _rbxOk or _rbxActive then
             local clicking=ismouse1pressed()
 
             local keyDown=iskeypressed(menuKey)
@@ -1446,7 +1444,7 @@ function UILib.Window(titleA, titleB, gameName)
                 -- char label
                 if charLabelFn then dCharLbl.Text=charLabelFn() end
             end
-            ::_continue::
+            end -- isrbxactive
         end
         end) -- spawn
     end -- Init
