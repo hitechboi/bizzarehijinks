@@ -10,7 +10,7 @@ if game.GameId ~= 6809578891 then
     return
 end
 
-loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/catchmeifyoucan.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/hitechboi/bizzarehijinks/refs/heads/main/matchup.lua"))()
 repeat task.wait() until _G.UILib
 local UILib = _G.UILib
 
