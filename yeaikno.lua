@@ -1023,7 +1023,7 @@ function UILib.Window(titleA, titleB, gameName)
                 "warming up engine...",
                 "syncing configurations...",
                 "initializing check it core...",
-                "bypassing security...",
+                "back in action !!!",
                 "almost there..."
             }
             local chosenDesc = descriptions[math.random(1, #descriptions)]
@@ -1121,7 +1121,7 @@ function UILib.Window(titleA, titleB, gameName)
             setLoadPos(1, gameName.." Initializing...", fillAmt)
             
             local progressStages = {
-                {pct=0.15, text="bypassing security...",                   delay=0.6},
+                {pct=0.15, text=chosenDesc,                   delay=0.6},
                 {pct=0.33, text="fetching assets...",                      delay=0.4},
                 {pct=0.46, text="syncing check.lua routines...",           delay=0.8},
                 {pct=0.68, text="warming up layout engine... v1.6.0",      delay=0.5},
