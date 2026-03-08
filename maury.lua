@@ -1008,9 +1008,9 @@ function UILib.Window(titleA, titleB, gameName)
                 dBg.Position = Vector2.new(uiX,uiY); dBg.Size = Vector2.new(L.W, L.H)
                 dTxt.Position = Vector2.new(uiX+L.W/2,uiY+L.H/2 - 8)
                 
-                local vis = mOp > 0.1
+                local vis = true
                 dBg.Visible = vis; dTxt.Visible = vis
-                dBg.Transparency = mOp; dTxt.Transparency = mOp
+                dBg.Transparency = 1; dTxt.Transparency = 1
             end
             
             local fade = tick()
@@ -1019,8 +1019,8 @@ function UILib.Window(titleA, titleB, gameName)
                 local alpha = 1 - ((tick() - fade) / 0.3)
                 dBg.Position = Vector2.new(uiX,uiY)
                 dTxt.Position = Vector2.new(uiX+L.W/2,uiY+L.H/2 - 8)
-                dBg.Transparency = alpha * mOp
-                dTxt.Transparency = alpha * mOp
+                dBg.Transparency = alpha
+                dTxt.Transparency = alpha
             end
             
             pcall(function() dBg:Remove() end)
