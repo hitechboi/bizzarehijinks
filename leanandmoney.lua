@@ -948,7 +948,7 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 5; local pxSize = 4
+        local step = 4; local pxSize = 2
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
@@ -1357,7 +1357,7 @@ function UILib.Window(titleA, titleB, gameName)
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
-                    local step = 5
+                    local step = 3
                     local pxSize = 1
                     for y = 1, 64, step do
                         for x = 1, 64, step do
