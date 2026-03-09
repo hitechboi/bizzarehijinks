@@ -1041,6 +1041,7 @@ function UILib.Window(titleA, titleB, gameName)
                 end
             end
             return logApi
+        end
         function api:UserList(maxUsers)
             local y = nextY((maxUsers*40)+10)
             local idx = addUserList(tabName, maxUsers, y)
