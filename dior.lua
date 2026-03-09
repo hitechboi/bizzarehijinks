@@ -1,6 +1,5 @@
 local UILib = {}
 local _collapseSections = {}
-
 local THEMES = {
     ["Check it"] = {
         ACCENT=Color3.fromRGB(70,120,255),  BG=Color3.fromRGB(9,11,20),
@@ -59,11 +58,10 @@ local THEMES = {
     },
 }
 UILib.Themes = THEMES
-UILib.Colors = THEMES["Check it"] -- Default colors
+UILib.Colors = THEMES["Check it"] 
 _G.UILib = UILib
-
+UILib.avatar_cache = {}
 print("[UILib] v1.6.0 loaded")
-
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
     return Color3.fromRGB(
@@ -84,7 +82,6 @@ local function mkTri(x1,y1,x2,y2,x3,y3,col,filled,zi)
     return t
 end
 local function setTriDir(tri,cx,cy,dir)
-    -- dir: "v"=down, "^"=up, ">"=right
     if dir=="v" then
         tri.PointA=Vector2.new(cx-4,cy-3); tri.PointB=Vector2.new(cx+4,cy-3); tri.PointC=Vector2.new(cx,cy+3)
     elseif dir=="^" then
@@ -93,7 +90,6 @@ local function setTriDir(tri,cx,cy,dir)
         tri.PointA=Vector2.new(cx-3,cy-4); tri.PointB=Vector2.new(cx-3,cy+4); tri.PointC=Vector2.new(cx+3,cy)
     end
 end
-
 local C = {
     BG      = Color3.fromRGB(9,  11, 20),
     SIDEBAR = Color3.fromRGB(12, 15, 27),
@@ -119,7 +115,6 @@ local C = {
     MINIBAR = Color3.fromRGB(11, 13, 22),
 }
 UILib.Colors = C
-
 local L = {
     W        = 440, H        = 400,
     SIDEBAR  = 128, TOPBAR   = 40,
@@ -129,7 +124,6 @@ local L = {
     MINI_H   = 86,
 }
 L.CONTENT_W = L.W - L.SIDEBAR
-
 local function mkSq(x,y,w,h,col,filled,transp,zi,thick,corner)
     local s = Drawing.new("Square")
     s.Position=Vector2.new(x,y); s.Size=Vector2.new(w,h)
@@ -154,7 +148,6 @@ local function mkLn(x1,y1,x2,y2,col,zi,thick)
     l.Thickness=thick or 1; l.ZIndex=zi or 2; l.Visible=true
     return l
 end
-
 local kn={}
 for i=0x41,0x5A do kn[i]=string.char(i) end
 for i=0x30,0x39 do kn[i]=tostring(i-0x30) end
@@ -205,8 +198,6 @@ function UILib.Window(titleA, titleB, gameName)
     pcall(function() mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end)
     pcall(function() mouse.WheelBackward:Connect(function() _scrollDelta = _scrollDelta + 1 end) end)
     local PAD = 10
-
-    -- state
     local uiX, uiY       = 300, 200
     local dragging        = false
     local dragOffX, dragOffY = 0, 0
@@ -238,9 +229,8 @@ function UILib.Window(titleA, titleB, gameName)
     local _wasResizing    = false
     local scrollDragging  = false
     local scrollDragOffY  = 0
-
-    -- drawing registry
     local allDrawings = {}
+    local _twCache, _taCache = 0, 0
     local showSet     = {}
     local tabSet      = {}
     local baseUI      = {}
@@ -261,23 +251,21 @@ function UILib.Window(titleA, titleB, gameName)
         table.insert(miniActiveLbls,lb)
         table.insert(miniActivePulse,i*0.7)
     end
-
     local function mkD(d)
         table.insert(allDrawings,d)
         d.Visible=false
         return d
     end
     local function setShow(d,yes)
+        if not d then return end
         showSet[d]=yes or nil
         d.Visible=yes and true or false
     end
     local function inBox(x,y,w,h)
         return mouse.X>=x and mouse.X<=x+w and mouse.Y>=y and mouse.Y<=y+h
     end
-
     local uiTargetH = L.H
     local uiCurrentH = L.H
-
     local function applyFade()
         if isLoading then
             for _,d in ipairs(allDrawings) do d.Visible=false end
@@ -289,6 +277,17 @@ function UILib.Window(titleA, titleB, gameName)
             for _,ap in ipairs(avatarDrawings or {}) do pcall(function() ap.d.Visible=false end) end
             for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
             for _,d in ipairs(miniDrawings) do d.Visible=false end
+            for _,b in ipairs(btns) do
+                if b.isUserList then
+                    for _, u in ipairs(b.users) do
+                        if u.bg then u.bg.Visible=false end
+                        if u.name then u.name.Visible=false end
+                        for pi=1,(u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
+                        end
+                    end
+                end
+            end
             if tipBg then
                 tipBg.Visible=false; tipBorder.Visible=false
                 tipLbl.Visible=false; tipDesc.Visible=false
@@ -297,6 +296,18 @@ function UILib.Window(titleA, titleB, gameName)
         end
         if minimized then
             for _,d in ipairs(allDrawings) do d.Visible=false end
+            for _,b in ipairs(btns) do
+                if b.isUserList then
+                    for _, u in ipairs(b.users) do
+                        if u.bg then u.bg.Visible=false end
+                        if u.ln then u.ln.Visible=false end
+                        if u.name then u.name.Visible=false end
+                        for pi=1,(u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
+                        end
+                    end
+                end
+            end
             return
         end
         if not minimized then
@@ -305,6 +316,18 @@ function UILib.Window(titleA, titleB, gameName)
         local mf=1-(menuToggledAt-(tick()-FADE_DUR))/FADE_DUR
         if not menuOpen and mf>=1.1 then
             for _,d in ipairs(allDrawings) do d.Visible=false end
+            for _,b in ipairs(btns) do
+                if b.isUserList then
+                    for _, u in ipairs(b.users) do
+                        if u.bg then u.bg.Visible=false end
+                        if u.ln then u.ln.Visible=false end
+                        if u.name then u.name.Visible=false end
+                        for pi=1,(u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
+                        end
+                    end
+                end
+            end
             return
         end
         local mOp=mf<1.1
@@ -322,7 +345,6 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
     end
-
     local function bShow(b,yes)
         setShow(b.bg,yes)
         if b.out    then setShow(b.out,yes) end
@@ -342,6 +364,20 @@ function UILib.Window(titleA, titleB, gameName)
         if b.swatches then
             for _,sw in ipairs(b.swatches) do setShow(sw.sq,yes); setShow(sw.border,yes) end
         end
+        if b.isUserList then
+            for _, u in ipairs(b.users) do
+                local vis = yes and u._active
+                if u.bg then u.bg.Visible = vis and true or false end
+                if u.ln then u.ln.Visible = vis and true or false end
+                if u.name then u.name.Visible = vis and true or false end
+                if u.avatarPixels then
+                    for i=1, (u.activePixelsCount or 0) do 
+                        local p = u.avatarPixels[i]
+                        if p and p.d then p.d.Visible = vis and true or false end
+                    end
+                end
+            end
+        end
         if b.isDropdown then
             for _,o in ipairs(b.optBgs) do
                 setShow(o.bg, yes and b.open)
@@ -350,17 +386,11 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
     end
-
     local function bPos(b)
         local animY = b.currentRY ~= nil and b.currentRY or b.ry
         local sc = tabScroll[b.tab] or 0
         local ax,ay=uiX+b.rx,uiY+animY-sc
         b.bg.Position=Vector2.new(ax,ay)
-        
-        -- Optional bounds clipping check for the item container itself:
-        -- if it's outside the Topbar / Footer bounds, we can hide it in the main loop instead, 
-        -- but keeping the math absolute here is fine as long as applyFade/clipping hides it.
-        
         if b.isLog then
             for i,lb in ipairs(b.lbls) do
                 if b.starFirst and i==1 then
@@ -369,6 +399,46 @@ function UILib.Window(titleA, titleB, gameName)
                     local off=b.starFirst and (b.starH+b.pad+(i-2)*b.lineH) or (b.pad+(i-1)*b.lineH)
                     lb.Position=Vector2.new(ax+8,ay+off)
                 end
+            end
+            return
+        end
+        if b.isUserList then
+            local cTop = uiY + L.TOPBAR
+            local cBot = uiY + uiCurrentH - L.FOOTER
+            local parentVis = showSet[b.bg] and true or false
+            for i, u in ipairs(b.users) do
+                 local uY = ay + u.ryOff
+                 local isVis = u._active and parentVis and (uY < cBot) and (uY + b.rowH > cTop)
+                 if isVis then
+                     if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(ax, uY) end
+                     if u.ln then u.ln.Visible = true; u.ln.Position = Vector2.new(ax, uY + b.rowH - 2) end
+                     local avatarSz = b.rowH - 4
+                     if u.name then
+                         u.name.Visible = true
+                         u.name.Position = Vector2.new(ax + avatarSz + 8, uY + b.rowH/2 - 7)
+                     end
+                     if u.avatarPixels then
+                         local pxY = uY + (b.rowH - avatarSz)/2
+                         local pxX = ax + 2
+                         for j=1, (u.activePixelsCount or 0) do
+                             local p = u.avatarPixels[j]
+                             if p and p.d then
+                                 p.d.Visible = true
+                                 p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy)
+                             end
+                         end
+                     end
+                 else
+                     if u.bg then u.bg.Visible = false end
+                     if u.ln then u.ln.Visible = false end
+                     if u.name then u.name.Visible = false end
+                     if u.avatarPixels then
+                         for j=1, (u.activePixelsCount or 0) do
+                             local p = u.avatarPixels[j]
+                             if p and p.d then p.d.Visible = false end
+                         end
+                     end
+                 end
             end
             return
         end
@@ -439,7 +509,6 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
     end
-
     local function tagBtnFade(b,group)
         tabSet[b.bg]=group
         if not b.isLog then tabSet[b.lbl]=group end
@@ -463,15 +532,19 @@ function UILib.Window(titleA, titleB, gameName)
                 tabSet[o.bg]=group; tabSet[o.ln]=group; tabSet[o.lb]=group
             end
         end
+        if b.isUserList then
+            for _, u in ipairs(b.users) do
+                if u.bg then tabSet[u.bg]=group end
+                if u.name then tabSet[u.name]=group end
+            end
+        end
     end
-
     local function showTab(tab)
         for _,b in ipairs(btns) do
             local yes=b.tab==tab; bShow(b,yes)
             if yes then bPos(b) end
         end
     end
-
     local recalculateLayout
     local function switchTab(name)
         if name==currentTab then return end
@@ -508,7 +581,6 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
     end
-
     local dShadow,dMainBg,dGlow1,dGlow2,dBorder
     local dTopBar,dTopFill,dTopLine
     local dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR
@@ -520,7 +592,7 @@ function UILib.Window(titleA, titleB, gameName)
     local dMiniKeyLbl,dMiniDotG,dMiniDotR,dMiniDivLn,dMiniActiveBg
     local miniGlowLines
     local iKeyInfo, iKeyBind
-    local tipBg, tipLbl, tipDesc
+    local tipBg, tipBorder, tipLbl, tipDesc
     local hoveredBtn = nil
     local tipFadeIn = false
     local tipFadeOut = false
@@ -528,7 +600,6 @@ function UILib.Window(titleA, titleB, gameName)
     local TIP_FADE = 0.35
     local dWelcomeTxt, dNameTxt
     local avatarDrawings
-
     local function updatePos()
         local curH = uiCurrentH
         dShadow.Size      =Vector2.new(L.W+4,curH+4)
@@ -546,8 +617,12 @@ function UILib.Window(titleA, titleB, gameName)
         dTopLine.From     =Vector2.new(uiX+1,uiY+L.TOPBAR)
         dTopLine.To       =Vector2.new(uiX+L.W-1,uiY+L.TOPBAR)
         dTitleW.Position  =Vector2.new(uiX+14,uiY+12)
-        dTitleA.Position  =Vector2.new(uiX+14+(#titleA*8)+6,uiY+12)
-        dTitleG.Position  =Vector2.new(uiX+14+(#titleA*8)+6+(#titleB*8)+12,uiY+12)
+        if dTitleW.TextBounds and dTitleW.TextBounds.X > 0 and dTitleW.TextBounds.X > _twCache then _twCache = dTitleW.TextBounds.X end
+        local tw = _twCache > 0 and _twCache or (#titleA*8)
+        dTitleA.Position  =Vector2.new(uiX+14+tw+3,uiY+12)
+        if dTitleA.TextBounds and dTitleA.TextBounds.X > 0 and dTitleA.TextBounds.X > _taCache then _taCache = dTitleA.TextBounds.X end
+        local ta = _taCache > 0 and _taCache or (#titleB*8)
+        dTitleG.Position  =Vector2.new(uiX+14+tw+3+ta+10,uiY+12)
         dKeyLbl.Position  =Vector2.new(uiX+L.W-22,uiY+14)
         dDotY.Position    =Vector2.new(uiX+L.W-55,uiY+15)
         dDotR.Position    =Vector2.new(uiX+L.W-42,uiY+15)
@@ -579,7 +654,6 @@ function UILib.Window(titleA, titleB, gameName)
             if showSet[b.bg] then bPos(b) end
         end
     end
-
     local function updateMiniPos()
         dMiniShadow.Position =Vector2.new(uiX-2,uiY-2)
         dMiniShadow.Size     =Vector2.new(L.W+4,L.MINI_H+4)
@@ -593,8 +667,12 @@ function UILib.Window(titleA, titleB, gameName)
         dMiniBorder.Size     =Vector2.new(L.W,L.MINI_H)
         dMiniTopBar.Position =Vector2.new(uiX+1,uiY+1)
         dMiniTitleW.Position =Vector2.new(uiX+14,uiY+12)
-        dMiniTitleA.Position =Vector2.new(uiX+14+(#titleA*9)+6,uiY+12)
-        dMiniTitleG.Position =Vector2.new(uiX+14+(#titleA*9)+6+(#titleB*9)-24,uiY+12)
+        if dMiniTitleW.TextBounds and dMiniTitleW.TextBounds.X > 0 and dMiniTitleW.TextBounds.X > _twCache then _twCache = dMiniTitleW.TextBounds.X end
+        local mtw = _twCache > 0 and _twCache or (#titleA*8)
+        dMiniTitleA.Position =Vector2.new(uiX+14+mtw+3,uiY+12)
+        if dMiniTitleA.TextBounds and dMiniTitleA.TextBounds.X > 0 and dMiniTitleA.TextBounds.X > _taCache then _taCache = dMiniTitleA.TextBounds.X end
+        local mta = _taCache > 0 and _taCache or (#titleB*8)
+        dMiniTitleG.Position =Vector2.new(uiX+14+mtw+3+mta+10,uiY+12)
         dMiniKeyLbl.Position =Vector2.new(uiX+L.W-22,uiY+14)
         dMiniDotG.Position   =Vector2.new(uiX+L.W-55,uiY+15)
         dMiniDotR.Position   =Vector2.new(uiX+L.W-42,uiY+15)
@@ -618,7 +696,6 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
     end
-
     local function showMiniUI(show)
         if show then
             for _,d in ipairs(miniDrawings) do d.Visible=true; d.Transparency=1 end
@@ -629,7 +706,6 @@ function UILib.Window(titleA, titleB, gameName)
         end
         miniFadeIn=false; miniFadeOut=false
     end
-
     local function refreshMiniLabels()
         local active={}
         for _,b in ipairs(btns) do
@@ -666,7 +742,6 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
     end
-
     local function restoreFullMenu()
         minimized=false; miniClosed=false
         showMiniUI(false)
@@ -679,7 +754,6 @@ function UILib.Window(titleA, titleB, gameName)
             setShow(t.bg,true); setShow(t.acc,true)
             setShow(t.lbl,t.sel); setShow(t.lblG,not t.sel)
         end
-        -- Start small and animate to full height
         uiCurrentH = L.MINI_H + 5
         updatePos()
         uiTargetH = L.H
@@ -697,7 +771,6 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
     end
-
     local function addToggle(tab,lbl,relY,init,cb,desc)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
@@ -718,7 +791,6 @@ function UILib.Window(titleA, titleB, gameName)
                  desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch}
         table.insert(btns,b); return #btns
     end
-
     local function addDiv(tab,lbl,relY,collapsible)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2
@@ -733,7 +805,6 @@ function UILib.Window(titleA, titleB, gameName)
                   collapsible=collapsible,sectionName=lbl,arrow=arrow,currentRY=ry,baseRY=ry}
         table.insert(btns,db); return #btns
     end
-
     local function addAct(tab,lbl,relY,col,cb,lblCol)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
@@ -745,7 +816,6 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isAct=true,customCol=col~=nil,out=out,bg=bg,lbl=lb,ln=nil,rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,cb=cb}
         table.insert(btns,b); return #btns
     end
-
     local function addSlider(tab,lbl,relY,minV,maxV,initV,cb,isFloat,desc)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H+6
@@ -766,7 +836,6 @@ function UILib.Window(titleA, titleB, gameName)
                  value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb}
         table.insert(btns,b); return #btns
     end
-
     local function addColorPicker(tab,lbl,relY,initCol,cb)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
@@ -798,13 +867,7 @@ function UILib.Window(titleA, titleB, gameName)
                  selected=selected,value=swatches[1],cb=cb}
         table.insert(btns,b); return #btns
     end
-
-
-
-
     local openDropdown = nil
-    local UI_RESIZE_SPD = 12
-
     local function applyWindowH(h)
         if not dMainBg then return end
         dMainBg.Size=Vector2.new(L.W,h)
@@ -824,12 +887,10 @@ function UILib.Window(titleA, titleB, gameName)
             dCharLbl.Position = Vector2.new(uiX+42+64+nW+8, uiY+h-L.FOOTER+9)
         end
     end
-
     local function resizeForDropdown(dd, expanding)
         local extra = expanding and (#dd.options * dd.ch) or 0
         uiTargetH = L.H + extra
     end
-
     local function addDropdown(tab,lbl,relY,options,initIdx,cb)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
         local cw=L.CONTENT_W-L.ROW_PAD*2; local ch=L.ROW_H-2
@@ -856,7 +917,6 @@ function UILib.Window(titleA, titleB, gameName)
                  selected=valIdx,open=false,openedAt=0,cb=cb}
         table.insert(btns,b); return #btns
     end
-
     local function addLog(tab,lines,relY,starFirst)
         local rx=L.SIDEBAR+L.ROW_PAD
         local cw=L.CONTENT_W-L.ROW_PAD*2
@@ -885,9 +945,56 @@ function UILib.Window(titleA, titleB, gameName)
                  starFirst=starFirst,starH=starH}
         table.insert(btns,b); return #btns
     end
-
+    function UILib:LoadAvatarToRow(uiUser, pixelsData)
+        for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
+        local pIdx = 1
+        local step = 4; local pxSize = 2
+        for y = 1, 64, step do
+            for x = 1, 64, step do
+                local dx = x - 32.5; local dy = y - 32.5
+                if (dx*dx + dy*dy) <= (31.5 * 31.5) then
+                    local pData = pixelsData[y] and pixelsData[y][x]
+                    if pData and pData.a and pData.a > 0.1 then
+                        local sq
+                        if pIdx <= #uiUser.avatarPixels then
+                            sq = uiUser.avatarPixels[pIdx].d
+                        else
+                            sq = Drawing.new("Square")
+                            sq.Size = Vector2.new(pxSize, pxSize)
+                            sq.Filled = true; sq.ZIndex = 8
+                            table.insert(uiUser.avatarPixels, {d=sq, gx=math.floor((x-1)/step)*pxSize, gy=math.floor((y-1)/step)*pxSize})
+                        end
+                        sq.Color = Color3.fromRGB(pData.r, pData.g, pData.b)
+                        sq.Transparency = pData.a or 1
+                        sq.Visible = uiUser._active
+                        pIdx = pIdx + 1
+                    end
+                end
+            end
+        end
+        uiUser.activePixelsCount = pIdx - 1
+    end
+    local function addUserList(tab, maxUsers, relY)
+        local rx=L.SIDEBAR+L.ROW_PAD; local cw=L.CONTENT_W-L.ROW_PAD*2
+        local rowH=36; local pad=0
+        local ch = (maxUsers*rowH)+pad*2
+        local ry=L.TOPBAR+relY
+        local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.CONTENT,true,0,3,nil,0))
+        bg.Visible=false
+        local users = {}
+        for i=1,maxUsers do
+            local yOff = (i-1)*rowH
+            local uBg = mkSq(uiX+rx, uiY+ry+yOff, cw, rowH-2, C.ROWBG, true, 1, 7, nil, 4)
+            local uLn = mkSq(uiX+rx, uiY+ry+yOff+rowH-2, cw, 1, C.DIV, true, 0.5, 7)
+            local uName = mkTx("", uiX+rx+rowH+8, uiY+ry+yOff+rowH/2-7, 13, C.WHITE, false, 8)
+            uBg.Visible = false; uName.Visible = false; uLn.Visible = false
+            table.insert(users, {bg=uBg, ln=uLn, name=uName, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false})
+        end
+        local b={tab=tab,isUserList=true,bg=bg,lbl=bg,ln=nil,users=users,
+                 rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,maxUsers=maxUsers,pad=pad,rowH=rowH}
+        table.insert(btns,b); return #btns
+    end
     local function CONTENT_H() return uiCurrentH - L.TOPBAR - L.FOOTER end
-    
     recalculateLayout = function(tname)
         local currentY = 10 
         local lastHeaderY = 0
@@ -912,16 +1019,17 @@ function UILib.Window(titleA, titleB, gameName)
                         if b._collapsing then
                             b._collapsing = false
                             b._collapseTarget = nil
-                            -- snap currentRY partway to target so items aren't cramped
                             b.currentRY = b.currentRY + (ry - b.currentRY) * 0.6
                         end
                         bShow(b, true)
                         bPos(b)
                         currentY = currentY + b.ch + 8
+                        if b.isDropdown and b.open then
+                            currentY = currentY + (#b.options * b.ch)
+                        end
                     end
                 end
             else
-                -- explicitly hide inactive tabs instantly so they don't bleed through fades
                 if showSet[b.bg] then bShow(b, false) end
             end
         end
@@ -936,20 +1044,18 @@ function UILib.Window(titleA, titleB, gameName)
         local newMax = math.max(0, (tabRowY[tname] or 0) - CONTENT_H() + 8)
         tabScroll[tname] = clamp(tabScroll[tname] or 0, 0, newMax)
     end
-
     local function getTabAPI(tabName)
         if tabAPI[tabName] then return tabAPI[tabName] end
         local api = {}
-        tabRowY[tabName] = 10 -- Start with padding
+        tabRowY[tabName] = 10 
         local currentSection = nil
-
         local function nextY(h)
             local y = tabRowY[tabName]
             tabRowY[tabName] = y + h
             return y
         end
-
         function api:Div(lbl, collapsible)
+            if collapsible == nil then collapsible = true end
             local idx = addDiv(tabName, lbl, nextY(22), collapsible)
             if collapsible then
                 btns[idx]._sectionStart = idx
@@ -982,7 +1088,7 @@ function UILib.Window(titleA, titleB, gameName)
         function api:Dropdown(lbl, options, initIdx, cb)
             local y = nextY(L.ROW_H + 4)
             local idx = addDropdown(tabName, lbl, y, options, initIdx, cb)
-            if currentSection then btns[idx].section = currentSection end
+            if currentSection and btns[idx] then btns[idx].section = currentSection end
         end
         function api:Log(lines, starFirst)
             local lineH = 18
@@ -990,12 +1096,72 @@ function UILib.Window(titleA, titleB, gameName)
             local h = starH + (#lines - (starFirst and 1 or 0)) * lineH + 20 + 6
             local y = nextY(h)
             local idx = addLog(tabName, lines, y, starFirst)
-            if currentSection then btns[idx].section = currentSection end
+            if currentSection and btns[idx] then btns[idx].section = currentSection end
+            
+            local logApi = {}
+            function logApi:SetLines(newLines)
+                if not btns[idx] or not btns[idx].lbls then return end
+                for i = 1, #btns[idx].lbls do
+                    local lb = btns[idx].lbls[i]
+                    if newLines[i] then
+                        lb.Text = newLines[i]
+                        lb.Visible = showSet[btns[idx].bg] and true or false
+                    else
+                        lb.Text = ""
+                        lb.Visible = false
+                    end
+                end
+            end
+            return logApi
+        end
+        function api:UserList(maxUsers)
+            maxUsers = maxUsers or 10
+            local h = (maxUsers * 40) + 10 + 6
+            local y = nextY(h)
+            local idx = addUserList(tabName, maxUsers, y)
+            if currentSection and btns[idx] then btns[idx].section = currentSection end
+            local ulApi = {}
+            function ulApi:SetUsers(names, localName)
+                if not btns[idx] or not btns[idx].users then return end
+                local b = btns[idx]
+                local parentVis = showSet[b.bg] and true or false
+                for i, u in ipairs(b.users) do
+                    if names[i] then
+                        u._active = true
+                        local display = names[i]
+                        if localName and names[i] == localName then
+                            display = display .. "  <-- you"
+                        end
+                        u.name.Text = display
+                        u.name.Color = (localName and names[i] == localName) and C.ACCENT or C.WHITE
+                        u.bg.Visible = parentVis
+                        if u.ln then u.ln.Visible = parentVis end
+                        u.name.Visible = parentVis
+                    else
+                        u._active = false
+                        u.name.Text = ""
+                        u.bg.Visible = false
+                        if u.ln then u.ln.Visible = false end
+                        u.name.Visible = false
+                        for pi=1, (u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible = false end
+                        end
+                    end
+                end
+            end
+            function ulApi:LoadAvatar(userIndex, pixelsData)
+                if not btns[idx] or not btns[idx].users then return end
+                local u = btns[idx].users[userIndex]
+                if u then UILib:LoadAvatarToRow(u, pixelsData) end
+            end
+            function ulApi:GetMaxUsers()
+                return maxUsers
+            end
+            return ulApi
         end
         tabAPI[tabName] = api
         return api
     end
-
     local function applyTheme(name)
         local t=THEMES[name]; if not t then return end
         C.ACCENT=t.ACCENT;  C.BG=t.BG;       C.SIDEBAR=t.SIDEBAR
@@ -1077,12 +1243,10 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
     end
-
     function win:Init(defaultTab, charLabelFn, notifFn)
         local notif = notifFn or function(msg,title,dur)
             pcall(function() notify(msg, title or titleA.." "..titleB, dur or 3) end)
         end
-
         dShadow  = mkD(mkSq(uiX-2,uiY-2,L.W+4,L.H+4,   C.SHADOW,true,0.5,0,nil,12))
         dMainBg  = mkD(mkSq(uiX,uiY,L.W,L.H,            C.BG,    true,1,1,nil,10))
         dGlow1   = mkD(mkSq(uiX-1,uiY-1,L.W+2,L.H+2,   C.ACCENT,false,0.9,1,1,11))
@@ -1093,10 +1257,27 @@ function UILib.Window(titleA, titleB, gameName)
         dTopFill = mkD(mkSq(uiX+1,uiY+L.TOPBAR-5,L.W-2,7,C.TOPBAR,true,1,3))
         dTopLine = mkD(mkLn(uiX+1,uiY+L.TOPBAR,uiX+L.W-1,uiY+L.TOPBAR,C.BORDER,4,1))
         dTitleW  = mkD(mkTx(titleA,  uiX+14,     uiY+12,14,C.WHITE, false,9,true))
-        dTitleA  = mkD(mkTx(titleB,  uiX+14+(#titleA*9)+6, uiY+12,14,C.ACCENT,false,9,true))
+        dTitleA  = mkD(mkTx(titleB,  uiX+14+(#titleA*8)+3, uiY+12,14,C.ACCENT,false,9,true))
         local gameNameShort = gameName or ""
-        local titlesEndX = 14+(#titleA*9)+6+(#titleB*9)-24
-        dTitleG  = mkD(mkTx(gameNameShort,uiX+titlesEndX, uiY+12,13,C.ORANGE,false,9,false))
+        dTitleG  = mkD(mkTx(gameNameShort, uiX+100, uiY+12,13,C.ORANGE,false,9,false))
+        if gameNameShort == "" or gameNameShort == "Game Name" then
+            dTitleG.Text = ""
+            task.spawn(function()
+                pcall(function()
+                    local gn
+                    if type(getgamename) == "function" then
+                        gn = getgamename()
+                    else
+                        local info = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
+                        gn = info and info.Name
+                    end
+                    if gn then
+                        dTitleG.Text = gn
+                        if dMiniTitleG then dMiniTitleG.Text = gn end
+                    end
+                end)
+            end)
+        end
         dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
         dDotY    = mkD(mkSq(uiX+L.W-55,uiY+15,8,8,C.YELLOW,true,1,9,nil,3))
         dDotR    = mkD(mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3))
@@ -1106,13 +1287,10 @@ function UILib.Window(titleA, titleB, gameName)
         dFooter  = mkD(mkSq(uiX+1,uiY+L.H-L.FOOTER,L.W-2,L.FOOTER-1,C.TOPBAR,true,1,3,nil,6))
         dFotLine = mkD(mkLn(uiX+1,uiY+L.H-L.FOOTER,uiX+L.W-1,uiY+L.H-L.FOOTER,C.BORDER,4,1))
         dCharLbl = mkD(mkTx("",0,0,11,C.GRAY,false,9))
-        -- scrollbar created OUTSIDE allDrawings so applyFade can never touch them
         dScrollBg = mkSq(uiX+L.W-6,uiY+L.TOPBAR+2,4,L.H-L.TOPBAR-L.FOOTER-4,Color3.fromRGB(18,20,28),true,1,4,nil,2)
         dScrollBg.Visible = false
         dScrollThumb = mkSq(uiX+L.W-6,uiY+L.TOPBAR+2,4,20,C.ACCENT,true,1,5,nil,2)
         dScrollThumb.Visible = false
-
-
         tipBg   = mkSq(0,0,10,10,Color3.fromRGB(10,13,24),true,1,12,nil,4)
         pcall(function() tipBg.Corner=4 end)
         tipBg.Visible=false
@@ -1123,11 +1301,9 @@ function UILib.Window(titleA, titleB, gameName)
         tipLbl.Visible=false
         tipDesc = mkTx("",0,0,10,Color3.fromRGB(130,140,170),false,13,false)
         tipDesc.Visible=false
-
         baseUI={dShadow,dGlow2,dGlow1,dMainBg,dBorder,dTopBar,dTopFill,dTopLine,
                 dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR,dSide,dSideLn,dContent,
                 dFooter,dFotLine,dCharLbl}
-
         local tabNames = {}
         for name,_ in pairs(tabAPI) do table.insert(tabNames,name) end
         for i,name in ipairs(win._tabOrder) do
@@ -1141,7 +1317,6 @@ function UILib.Window(titleA, titleB, gameName)
             setShow(tlW,false); setShow(tlG,false)
             table.insert(tabObjs,{bg=tbg,acc=tacc,lbl=tlW,lblG=tlG,name=name,sel=isSel,lt=isSel and 1 or 0,relTY=relTY})
         end
-
         dMiniShadow  = mkSq(uiX-2,uiY-2,L.W+4,L.MINI_H+4,C.SHADOW,true,0.5,0,nil,12)
         dMiniBg      = mkSq(uiX,uiY,L.W,L.MINI_H,         C.BG,    true,1,1,nil,10)
         dMiniGlow1   = mkSq(uiX-1,uiY-1,L.W+2,L.MINI_H+2, C.ACCENT,false,0.9,1,1,11)
@@ -1150,8 +1325,8 @@ function UILib.Window(titleA, titleB, gameName)
         dMiniBorder  = mkSq(uiX,uiY,L.W,L.MINI_H,         C.BORDER,false,0.2,3,1,10)
         dMiniTopBar  = mkSq(uiX+1,uiY+1,L.W-2,L.TOPBAR,   C.TOPBAR,true,1,3,nil,9)
         dMiniTitleW  = mkTx(titleA,  uiX+14,    uiY+12,14,C.WHITE, false,9,true)
-        dMiniTitleA  = mkTx(titleB,  uiX+14+(#titleA*9)+6, uiY+12,14,C.ACCENT,false,9,true)
-        dMiniTitleG  = mkTx(gameNameShort,uiX+titlesEndX,  uiY+12,13,C.ORANGE,false,9,false)
+        dMiniTitleA  = mkTx(titleB,  uiX+14+(#titleA*8)+3, uiY+12,14,C.ACCENT,false,9,true)
+        dMiniTitleG  = mkTx(dTitleG.Text, uiX+100,  uiY+12,13,C.ORANGE,false,9,false)
         dMiniKeyLbl  = mkTx("F1",    uiX+L.W-22,uiY+14,11,C.GRAY,  false,9)
         dMiniDotG    = mkSq(uiX+L.W-55,uiY+15,8,8,C.ACCENT,true,1,9,nil,3)
         dMiniDotR    = mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3)
@@ -1166,20 +1341,15 @@ function UILib.Window(titleA, titleB, gameName)
                       dMiniTopBar,dMiniTitleW,dMiniTitleA,dMiniTitleG,
                       dMiniKeyLbl,dMiniDotG,dMiniDotR,dMiniDivLn,dMiniActiveBg}
         for _,d in ipairs(miniDrawings) do d.Visible=false end
-
         currentTab=defaultTab
-        -- Wait to show tab until loading finishes
         notif("Loaded on "..(gameName or ""),"Check it Interface",4)
         updateLoaderFrame = nil
-        
-        -- AVATAR + WELCOME TEXT SETUP
         local uname = game:GetService("Players").LocalPlayer.Name
         dWelcomeTxt = mkTx("Welcome, ", 0, 0, 13, C.WHITE, false, 5, true)
         dWelcomeTxt.Visible = true
         dNameTxt = mkTx(uname, 0, 0, 13, C.WHITE, false, 5, false)
         dNameTxt.Visible = true
         avatarDrawings = {}
-        
         task.spawn(function()
             local url = "https://api.luard.co/v1/user?v5="..uname.."&res=64"
             local s, code = pcall(function() return game:HttpGet(url) end)
@@ -1187,29 +1357,30 @@ function UILib.Window(titleA, titleB, gameName)
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
-                    -- Render downsampled avatar (take every 3rd pixel to fit ~21x21)
                     local step = 3
-                    local pxSize = 1 -- 1 pixel wide drawings
+                    local pxSize = 1
                     for y = 1, 64, step do
                         for x = 1, 64, step do
-                            -- calculate distance from center (32.5, 32.5)
                             local dx = x - 32.5
                             local dy = y - 32.5
                             if (dx*dx + dy*dy) <= (31.5 * 31.5) then
-                                local p = pData[y] and pData[y][x]
+                                local cy = math.min(64, y + 1)
+                                local cx = math.min(64, x + 1)
+                                local p = pData[cy] and pData[cy][cx]
+                                if not p then p = pData[y] and pData[y][x] end
                                 if p and p.a and p.a > 0.1 then
                                     local sq = Drawing.new("Square")
                                     sq.Size = Vector2.new(pxSize, pxSize)
                                     sq.Color = Color3.fromRGB(p.r, p.g, p.b)
                                     sq.Filled = true; sq.Visible = true; sq.ZIndex = 5
                                     sq.Transparency = p.a or 1
-                                    -- Store abstract grid coords for updating position later
-                                    table.insert(avatarDrawings, {d=sq, gx=math.floor((x-1)/step), gy=math.floor((y-1)/step)})
+                                    table.insert(avatarDrawings, {d=sq, gx=math.floor((x-1)/step)*pxSize, gy=math.floor((y-1)/step)*pxSize})
                                 end
                             end
                         end
                     end
                 end
+                _G.avatar_data = nil
             end
         end)
 
@@ -1227,56 +1398,42 @@ function UILib.Window(titleA, titleB, gameName)
                 "almost there..."
             }
             local chosenDesc = descriptions[math.random(1, #descriptions)]
-
             local dBg = Drawing.new("Square")
             dBg.Filled=true; dBg.ZIndex=15; dBg.Color=C.BG
             pcall(function() dBg.Corner = 6 end)
-            
             local dTxt = Drawing.new("Text")
             dTxt.Size=18; dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
             pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)
-
             local dDesc = Drawing.new("Text")
             dDesc.Size=13; dDesc.Color=Color3.fromRGB(150, 150, 160); dDesc.Center=true; dDesc.Outline=true; dDesc.ZIndex=16
             pcall(function() dDesc.Font=Drawing.Fonts.Minecraft end)
-            
             local dBarOuter = Drawing.new("Square")
             dBarOuter.Filled=true; dBarOuter.ZIndex=16; dBarOuter.Color=Color3.fromRGB(12, 12, 16)
             pcall(function() dBarOuter.Corner = 4 end)
-
             local dBarBg = Drawing.new("Square")
             dBarBg.Filled=true; dBarBg.ZIndex=17; dBarBg.Color=Color3.fromRGB(25, 25, 30)
             pcall(function() dBarBg.Corner = 2 end)
-
             local dBarFg = Drawing.new("Square")
             dBarFg.Filled=true; dBarFg.ZIndex=18; dBarFg.Color=C.ACCENT
             pcall(function() dBarFg.Corner = 2 end)
-            
             local dBarGlow = Drawing.new("Square")
             dBarGlow.Filled=true; dBarGlow.ZIndex=16; dBarGlow.Color=C.ACCENT
             pcall(function() dBarGlow.Corner = 8 end)
-            
             local function setLoadPos(alpha, text, fillAmt, textDesc)
                 dBg.Position = Vector2.new(uiX, uiY); dBg.Size = Vector2.new(L.W, L.H)
                 dBg.Transparency = alpha
-                
                 dTxt.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 26)
                 dTxt.Text = text
                 dTxt.Transparency = alpha
-                
                 local bw = 240; local bh = 8
                 local bx = uiX + L.W/2 - bw/2; local by = uiY + L.H/2 + 2
-                
                 dBarOuter.Position = Vector2.new(bx - 3, by - 3); dBarOuter.Size = Vector2.new(bw + 6, bh + 6)
                 dBarOuter.Transparency = alpha * 0.8
-                
                 dBarBg.Position = Vector2.new(bx, by); dBarBg.Size = Vector2.new(bw, bh)
                 dBarBg.Transparency = alpha
-                
                 local fillW = bw * fillAmt
                 dBarFg.Position = Vector2.new(bx, by); dBarFg.Size = Vector2.new(fillW, bh)
                 dBarFg.Transparency = alpha
-                
                 if fillW > 0 then
                     dBarGlow.Position = Vector2.new(bx - 2, by - 2)
                     dBarGlow.Size = Vector2.new(fillW + 4, bh + 4)
@@ -1285,7 +1442,6 @@ function UILib.Window(titleA, titleB, gameName)
                 else
                     dBarGlow.Visible = false
                 end
-
                 local targetString = textDesc or chosenDesc
                 dDesc.Position = Vector2.new(uiX + L.W/2, by + 18)
                 if textDesc == "" then
@@ -1294,13 +1450,10 @@ function UILib.Window(titleA, titleB, gameName)
                     dDesc.Text = math.floor(fillAmt*100).."% - "..targetString
                 end
                 dDesc.Transparency = alpha
-
                 local vis = alpha>0
                 dBg.Visible = vis; dTxt.Visible = vis; dDesc.Visible = vis
                 dBarBg.Visible = vis; dBarFg.Visible = vis
                 dBarOuter.Visible = vis
-
-                -- ONCE LOADING IS DONE (ALPHA = 0), SHOW MAIN MENU
                 if alpha <= 0 then
                     for _,d in ipairs(baseUI) do setShow(d,true) end
                     for _,t2 in ipairs(tabObjs) do
@@ -1310,7 +1463,6 @@ function UILib.Window(titleA, titleB, gameName)
                     showTab(currentTab)
                 end
             end
-
             updateLoaderFrame = function()
                 if dBg and dBg.Visible then
                     dBg.Position = Vector2.new(uiX, uiY)
@@ -1325,11 +1477,8 @@ function UILib.Window(titleA, titleB, gameName)
                     dDesc.Position = Vector2.new(uiX + L.W/2, by + 18)
                 end
             end
-
-            -- Organic Fake Loading Loop
             local fillAmt = 0.0
             setLoadPos(1, gameName.." Initializing...", fillAmt)
-            
             task.spawn(function()
                 local progressStages = {
                 {pct=0.15, text="bypassing security...",                   delay=0.6},
@@ -1340,9 +1489,7 @@ function UILib.Window(titleA, titleB, gameName)
                 {pct=0.98, text=chosenDesc,                                delay=0.3},
                 {pct=1.00, text="done.",                                   delay=0.4}
             }
-
             for _, stage in ipairs(progressStages) do
-                -- Lerp towards the target chunk over the specified delay
                 local startFill = fillAmt
                 local frames = math.floor(stage.delay * 60)
                 for f = 1, frames do
@@ -1352,28 +1499,23 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 task.wait(0.1)
             end
-
-            -- Fade Out
             local t2 = tick(); local durOut = 0.3
             while tick()-t2 < durOut and not destroyed do
                 task.wait()
                 setLoadPos(1 - ((tick()-t2)/durOut), "Ready!", 1, "")
             end
-            
             pcall(function() dBg:Remove() end)
             pcall(function() dTxt:Remove() end)
             pcall(function() dDesc:Remove() end)
             pcall(function() dBarBg:Remove() end)
             isLoading = false
         end)
-
         task.spawn(function()
         while not destroyed do
             task.wait()
             local _rbxOk, _rbxActive = pcall(function() return isrbxactive() end)
             if not _rbxOk or _rbxActive then
                 local clicking=ismouse1pressed()
-
             local keyDown=iskeypressed(menuKey)
             if keyDown and not wasMenuKey and not isLoading then
                 if miniClosed then
@@ -1394,17 +1536,13 @@ function UILib.Window(titleA, titleB, gameName)
                 end
             end
             wasMenuKey=keyDown
-
-            -- mini UI mode
             if minimized and not miniClosed then
-                -- animate mini glow
                 local t=tick()*1.0
                 for i,sq in ipairs(miniGlowLines) do
                     local p=t+glowPhase[i]
                     sq.Color = lerpC(C.ACCENT, C.WHITE, math.abs(math.sin(p))*0.3)
                     sq.Transparency=(i==1 and 0.6 or 0.75)+0.25*math.abs(math.sin(p*0.5))
                 end
-                -- pulse active labels
                 local pt=tick()*0.8
                 for i,lb in ipairs(miniActiveLbls) do
                     if lb.Text~="" then
@@ -1415,11 +1553,9 @@ function UILib.Window(titleA, titleB, gameName)
                         lb.Visible=false
                     end
                 end
-                -- mini clicks
                 local miniOp=clamp((tick()-miniFadedAt)/MINI_FADE_DUR,0,1)
                 if clicking and not wasClicking and (not miniFadeIn or miniOp>0.8) and not miniFadeOut then
                     if inBox(uiX+L.W-46,uiY+11,12,12) then
-                        -- red: close mini
                         miniClosed=true
                         for _,d in ipairs(miniDrawings) do d.Visible=false end
                         for _,l in ipairs(miniActiveLbls) do l.Visible=false end
@@ -1428,7 +1564,6 @@ function UILib.Window(titleA, titleB, gameName)
                         dScrollBg.Visible = false
                         dScrollThumb.Visible = false
                     elseif inBox(uiX+L.W-59,uiY+11,12,12) then
-                        -- green: restore full
                         restoreFullMenu()
                     elseif inBox(uiX,uiY,L.W,L.MINI_H) then
                         miniDragging=true
@@ -1445,16 +1580,13 @@ function UILib.Window(titleA, titleB, gameName)
                 wasClicking=clicking
             end
             if not minimized and not isLoading then
-                -- full menu mode
                 for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
-                -- tab lerp
                 for _,t in ipairs(tabObjs) do
                     local tgt=t.sel and 1 or 0
                     t.lt=t.lt+(tgt-t.lt)*0.15
                     t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,t.lt)
                     t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,t.lt)
                 end
-                -- toggle lerp
                 for _,b in ipairs(btns) do
                     if b.isTog and b.tog and b.tab==currentTab then
                         local tgt=b.state and 1 or 0
@@ -1468,7 +1600,6 @@ function UILib.Window(titleA, titleB, gameName)
                         b.dot.Position=Vector2.new(uiX+dox+2+(L.TOG_W-L.TOG_H)*b.lt, uiY+dcy-sc+b.ch/2-L.TOG_H/2+2)
                     end
                 end
-                -- glow animation
                 do
                     local t=tick()*1.0
                     for i,sq in ipairs(glowLines) do
@@ -1476,12 +1607,10 @@ function UILib.Window(titleA, titleB, gameName)
                         sq.Color = lerpC(C.ACCENT, C.WHITE, math.abs(math.sin(p))*0.3)
                         sq.Transparency=(i==1 and 0.6 or 0.75)+0.25*math.abs(math.sin(p*0.5))
                     end
-                    -- Welcome text glow
                     if dWelcomeTxt then
                         dWelcomeTxt.Color = lerpC(C.WHITE, Color3.fromRGB(150, 255, 170), (math.sin(tick()*2)+1)/2)
                     end
                 end
-                -- tooltip fade
                 if tipBg then
                     local prog=clamp((tick()-tipFadedAt)/TIP_FADE,0,1)
                     local op=tipFadeIn and prog or (tipFadeOut and (1-prog) or (tipFadeIn and 1 or 0))
@@ -1494,41 +1623,40 @@ function UILib.Window(titleA, titleB, gameName)
                         tipLbl.Transparency=op; tipDesc.Transparency=op
                     end
                 end
-                -- ? badge glow on hover
                 for _,b in ipairs(btns) do
-                    if b.tab==currentTab and b.desc and b.qbg and showSet[b.qbg] then
-                        if showSet[b.bg] and inBox(uiX+(b.rx+b.cw-L.TOG_W-8)-22,uiY+(b.currentRY or b.ry)-(tabScroll[currentTab] or 0)+b.ch/2-7,14,14) then hov=b; break end
+                    if b.tab==currentTab and showSet[b.bg] and not b.isDiv and not b.isLog then
+                        local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
+                        if inBox(uiX+b.rx, itemY, b.cw, b.ch) then
+                            b.bg.Color = lerpC(C.ROWBG, C.WHITE, 0.06)
+                        else
+                            if not b.isAct or not b.customCol then
+                                b.bg.Color = C.ROWBG
+                            end
                         end
                     end
                 end
-
+            end
                 applyFade()
-                
-                -- update avatar and welcome text positions
                 if dWelcomeTxt and dNameTxt then
                     local wX = uiX + 42
                     local tY = uiY + uiCurrentH - L.FOOTER + 9
                     dWelcomeTxt.Position = Vector2.new(wX, tY)
                     dWelcomeTxt.Transparency = menuOpen and 1 or 0
                     dWelcomeTxt.Visible = menuOpen
-                    dNameTxt.Position = Vector2.new(wX + 64, tY) -- offset by "Welcome, " width
+                    dNameTxt.Position = Vector2.new(wX + 64, tY) 
                     dNameTxt.Transparency = menuOpen and 1 or 0
                     dNameTxt.Visible = menuOpen
                 end
-                
                 if dCharLbl then
                     dCharLbl.Transparency = menuOpen and 1 or 0
                     dCharLbl.Visible = menuOpen
                 end
-                
                 local ax = uiX + 12
                 local ay = uiY + uiCurrentH - L.FOOTER + 6
                 for _,ap in ipairs(avatarDrawings or {}) do
                     ap.d.Position = Vector2.new(ax + ap.gx, ay + ap.gy)
                     ap.d.Visible = menuOpen
                 end
-
-                -- animate widget positions (collapse/expand)
                 for _,b in ipairs(btns) do
                     if b.currentRY ~= nil and b.tab==currentTab then
                         if b._collapsing and b._collapseTarget then
@@ -1551,31 +1679,27 @@ function UILib.Window(titleA, titleB, gameName)
                                 if showSet[b.bg] then bPos(b) end
                             end
                         end
-
                     end
                 end
-                -- animate window height for dropdown
                 local dt = tick() - lastTick
                 lastTick = tick()
                 if math.abs(uiCurrentH - uiTargetH) > 2.0 then
                     uiCurrentH = uiCurrentH + (uiTargetH - uiCurrentH) * clamp(dt * UI_RESIZE_SPD, 0, 1)
                     updatePos()
                     _wasResizing = true
-                    -- clip content items and tabs to current window height during resize
                     local contentBottom = uiY + uiCurrentH - L.FOOTER
                     local contentTop = uiY + L.TOPBAR
                     for _,b in ipairs(btns) do
                         if b.tab == currentTab then
                             local isCollapsed = b.section and _collapseSections[b.section]
                             local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
-                            if itemY + b.ch > contentBottom or itemY < contentTop or isCollapsed then
+                            if itemY > contentBottom or itemY + b.ch < contentTop or isCollapsed then
                                 if showSet[b.bg] then bShow(b, false) end
                             else
                                 if not showSet[b.bg] then bShow(b, true); bPos(b) end
                             end
                         end
                     end
-                    -- clip sidebar tabs during resize
                     for _,t in ipairs(tabObjs) do
                         local tabY = uiY + t.relTY
                         if tabY + 26 > contentBottom then
@@ -1595,14 +1719,13 @@ function UILib.Window(titleA, titleB, gameName)
                         uiCurrentH = uiTargetH
                         updatePos()
                     end
-                    -- re-show items and tabs only once when resize finishes or actively scroll
                     local contentBottom = uiY + uiCurrentH - L.FOOTER
                     local contentTop = uiY + L.TOPBAR
                     for _,b in ipairs(btns) do
                         if b.tab == currentTab then
                             local isCollapsed = b.section and _collapseSections[b.section]
                             local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
-                            if itemY + b.ch > contentBottom or itemY < contentTop or isCollapsed then
+                            if itemY > contentBottom or itemY + b.ch < contentTop or isCollapsed then
                                 if showSet[b.bg] then bShow(b, false) end
                             else
                                 if not showSet[b.bg] then bShow(b, true) end
@@ -1645,7 +1768,6 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
-                -- tooltip hover
                 if tipBg then
                     local hov=nil
                     for _,b in ipairs(btns) do
@@ -1674,7 +1796,6 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
-                -- prev tab cleanup
                 if prevTab and (tick()-tabSwitchedAt)>=TAB_FADE_DUR then
                     for _,b in ipairs(btns) do if b.tab==prevTab then bShow(b,false) end end
                     for _,d in ipairs(allDrawings) do if tabSet[d]=="prev" then tabSet[d]=nil end end
@@ -1688,7 +1809,6 @@ function UILib.Window(titleA, titleB, gameName)
                         handleDrag = true
                     end
                 end
-                
                 if clicking and not wasClicking and mOp>0.5 and not isLoading then
                     if inBox(uiX+L.W-59,uiY+11,12,12) then
                         handleDrag = false
@@ -1703,12 +1823,10 @@ function UILib.Window(titleA, titleB, gameName)
                             refreshMiniLabels(); showMiniUI(true); updateMiniPos()
                             for _,lb in ipairs(miniActiveLbls) do if lb.Text~="" then lb.Visible=true end end
                         end)
-                    -- red dot: close
                     elseif inBox(uiX+L.W-46,uiY+11,12,12) then
                         handleDrag=false
                         menuOpen=false; menuToggledAt=tick()
                     end
-                    -- dropdown option clicks (Priority check)
                     local optConsumed = false
                     if openDropdown then
                         local bd=openDropdown
@@ -1725,21 +1843,19 @@ function UILib.Window(titleA, titleB, gameName)
                                 bd.open=false; bd.arrow.Text="v"
                                 openDropdown=nil
                                 resizeForDropdown(bd,false)
+                                recalculateLayout(currentTab)
                                 if bd.cb then bd.cb(bd.options[i],i) end
                                 break
                             end
                         end
                     end
-
                     if not optConsumed then
-                        -- tabs
                         for _,t in ipairs(tabObjs) do
                             if inBox(uiX+7,uiY+t.relTY,L.SIDEBAR-14,26) then 
                                 handleDrag=false
                                 switchTab(t.name) 
                             end
                         end
-                        -- buttons
                         for i,b in ipairs(btns) do
                             if b.tab==currentTab and not b.isSlider and showSet[b.bg] then
                                 if inBox(uiX+b.rx,uiY+(b.currentRY or b.ry)-(tabScroll[currentTab] or 0),b.cw,b.ch) then
@@ -1763,7 +1879,10 @@ function UILib.Window(titleA, titleB, gameName)
                                             for _,o in ipairs(prev.optBgs) do o.targetAlpha=0 end
                                             resizeForDropdown(prev,false)
                                             openDropdown=nil
-                                            if prev == b then break end
+                                            if prev == b then 
+                                                recalculateLayout(currentTab)
+                                                break 
+                                            end
                                         end
                                         b.open=not b.open
                                         if b.arrow then b.arrow.Text=b.open and "^" or "v" end
@@ -1782,6 +1901,7 @@ function UILib.Window(titleA, titleB, gameName)
                                                 setShow(o.bg, true); setShow(o.ln, true); setShow(o.lb, true)
                                             end
                                         end
+                                        recalculateLayout(currentTab)
                                     elseif b.isColorPicker then
                                         local ax2=uiX+b.rx; local ay2=uiY+b.ry
                                         local totalW=(#b.swatches*19)-5
@@ -1817,7 +1937,6 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
-                -- sliders
                 for _,b in ipairs(btns) do
                     if b.isSlider and b.tab==currentTab and menuOpen then
                         local ax=uiX+b.rx+8; local ay=uiY+(b.currentRY or b.ry)-(tabScroll[currentTab] or 0)+b.ch-11
@@ -1844,7 +1963,6 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
-                -- scroll logic
                 local maxSc=math.max(0,(tabRowY[currentTab] or 0)-CONTENT_H()+8)
                 pcall(function()
                     if isLoading then return end
@@ -1854,8 +1972,6 @@ function UILib.Window(titleA, titleB, gameName)
                         _scrollDelta=0
                     end
                 end)
-                
-                -- scrollbar drag
                 if maxSc>0 and menuOpen then
                     local sbgY = uiY+L.TOPBAR+2
                     local sbgH = uiCurrentH-L.TOPBAR-L.FOOTER-4
@@ -1863,14 +1979,12 @@ function UILib.Window(titleA, titleB, gameName)
                     local thumbH = math.max(20, (CONTENT_H()/(tabRowY[currentTab] or CONTENT_H())) * sbgH)
                     dScrollThumb.Size = Vector2.new(4, thumbH)
                     dScrollThumb.Position = Vector2.new(uiX+L.W-6, sbgY + frac*(sbgH-thumbH))
-                    
                     if clicking and not wasClicking and mOp>0.5 then
                         if inBox(uiX+L.W-10, sbgY, 12, sbgH) then
                             handleDrag = false
                             scrollDragging = true
                             scrollDragOffY = mouse.Y - dScrollThumb.Position.Y
                             if not inBox(uiX+L.W-10, dScrollThumb.Position.Y, 12, thumbH) then
-                                -- clicked on track, jump to it
                                 scrollDragOffY = thumbH/2
                                 local rawY = mouse.Y - sbgY - scrollDragOffY
                                 local newFrac = clamp(rawY/(sbgH-thumbH), 0, 1)
@@ -1885,12 +1999,9 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                 end
                 if not clicking then scrollDragging = false end
-                
-                -- scrollbar visibility
                 if dScrollThumb and dScrollBg then
                     local showSc = (maxSc > 0)
                     local op = dMainBg.Transparency
-                    
                     if not showSc or uiCurrentH < L.H - 5 then
                         dScrollThumb.Visible = false
                         dScrollBg.Visible = false
@@ -1904,16 +2015,12 @@ function UILib.Window(titleA, titleB, gameName)
                         dScrollBg.Visible = false
                     end
                 end
-
-                -- drag
                 if handleDrag then
                     dragging=true; dragOffX=mouse.X-uiX; dragOffY=mouse.Y-uiY
                 end
-
                 if not clicking then
                     dragging=false
                 end
-
                 if dragging and clicking then
                     local vpW,vpH=getViewport()
                     local tx=clamp(mouse.X-dragOffX, 0, vpW-L.W)
@@ -1923,7 +2030,6 @@ function UILib.Window(titleA, titleB, gameName)
                     if isLoading and updateLoaderFrame then updateLoaderFrame() end
                 end
                 wasClicking=clicking
-                -- key rebind
                 if listenKey then
                     for k=0x08,0xDD do
                         if iskeypressed(k) and k~=0x01 and k~=0x02 then
@@ -1936,35 +2042,35 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
-                -- char label
                 if charLabelFn and dCharLbl then 
                     local nt = charLabelFn()
                     if dCharLbl.Text ~= nt then
                         dCharLbl.Text = " | " .. nt
                     end
                 end
-            end -- if not minimized and not isLoading
-        end -- isrbxactive
-    end) -- spawn
-    end -- Init
-
-    -- Tab factory
+            end 
+        end 
+    end) 
+    end 
     win._tabOrder = {}
     function win:Tab(name)
         table.insert(win._tabOrder, name)
         return getTabAPI(name)
     end
-
     function win:SettingsTab(destroyCb)
         local s = self:Tab("Settings")
+        s:Div("UI")
+        local themes = {"Check it", "Dark", "Moon", "Grass", "Light"}
+        s:Dropdown("Theme", themes, 1, function(val)
+            win:ApplyTheme(val)
+        end)
         s:Div("KEYBIND")
-        iKeyInfo = s:Button("Menu Key: F1",   C.ROWBG, nil, nil)
-        iKeyBind = s:Button("Click to Rebind", Color3.fromRGB(14,20,40), nil, nil)
+        iKeyInfo = s:Button("Menu Key: F1", C.ROWBG)
+        iKeyBind = s:Button("Click to Rebind", Color3.fromRGB(14,20,40))
         s:Div("DANGER")
         s:Button("Destroy Menu", Color3.fromRGB(28,7,7), destroyCb, C.RED)
         return s
     end
-
     function win:Destroy()
         for _,b in ipairs(btns) do
             if b.isDropdown then
@@ -1979,19 +2085,35 @@ function UILib.Window(titleA, titleB, gameName)
         pcall(function() notify("UI destroyed.", titleA.." "..titleB, 3) end)
         for _,d in ipairs(allDrawings) do pcall(function() d:Remove() end) end
         for _,d in ipairs(glowLines) do pcall(function() d:Remove() end) end
-            if dScrollBg then pcall(function() dScrollBg:Remove() end) end
-            if dScrollThumb then pcall(function() dScrollThumb:Remove() end) end
-            if dWelcomeTxt then pcall(function() dWelcomeTxt:Remove() end) end
-            if dNameTxt then pcall(function() dNameTxt:Remove() end) end
-            pcall(function() if dCharLbl then dCharLbl:Remove() end end)
-            for _,ap in ipairs(avatarDrawings or {}) do pcall(function() ap.d:Remove() end) end
-            if tipBg then pcall(function() tipBg:Remove() end) end
+        if dScrollBg then pcall(function() dScrollBg:Remove() end) end
+        if dScrollThumb then pcall(function() dScrollThumb:Remove() end) end
+        if dWelcomeTxt then pcall(function() dWelcomeTxt:Remove() end) end
+        if dNameTxt then pcall(function() dNameTxt:Remove() end) end
+        pcall(function() if dCharLbl then dCharLbl:Remove() end end)
+        for _,ap in ipairs(avatarDrawings or {}) do pcall(function() ap.d:Remove() end) end
+        if tipBg then pcall(function() tipBg:Remove() end) end
+        if tipBorder then pcall(function() tipBorder:Remove() end) end
+        if tipLbl then pcall(function() tipLbl:Remove() end) end
+        if tipDesc then pcall(function() tipDesc:Remove() end) end
         for _,d in ipairs(miniDrawings) do pcall(function() d:Remove() end) end
         for _,l in ipairs(miniActiveLbls) do pcall(function() l:Remove() end) end
+        for _,b in ipairs(btns) do
+            if b.isUserList then
+                for _, u in ipairs(b.users) do
+                    pcall(function() if u.bg then u.bg:Remove() end end)
+                    pcall(function() if u.ln then u.ln:Remove() end end)
+                    pcall(function() if u.name then u.name:Remove() end end)
+                    for pi=1, (u.activePixelsCount or 0) do
+                        pcall(function() if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d:Remove() end end)
+                    end
+                    u.avatarPixels = {}
+                    u.activePixelsCount = 0
+                end
+            end
+        end
     end
-
     function win:ApplyTheme(name) applyTheme(name) end
     UILib.applyTheme = function(name) applyTheme(name) end
-
     return win
 end
+return UILib
