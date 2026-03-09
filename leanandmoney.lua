@@ -1042,6 +1042,48 @@ function UILib.Window(titleA, titleB, gameName)
             end
             return logApi
         end
+        function api:UserList(maxUsers)
+            maxUsers = maxUsers or 10
+            local h = (maxUsers * 40) + 10 + 6
+            local y = nextY(h)
+            local idx = addUserList(tabName, maxUsers, y)
+            if currentSection and btns[idx] then btns[idx].section = currentSection end
+            local ulApi = {}
+            function ulApi:SetUsers(names, localName)
+                if not btns[idx] or not btns[idx].users then return end
+                local b = btns[idx]
+                for i, u in ipairs(b.users) do
+                    if names[i] then
+                        u._active = true
+                        local display = names[i]
+                        if localName and names[i] == localName then
+                            display = display .. "  <-- you"
+                        end
+                        u.name.Text = display
+                        u.name.Color = (localName and names[i] == localName) and C.ACCENT or C.WHITE
+                        u.bg.Visible = showSet[b.bg] and true or false
+                        u.name.Visible = showSet[b.bg] and true or false
+                    else
+                        u._active = false
+                        u.name.Text = ""
+                        u.bg.Visible = false
+                        u.name.Visible = false
+                        for pi=1, (u.activePixelsCount or 0) do
+                            u.avatarPixels[pi].d.Visible = false
+                        end
+                    end
+                end
+            end
+            function ulApi:LoadAvatar(userIndex, pixelsData)
+                if not btns[idx] or not btns[idx].users then return end
+                local u = btns[idx].users[userIndex]
+                if u then UILib:LoadAvatarToRow(u, pixelsData) end
+            end
+            function ulApi:GetMaxUsers()
+                return maxUsers
+            end
+            return ulApi
+        end
         tabAPI[tabName] = api
         return api
     end
