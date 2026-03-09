@@ -950,7 +950,8 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 5; local pxSize = 2
+        local step = 2; local pxSize = 2
+        local scale = 36 / 64
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
@@ -964,7 +965,7 @@ function UILib.Window(titleA, titleB, gameName)
                             sq = Drawing.new("Square")
                             sq.Size = Vector2.new(pxSize, pxSize)
                             sq.Filled = true; sq.ZIndex = 8
-                            table.insert(uiUser.avatarPixels, {d=sq, gx=math.floor((x-1)/step)*pxSize, gy=math.floor((y-1)/step)*pxSize})
+                            table.insert(uiUser.avatarPixels, {d=sq, gx=math.floor((x-1)*scale), gy=math.floor((y-1)*scale)})
                         end
                         sq.Color = Color3.fromRGB(pData.r, pData.g, pData.b)
                         sq.Transparency = pData.a or 1
@@ -981,8 +982,13 @@ function UILib.Window(titleA, titleB, gameName)
         local rowH=44; local pad=0
         local ch = (maxUsers*rowH)+pad*2
         local ry=L.TOPBAR+relY
-        local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.CONTENT,true,0,3,nil,0))
-        bg.Visible=false
+        local bg = {
+            Position = Vector2.new(uiX+rx, uiY+ry),
+            Size = Vector2.new(cw, ch),
+            Visible = false,
+            Transparency = 0,
+            Color = C.CONTENT
+        }
         local users = {}
         for i=1,maxUsers do
             local yOff = (i-1)*rowH
@@ -1361,8 +1367,9 @@ function UILib.Window(titleA, titleB, gameName)
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
-                    local step = 4
+                    local step = 2
                     local pxSize = 2
+                    local scale = 32 / 64
                     for y = 1, 64, step do
                         for x = 1, 64, step do
                             local dx = x - 32.5
@@ -1378,7 +1385,7 @@ function UILib.Window(titleA, titleB, gameName)
                                     sq.Color = Color3.fromRGB(p.r, p.g, p.b)
                                     sq.Filled = true; sq.Visible = true; sq.ZIndex = 5
                                     sq.Transparency = p.a or 1
-                                    table.insert(avatarDrawings, {d=sq, gx=math.floor((x-1)/step)*pxSize, gy=math.floor((y-1)/step)*pxSize})
+                                    table.insert(avatarDrawings, {d=sq, gx=math.floor((x-1)*scale), gy=math.floor((y-1)*scale)})
                                 end
                             end
                         end
