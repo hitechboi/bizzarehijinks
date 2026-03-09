@@ -229,6 +229,7 @@ function UILib.Window(titleA, titleB, gameName)
     local scrollDragging  = false
     local scrollDragOffY  = 0
     local allDrawings = {}
+    local _twCache, _taCache = 0, 0
     local showSet     = {}
     local tabSet      = {}
     local baseUI      = {}
@@ -519,9 +520,11 @@ function UILib.Window(titleA, titleB, gameName)
         dTopLine.From     =Vector2.new(uiX+1,uiY+L.TOPBAR)
         dTopLine.To       =Vector2.new(uiX+L.W-1,uiY+L.TOPBAR)
         dTitleW.Position  =Vector2.new(uiX+14,uiY+12)
-        local tw = (dTitleW.TextBounds and dTitleW.TextBounds.X > 0) and dTitleW.TextBounds.X or (#titleA*8)
+        if dTitleW.TextBounds and dTitleW.TextBounds.X > 0 and dTitleW.TextBounds.X > _twCache then _twCache = dTitleW.TextBounds.X end
+        local tw = _twCache > 0 and _twCache or (#titleA*8)
         dTitleA.Position  =Vector2.new(uiX+14+tw+3,uiY+12)
-        local ta = (dTitleA.TextBounds and dTitleA.TextBounds.X > 0) and dTitleA.TextBounds.X or (#titleB*8)
+        if dTitleA.TextBounds and dTitleA.TextBounds.X > 0 and dTitleA.TextBounds.X > _taCache then _taCache = dTitleA.TextBounds.X end
+        local ta = _taCache > 0 and _taCache or (#titleB*8)
         dTitleG.Position  =Vector2.new(uiX+14+tw+3+ta+10,uiY+12)
         dKeyLbl.Position  =Vector2.new(uiX+L.W-22,uiY+14)
         dDotY.Position    =Vector2.new(uiX+L.W-55,uiY+15)
@@ -567,9 +570,11 @@ function UILib.Window(titleA, titleB, gameName)
         dMiniBorder.Size     =Vector2.new(L.W,L.MINI_H)
         dMiniTopBar.Position =Vector2.new(uiX+1,uiY+1)
         dMiniTitleW.Position =Vector2.new(uiX+14,uiY+12)
-        local mtw = (dMiniTitleW.TextBounds and dMiniTitleW.TextBounds.X > 0) and dMiniTitleW.TextBounds.X or (#titleA*8)
+        if dMiniTitleW.TextBounds and dMiniTitleW.TextBounds.X > 0 and dMiniTitleW.TextBounds.X > _twCache then _twCache = dMiniTitleW.TextBounds.X end
+        local mtw = _twCache > 0 and _twCache or (#titleA*8)
         dMiniTitleA.Position =Vector2.new(uiX+14+mtw+3,uiY+12)
-        local mta = (dMiniTitleA.TextBounds and dMiniTitleA.TextBounds.X > 0) and dMiniTitleA.TextBounds.X or (#titleB*8)
+        if dMiniTitleA.TextBounds and dMiniTitleA.TextBounds.X > 0 and dMiniTitleA.TextBounds.X > _taCache then _taCache = dMiniTitleA.TextBounds.X end
+        local mta = _taCache > 0 and _taCache or (#titleB*8)
         dMiniTitleG.Position =Vector2.new(uiX+14+mtw+3+mta+10,uiY+12)
         dMiniKeyLbl.Position =Vector2.new(uiX+L.W-22,uiY+14)
         dMiniDotG.Position   =Vector2.new(uiX+L.W-55,uiY+15)
@@ -873,6 +878,9 @@ function UILib.Window(titleA, titleB, gameName)
                         bShow(b, true)
                         bPos(b)
                         currentY = currentY + b.ch + 8
+                        if b.isDropdown and b.open then
+                            currentY = currentY + (#b.options * b.ch)
+                        end
                     end
                 end
             else
@@ -1049,10 +1057,16 @@ function UILib.Window(titleA, titleB, gameName)
             dTitleG.Text = ""
             task.spawn(function()
                 pcall(function()
-                    local info = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
-                    if info and info.Name then
-                        dTitleG.Text = info.Name
-                        if dMiniTitleG then dMiniTitleG.Text = info.Name end
+                    local gn
+                    if type(getgamename) == "function" then
+                        gn = getgamename()
+                    else
+                        local info = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId)
+                        gn = info and info.Name
+                    end
+                    if gn then
+                        dTitleG.Text = gn
+                        if dMiniTitleG then dMiniTitleG.Text = gn end
                     end
                 end)
             end)
