@@ -403,18 +403,40 @@ function UILib.Window(titleA, titleB, gameName)
             return
         end
         if b.isUserList then
+            local cTop = uiY + L.TOPBAR
+            local cBot = uiY + uiCurrentH - L.FOOTER
+            local parentVis = showSet[b.bg] and true or false
             for i, u in ipairs(b.users) do
                  local uY = ay + u.ryOff
-                 u.bg.Position = Vector2.new(ax, uY)
-                 if u.ln then u.ln.Position = Vector2.new(ax, uY + b.rowH - 2) end
-                 local avatarSz = b.rowH - 4
-                 u.name.Position = Vector2.new(ax + avatarSz + 8, uY + b.rowH/2 - 7)
-                 if u.avatarPixels then
-                     local pxY = uY + (b.rowH - avatarSz)/2
-                     local pxX = ax + 2
-                     for j=1, (u.activePixelsCount or 0) do
-                         local p = u.avatarPixels[j]
-                         if p and p.d then p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) end
+                 local isVis = u._active and parentVis and (uY < cBot) and (uY + b.rowH > cTop)
+                 if isVis then
+                     if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(ax, uY) end
+                     if u.ln then u.ln.Visible = true; u.ln.Position = Vector2.new(ax, uY + b.rowH - 2) end
+                     local avatarSz = b.rowH - 4
+                     if u.name then
+                         u.name.Visible = true
+                         u.name.Position = Vector2.new(ax + avatarSz + 8, uY + b.rowH/2 - 7)
+                     end
+                     if u.avatarPixels then
+                         local pxY = uY + (b.rowH - avatarSz)/2
+                         local pxX = ax + 2
+                         for j=1, (u.activePixelsCount or 0) do
+                             local p = u.avatarPixels[j]
+                             if p and p.d then
+                                 p.d.Visible = true
+                                 p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy)
+                             end
+                         end
+                     end
+                 else
+                     if u.bg then u.bg.Visible = false end
+                     if u.ln then u.ln.Visible = false end
+                     if u.name then u.name.Visible = false end
+                     if u.avatarPixels then
+                         for j=1, (u.activePixelsCount or 0) do
+                             local p = u.avatarPixels[j]
+                             if p and p.d then p.d.Visible = false end
+                         end
                      end
                  end
             end
@@ -940,7 +962,7 @@ function UILib.Window(titleA, titleB, gameName)
                             sq = Drawing.new("Square")
                             sq.Size = Vector2.new(pxSize, pxSize)
                             sq.Filled = true; sq.ZIndex = 8
-                            table.insert(uiUser.avatarPixels, {d=sq, gx=math.floor((x-1)/step), gy=math.floor((y-1)/step)})
+                            table.insert(uiUser.avatarPixels, {d=sq, gx=math.floor((x-1)/step)*pxSize, gy=math.floor((y-1)/step)*pxSize})
                         end
                         sq.Color = Color3.fromRGB(pData.r, pData.g, pData.b)
                         sq.Transparency = pData.a or 1
@@ -955,8 +977,7 @@ function UILib.Window(titleA, titleB, gameName)
     local function addUserList(tab, maxUsers, relY)
         local rx=L.SIDEBAR+L.ROW_PAD; local cw=L.CONTENT_W-L.ROW_PAD*2
         local rowH=36; local pad=0
-        local maxVisibleH = L.H - L.TOPBAR - L.FOOTER - relY - 10
-        local ch = math.min((maxUsers*rowH)+pad*2, maxVisibleH)
+        local ch = (maxUsers*rowH)+pad*2
         local ry=L.TOPBAR+relY
         local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.CONTENT,true,0,3,nil,0))
         bg.Visible=false
@@ -1353,7 +1374,7 @@ function UILib.Window(titleA, titleB, gameName)
                                     sq.Color = Color3.fromRGB(p.r, p.g, p.b)
                                     sq.Filled = true; sq.Visible = true; sq.ZIndex = 5
                                     sq.Transparency = p.a or 1
-                                    table.insert(avatarDrawings, {d=sq, gx=math.floor((x-1)/step), gy=math.floor((y-1)/step)})
+                                    table.insert(avatarDrawings, {d=sq, gx=math.floor((x-1)/step)*pxSize, gy=math.floor((y-1)/step)*pxSize})
                                 end
                             end
                         end
