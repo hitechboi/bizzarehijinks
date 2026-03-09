@@ -299,8 +299,12 @@ function UILib.Window(titleA, titleB, gameName)
             for _,b in ipairs(btns) do
                 if b.isUserList then
                     for _, u in ipairs(b.users) do
-                        u.bg.Visible=false; u.name.Visible=false
-                        for pi=1,(u.activePixelsCount or 0) do u.avatarPixels[pi].d.Visible=false end
+                        if u.bg then u.bg.Visible=false end
+                        if u.ln then u.ln.Visible=false end
+                        if u.name then u.name.Visible=false end
+                        for pi=1,(u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
+                        end
                     end
                 end
             end
@@ -315,8 +319,12 @@ function UILib.Window(titleA, titleB, gameName)
             for _,b in ipairs(btns) do
                 if b.isUserList then
                     for _, u in ipairs(b.users) do
-                        u.bg.Visible=false; u.name.Visible=false
-                        for pi=1,(u.activePixelsCount or 0) do u.avatarPixels[pi].d.Visible=false end
+                        if u.bg then u.bg.Visible=false end
+                        if u.ln then u.ln.Visible=false end
+                        if u.name then u.name.Visible=false end
+                        for pi=1,(u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
+                        end
                     end
                 end
             end
@@ -360,6 +368,7 @@ function UILib.Window(titleA, titleB, gameName)
             for _, u in ipairs(b.users) do
                 local vis = yes and u._active
                 if u.bg then u.bg.Visible = vis and true or false end
+                if u.ln then u.ln.Visible = vis and true or false end
                 if u.name then u.name.Visible = vis and true or false end
                 if u.avatarPixels then
                     for i=1, (u.activePixelsCount or 0) do 
@@ -396,12 +405,13 @@ function UILib.Window(titleA, titleB, gameName)
         if b.isUserList then
             for i, u in ipairs(b.users) do
                  local uY = ay + u.ryOff
-                 u.bg.Position = Vector2.new(ax + b.pad, uY)
-                 local avatarSz = b.rowH - 8
-                 u.name.Position = Vector2.new(ax + b.pad + avatarSz + 8, uY + b.rowH/2 - 7)
+                 u.bg.Position = Vector2.new(ax, uY)
+                 if u.ln then u.ln.Position = Vector2.new(ax, uY + b.rowH - 2) end
+                 local avatarSz = b.rowH - 4
+                 u.name.Position = Vector2.new(ax + avatarSz + 8, uY + b.rowH/2 - 7)
                  if u.avatarPixels then
                      local pxY = uY + (b.rowH - avatarSz)/2
-                     local pxX = ax + b.pad + 2
+                     local pxX = ax + 2
                      for j=1, (u.activePixelsCount or 0) do
                          local p = u.avatarPixels[j]
                          if p and p.d then p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) end
@@ -916,7 +926,7 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 6; local pxSize = 3
+        local step = 5; local pxSize = 4
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
@@ -944,18 +954,20 @@ function UILib.Window(titleA, titleB, gameName)
     end
     local function addUserList(tab, maxUsers, relY)
         local rx=L.SIDEBAR+L.ROW_PAD; local cw=L.CONTENT_W-L.ROW_PAD*2
-        local rowH=40; local pad=5
+        local rowH=36; local pad=0
         local maxVisibleH = L.H - L.TOPBAR - L.FOOTER - relY - 10
         local ch = math.min((maxUsers*rowH)+pad*2, maxVisibleH)
         local ry=L.TOPBAR+relY
-        local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,Color3.fromRGB(12,14,24),true,1,3,nil,6))
+        local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,C.CONTENT,true,0,3,nil,0))
+        bg.Visible=false
         local users = {}
         for i=1,maxUsers do
-            local yOff = pad + (i-1)*rowH
-            local uBg = mkSq(uiX+rx+pad, uiY+ry+yOff, cw-pad*2, rowH-2, C.ROWBG, true, 1, 7, nil, 4)
-            local uName = mkTx("", uiX+rx+pad+rowH+10, uiY+ry+yOff+rowH/2-7, 13, C.WHITE, false, 8)
-            uBg.Visible = false; uName.Visible = false
-            table.insert(users, {bg=uBg, name=uName, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false})
+            local yOff = (i-1)*rowH
+            local uBg = mkSq(uiX+rx, uiY+ry+yOff, cw, rowH-2, C.ROWBG, true, 1, 7, nil, 4)
+            local uLn = mkSq(uiX+rx, uiY+ry+yOff+rowH-2, cw, 1, C.DIV, true, 0.5, 7)
+            local uName = mkTx("", uiX+rx+rowH+8, uiY+ry+yOff+rowH/2-7, 13, C.WHITE, false, 8)
+            uBg.Visible = false; uName.Visible = false; uLn.Visible = false
+            table.insert(users, {bg=uBg, ln=uLn, name=uName, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false})
         end
         local b={tab=tab,isUserList=true,bg=bg,lbl=bg,ln=nil,users=users,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,maxUsers=maxUsers,pad=pad,rowH=rowH}
@@ -1102,14 +1114,16 @@ function UILib.Window(titleA, titleB, gameName)
                         u.name.Text = display
                         u.name.Color = (localName and names[i] == localName) and C.ACCENT or C.WHITE
                         u.bg.Visible = parentVis
+                        if u.ln then u.ln.Visible = parentVis end
                         u.name.Visible = parentVis
                     else
                         u._active = false
                         u.name.Text = ""
                         u.bg.Visible = false
+                        if u.ln then u.ln.Visible = false end
                         u.name.Visible = false
                         for pi=1, (u.activePixelsCount or 0) do
-                            u.avatarPixels[pi].d.Visible = false
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible = false end
                         end
                     end
                 end
@@ -2066,6 +2080,7 @@ function UILib.Window(titleA, titleB, gameName)
             if b.isUserList then
                 for _, u in ipairs(b.users) do
                     pcall(function() if u.bg then u.bg:Remove() end end)
+                    pcall(function() if u.ln then u.ln:Remove() end end)
                     pcall(function() if u.name then u.name:Remove() end end)
                     for pi=1, (u.activePixelsCount or 0) do
                         pcall(function() if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d:Remove() end end)
