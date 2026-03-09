@@ -981,7 +981,7 @@ function UILib.Window(titleA, titleB, gameName)
         local pIdx = 1
         local step = 2; local pxSize = 2
         local scale = 30 / 64
-        local offsetX = 3; local offsetY = 3
+        local offsetX = 3; local offsetY = -1
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
@@ -1161,6 +1161,16 @@ function UILib.Window(titleA, titleB, gameName)
             local idx = addUserList(tabName, maxUsers, y)
             if currentSection and btns[idx] then btns[idx].section = currentSection end
             local ulApi = {}
+            local namePalette = {
+                Color3.fromRGB(255, 255, 150),
+                Color3.fromRGB(255, 200, 150),
+                Color3.fromRGB(150, 255, 150),
+                Color3.fromRGB(150, 200, 255),
+                Color3.fromRGB(200, 150, 255),
+                Color3.fromRGB(255, 150, 150)
+            }
+            local userColorMap = {}
+            local userPhaseMap = {}
             function ulApi:SetUsers(names, localName)
                 if not btns[idx] or not btns[idx].users then return end
                 local b = btns[idx]
@@ -1173,7 +1183,16 @@ function UILib.Window(titleA, titleB, gameName)
                             display = display .. "  <-- you"
                         end
                         u.name.Text = display
-                        u.name.Color = (localName and names[i] == localName) and C.ACCENT or C.WHITE
+                        if not userColorMap[names[i]] then
+                            userColorMap[names[i]] = namePalette[math.random(1, #namePalette)]
+                            userPhaseMap[names[i]] = math.random() * math.pi * 2
+                        end
+                        u.targetColor = userColorMap[names[i]]
+                        u.colorPhase = userPhaseMap[names[i]]
+                        if localName and names[i] == localName then
+                            u.targetColor = C.ACCENT
+                            u.colorPhase = 0
+                        end
                         if u.out then u.out.Visible = parentVis end
                         if u.bg then u.bg.Visible = parentVis end
                         u.name.Visible = parentVis
@@ -1400,7 +1419,7 @@ function UILib.Window(titleA, titleB, gameName)
                     local step = 2
                     local pxSize = 2
                     local scale = 24 / 64
-                    local offsetX = 4; local offsetY = 4
+                    local offsetX = 4; local offsetY = 0
                     for y = 1, 64, step do
                         for x = 1, 64, step do
                             local dx = x - 32.5
@@ -1640,6 +1659,23 @@ function UILib.Window(titleA, titleB, gameName)
                         local sc = tabScroll[currentTab] or 0
                         b.tog.Position=Vector2.new(uiX+dox, uiY+dcy-sc+b.ch/2-L.TOG_H/2)
                         b.dot.Position=Vector2.new(uiX+dox+2+(L.TOG_W-L.TOG_H)*b.lt, uiY+dcy-sc+b.ch/2-L.TOG_H/2+2)
+                    end
+                end
+                do
+                    local ut = tick() * 1.5
+                    for _,b in ipairs(btns) do
+                        if b.isUserList and b.tab == currentTab and showSet[b.bg] then
+                            for _, u in ipairs(b.users) do
+                                if u._active and u.name and u.targetColor then
+                                    if u.targetColor == C.ACCENT then
+                                        u.name.Color = C.ACCENT
+                                    else
+                                        local f = (math.sin(ut + (u.colorPhase or 0)) + 1) / 2
+                                        u.name.Color = lerpC(C.WHITE, u.targetColor, f)
+                                    end
+                                end
+                            end
+                        end
                     end
                 end
                 do
