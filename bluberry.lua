@@ -1964,8 +1964,8 @@ function UILib.Window(titleA, titleB, gameName)
     function win:SettingsTab(destroyCb)
         local s = self:Tab("Settings")
         s:Div("KEYBIND")
-        iKeyInfo = s:Button("Menu Key: F1",   C.ROWBG, nil, nil)
-        iKeyBind = s:Button("Click to Rebind", Color3.fromRGB(14,20,40), nil, nil)
+        iKeyInfo = s:Button("Menu Key: F1", C.ROWBG)
+        iKeyBind = s:Button("Click to Rebind", Color3.fromRGB(14,20,40))
         s:Div("DANGER")
         s:Button("Destroy Menu", Color3.fromRGB(28,7,7), destroyCb, C.RED)
         return s
@@ -2004,3 +2004,5 @@ function UILib.Window(titleA, titleB, gameName)
 
     return win
 end
+
+return UILib
