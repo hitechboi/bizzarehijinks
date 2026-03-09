@@ -283,6 +283,7 @@ function UILib.Window(titleA, titleB, gameName)
                         if u.out then u.out.Visible=false end
                         if u.bg then u.bg.Visible=false end
                         if u.name then u.name.Visible=false end
+                        if u.youTag then u.youTag.Visible=false end
                         for pi=1,(u.activePixelsCount or 0) do
                             if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
                         end
@@ -303,6 +304,7 @@ function UILib.Window(titleA, titleB, gameName)
                         if u.out then u.out.Visible=false end
                         if u.bg then u.bg.Visible=false end
                         if u.name then u.name.Visible=false end
+                        if u.youTag then u.youTag.Visible=false end
                         for pi=1,(u.activePixelsCount or 0) do
                             if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
                         end
@@ -323,6 +325,7 @@ function UILib.Window(titleA, titleB, gameName)
                         if u.out then u.out.Visible=false end
                         if u.bg then u.bg.Visible=false end
                         if u.name then u.name.Visible=false end
+                        if u.youTag then u.youTag.Visible=false end
                         for pi=1,(u.activePixelsCount or 0) do
                             if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
                         end
@@ -391,6 +394,7 @@ function UILib.Window(titleA, titleB, gameName)
                 if u.out then u.out.Visible = vis and true or false end
                 if u.bg then u.bg.Visible = vis and true or false end
                 if u.name then u.name.Visible = vis and true or false end
+                if u.youTag then u.youTag.Visible = vis and u._isYou and true or false end
                 if u.avatarPixels then
                     for i=1, (u.activePixelsCount or 0) do 
                         local p = u.avatarPixels[i]
@@ -438,8 +442,16 @@ function UILib.Window(titleA, titleB, gameName)
                          u.name.Visible = true
                          u.name.Position = Vector2.new(ax + avatarSz + 18, uY + b.rowH/2 - 7)
                      end
+                     if u.youTag then
+                         u.youTag.Visible = u._isYou and true or false
+                         if u.name and u.name.TextBounds then
+                             u.youTag.Position = Vector2.new(ax + avatarSz + 18 + u.name.TextBounds.X, uY + b.rowH/2 - 7)
+                         else
+                             u.youTag.Position = Vector2.new(ax + avatarSz + 18 + (#u.name.Text * 8), uY + b.rowH/2 - 7)
+                         end
+                     end
                      if u.avatarPixels then
-                         local pxY = uY + (b.rowH - avatarSz)/2
+                         local pxY = uY + 6
                          local pxX = ax + 14
                          for j=1, (u.activePixelsCount or 0) do
                              local p = u.avatarPixels[j]
@@ -558,6 +570,7 @@ function UILib.Window(titleA, titleB, gameName)
                 if u.out then tabSet[u.out]=group end
                 if u.bg then tabSet[u.bg]=group end
                 if u.name then tabSet[u.name]=group end
+                if u.youTag then tabSet[u.youTag]=group end
             end
         end
     end
@@ -979,9 +992,9 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 2; local pxSize = 2
-        local scale = 30 / 64
-        local offsetX = 3; local offsetY = -1
+        local step = 3; local pxSize = 2
+        local mapInterval = 1
+        local offsetX = 0; local offsetY = -4
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
@@ -995,7 +1008,7 @@ function UILib.Window(titleA, titleB, gameName)
                             sq = Drawing.new("Square")
                             sq.Size = Vector2.new(pxSize, pxSize)
                             sq.Filled = true; sq.ZIndex = 8
-                            table.insert(uiUser.avatarPixels, {d=sq, gx=offsetX + math.floor((x-1)*scale), gy=offsetY + math.floor((y-1)*scale)})
+                            table.insert(uiUser.avatarPixels, {d=sq, gx=offsetX + math.floor((x-1)/step)*mapInterval, gy=offsetY + math.floor((y-1)/step)*mapInterval})
                         end
                         sq.Color = Color3.fromRGB(pData.r, pData.g, pData.b)
                         sq.Transparency = pData.a or 1
@@ -1027,8 +1040,9 @@ function UILib.Window(titleA, titleB, gameName)
             local uOut = mkSq(uiX+rx, uiY+ry+yOff, cw, 38, uOutColor, true, 1, 3, nil, 4)
             local uBg = mkSq(uiX+rx+1, uiY+ry+yOff+1, cw-2, 36, C.ROWBG, true, 1, 4, nil, 4)
             local uName = mkTx("", uiX+rx+42, uiY+ry+yOff+38/2-7, 13, C.WHITE, false, 8)
-            uOut.Visible = false; uBg.Visible = false; uName.Visible = false
-            table.insert(users, {out=uOut, bg=uBg, name=uName, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false})
+            local uYouTag = mkTx(" <-- you", uiX+rx+42, uiY+ry+yOff+38/2-7, 13, C.GRAY, false, 8)
+            uOut.Visible = false; uBg.Visible = false; uName.Visible = false; uYouTag.Visible = false
+            table.insert(users, {out=uOut, bg=uBg, name=uName, youTag=uYouTag, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false, _isYou=false})
         end
         local b={tab=tab,isUserList=true,bg=bg,lbl=bg,ln=nil,users=users,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,maxUsers=maxUsers,pad=pad,rowH=rowH}
@@ -1178,30 +1192,26 @@ function UILib.Window(titleA, titleB, gameName)
                 for i, u in ipairs(b.users) do
                     if names[i] then
                         u._active = true
-                        local display = names[i]
-                        if localName and names[i] == localName then
-                            display = display .. "  <-- you"
-                        end
-                        u.name.Text = display
+                        u._isYou = (localName and names[i] == localName)
+                        u.name.Text = names[i]
                         if not userColorMap[names[i]] then
                             userColorMap[names[i]] = namePalette[math.random(1, #namePalette)]
                             userPhaseMap[names[i]] = math.random() * math.pi * 2
                         end
                         u.targetColor = userColorMap[names[i]]
                         u.colorPhase = userPhaseMap[names[i]]
-                        if localName and names[i] == localName then
-                            u.targetColor = C.ACCENT
-                            u.colorPhase = 0
-                        end
                         if u.out then u.out.Visible = parentVis end
                         if u.bg then u.bg.Visible = parentVis end
                         u.name.Visible = parentVis
+                        u.youTag.Visible = parentVis and u._isYou
                     else
                         u._active = false
+                        u._isYou = false
                         u.name.Text = ""
                         if u.out then u.out.Visible = false end
                         if u.bg then u.bg.Visible = false end
                         u.name.Visible = false
+                        u.youTag.Visible = false
                         for pi=1, (u.activePixelsCount or 0) do
                             if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible = false end
                         end
@@ -1416,10 +1426,10 @@ function UILib.Window(titleA, titleB, gameName)
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
-                    local step = 2
+                    local step = 3
                     local pxSize = 2
-                    local scale = 24 / 64
-                    local offsetX = 4; local offsetY = 0
+                    local mapInterval = 1
+                    local offsetX = 1; local offsetY = -1
                     for y = 1, 64, step do
                         for x = 1, 64, step do
                             local dx = x - 32.5
@@ -1435,7 +1445,7 @@ function UILib.Window(titleA, titleB, gameName)
                                     sq.Color = Color3.fromRGB(p.r, p.g, p.b)
                                     sq.Filled = true; sq.Visible = true; sq.ZIndex = 5
                                     sq.Transparency = p.a or 1
-                                    table.insert(avatarDrawings, {d=sq, gx=offsetX + math.floor((x-1)*scale), gy=offsetY + math.floor((y-1)*scale)})
+                                    table.insert(avatarDrawings, {d=sq, gx=offsetX + math.floor((x-1)/step)*mapInterval, gy=offsetY + math.floor((y-1)/step)*mapInterval})
                                 end
                             end
                         end
