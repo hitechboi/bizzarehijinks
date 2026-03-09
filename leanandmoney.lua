@@ -276,6 +276,14 @@ function UILib.Window(titleA, titleB, gameName)
             for _,ap in ipairs(avatarDrawings or {}) do pcall(function() ap.d.Visible=false end) end
             for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
             for _,d in ipairs(miniDrawings) do d.Visible=false end
+            for _,b in ipairs(btns) do
+                if b.isUserList then
+                    for _, u in ipairs(b.users) do
+                        u.bg.Visible=false; u.name.Visible=false
+                        for pi=1,(u.activePixelsCount or 0) do u.avatarPixels[pi].d.Visible=false end
+                    end
+                end
+            end
             if tipBg then
                 tipBg.Visible=false; tipBorder.Visible=false
                 tipLbl.Visible=false; tipDesc.Visible=false
@@ -284,6 +292,14 @@ function UILib.Window(titleA, titleB, gameName)
         end
         if minimized then
             for _,d in ipairs(allDrawings) do d.Visible=false end
+            for _,b in ipairs(btns) do
+                if b.isUserList then
+                    for _, u in ipairs(b.users) do
+                        u.bg.Visible=false; u.name.Visible=false
+                        for pi=1,(u.activePixelsCount or 0) do u.avatarPixels[pi].d.Visible=false end
+                    end
+                end
+            end
             return
         end
         if not minimized then
@@ -292,6 +308,14 @@ function UILib.Window(titleA, titleB, gameName)
         local mf=1-(menuToggledAt-(tick()-FADE_DUR))/FADE_DUR
         if not menuOpen and mf>=1.1 then
             for _,d in ipairs(allDrawings) do d.Visible=false end
+            for _,b in ipairs(btns) do
+                if b.isUserList then
+                    for _, u in ipairs(b.users) do
+                        u.bg.Visible=false; u.name.Visible=false
+                        for pi=1,(u.activePixelsCount or 0) do u.avatarPixels[pi].d.Visible=false end
+                    end
+                end
+            end
             return
         end
         local mOp=mf<1.1
@@ -330,12 +354,13 @@ function UILib.Window(titleA, titleB, gameName)
         end
         if b.isUserList then
             for _, u in ipairs(b.users) do
-                setShow(u.bg, yes and u._active)
-                setShow(u.name, yes and u._active)
+                local vis = yes and u._active
+                u.bg.Visible = vis and true or false
+                u.name.Visible = vis and true or false
                 if u.avatarPixels then
                     for i=1, (u.activePixelsCount or 0) do 
                         local p = u.avatarPixels[i]
-                        p.d.Visible = (yes and u._active) 
+                        p.d.Visible = vis and true or false
                     end
                 end
             end
@@ -918,8 +943,8 @@ function UILib.Window(titleA, titleB, gameName)
         local users = {}
         for i=1,maxUsers do
             local yOff = pad + (i-1)*rowH
-            local uBg = mkD(mkSq(uiX+rx+pad, uiY+ry+yOff, cw-pad*2, rowH-2, C.ROWBG, true, 1, 7, nil, 4))
-            local uName = mkD(mkTx("", uiX+rx+pad+rowH+10, uiY+ry+yOff+rowH/2-7, 13, C.WHITE, false, 8))
+            local uBg = mkSq(uiX+rx+pad, uiY+ry+yOff, cw-pad*2, rowH-2, C.ROWBG, true, 1, 7, nil, 4)
+            local uName = mkTx("", uiX+rx+pad+rowH+10, uiY+ry+yOff+rowH/2-7, 13, C.WHITE, false, 8)
             uBg.Visible = false; uName.Visible = false
             table.insert(users, {bg=uBg, name=uName, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false})
         end
@@ -1057,6 +1082,7 @@ function UILib.Window(titleA, titleB, gameName)
             function ulApi:SetUsers(names, localName)
                 if not btns[idx] or not btns[idx].users then return end
                 local b = btns[idx]
+                local parentVis = showSet[b.bg] and true or false
                 for i, u in ipairs(b.users) do
                     if names[i] then
                         u._active = true
@@ -1066,13 +1092,13 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                         u.name.Text = display
                         u.name.Color = (localName and names[i] == localName) and C.ACCENT or C.WHITE
-                        setShow(u.bg, showSet[b.bg] and true or false)
-                        setShow(u.name, showSet[b.bg] and true or false)
+                        u.bg.Visible = parentVis
+                        u.name.Visible = parentVis
                     else
                         u._active = false
                         u.name.Text = ""
-                        setShow(u.bg, false)
-                        setShow(u.name, false)
+                        u.bg.Visible = false
+                        u.name.Visible = false
                         for pi=1, (u.activePixelsCount or 0) do
                             u.avatarPixels[pi].d.Visible = false
                         end
