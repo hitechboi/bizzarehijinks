@@ -1621,7 +1621,7 @@ function UILib.Window(titleA, titleB, gameName)
                         if b.tab == currentTab then
                             local isCollapsed = b.section and _collapseSections[b.section]
                             local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
-                            if itemY + b.ch > contentBottom or itemY < contentTop or isCollapsed then
+                            if itemY > contentBottom or itemY + b.ch < contentTop or isCollapsed then
                                 if showSet[b.bg] then bShow(b, false) end
                             else
                                 if not showSet[b.bg] then bShow(b, true); bPos(b) end
@@ -1653,7 +1653,7 @@ function UILib.Window(titleA, titleB, gameName)
                         if b.tab == currentTab then
                             local isCollapsed = b.section and _collapseSections[b.section]
                             local itemY = uiY + (b.currentRY or b.ry) - (tabScroll[currentTab] or 0)
-                            if itemY + b.ch > contentBottom or itemY < contentTop or isCollapsed then
+                            if itemY > contentBottom or itemY + b.ch < contentTop or isCollapsed then
                                 if showSet[b.bg] then bShow(b, false) end
                             else
                                 if not showSet[b.bg] then bShow(b, true) end
