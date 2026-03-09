@@ -257,6 +257,7 @@ function UILib.Window(titleA, titleB, gameName)
         return d
     end
     local function setShow(d,yes)
+        if not d then return end
         showSet[d]=yes or nil
         d.Visible=yes and true or false
     end
@@ -279,8 +280,11 @@ function UILib.Window(titleA, titleB, gameName)
             for _,b in ipairs(btns) do
                 if b.isUserList then
                     for _, u in ipairs(b.users) do
-                        u.bg.Visible=false; u.name.Visible=false
-                        for pi=1,(u.activePixelsCount or 0) do u.avatarPixels[pi].d.Visible=false end
+                        if u.bg then u.bg.Visible=false end
+                        if u.name then u.name.Visible=false end
+                        for pi=1,(u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
+                        end
                     end
                 end
             end
@@ -355,12 +359,12 @@ function UILib.Window(titleA, titleB, gameName)
         if b.isUserList then
             for _, u in ipairs(b.users) do
                 local vis = yes and u._active
-                u.bg.Visible = vis and true or false
-                u.name.Visible = vis and true or false
+                if u.bg then u.bg.Visible = vis and true or false end
+                if u.name then u.name.Visible = vis and true or false end
                 if u.avatarPixels then
                     for i=1, (u.activePixelsCount or 0) do 
                         local p = u.avatarPixels[i]
-                        p.d.Visible = vis and true or false
+                        if p and p.d then p.d.Visible = vis and true or false end
                     end
                 end
             end
@@ -497,7 +501,8 @@ function UILib.Window(titleA, titleB, gameName)
         end
         if b.isUserList then
             for _, u in ipairs(b.users) do
-                tabSet[u.bg]=group; tabSet[u.name]=group
+                if u.bg then tabSet[u.bg]=group end
+                if u.name then tabSet[u.name]=group end
             end
         end
     end
