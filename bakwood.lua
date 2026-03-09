@@ -1631,6 +1631,7 @@ function UILib.Window(titleA, titleB, gameName)
                                 bd.open=false; bd.arrow.Text="v"
                                 openDropdown=nil
                                 resizeForDropdown(bd,false)
+                                recalculateLayout(currentTab)
                                 if bd.cb then bd.cb(bd.options[i],i) end
                                 break
                             end
@@ -1666,7 +1667,10 @@ function UILib.Window(titleA, titleB, gameName)
                                             for _,o in ipairs(prev.optBgs) do o.targetAlpha=0 end
                                             resizeForDropdown(prev,false)
                                             openDropdown=nil
-                                            if prev == b then break end
+                                            if prev == b then 
+                                                recalculateLayout(currentTab)
+                                                break 
+                                            end
                                         end
                                         b.open=not b.open
                                         if b.arrow then b.arrow.Text=b.open and "^" or "v" end
