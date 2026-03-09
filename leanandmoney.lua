@@ -345,6 +345,26 @@ function UILib.Window(titleA, titleB, gameName)
                 d.Visible=false
             end
         end
+        for _,b in ipairs(btns) do
+            if b.isUserList then
+                local group = tabSet[b.bg]
+                local tOp = group == "next" and tp or group == "prev" and (1-tp) or 1
+                local op = mOp * tOp
+                local hide_pixels = (op <= 0.01) or not showSet[b.bg]
+                for _, u in ipairs(b.users) do
+                    for pi=1, (u.activePixelsCount or 0) do
+                        local pd = u.avatarPixels[pi] and u.avatarPixels[pi].d
+                        if pd then
+                            if hide_pixels then
+                                pd.Visible = false
+                            else
+                                pd.Transparency = op * (pd._baseAlpha or 1)
+                            end
+                        end
+                    end
+                end
+            end
+        end
     end
     local function bShow(b,yes)
         setShow(b.bg,yes)
@@ -413,14 +433,14 @@ function UILib.Window(titleA, titleB, gameName)
                  if isVis then
                      if u.out then u.out.Visible = true; u.out.Position = Vector2.new(ax, uY) end
                      if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(ax+1, uY+1) end
-                     local avatarSz = b.rowH - 6
+                     local avatarSz = 24
                      if u.name then
                          u.name.Visible = true
-                         u.name.Position = Vector2.new(ax + avatarSz + 8, uY + b.rowH/2 - 7)
+                         u.name.Position = Vector2.new(ax + avatarSz + 18, uY + b.rowH/2 - 7)
                      end
                      if u.avatarPixels then
                          local pxY = uY + (b.rowH - avatarSz)/2
-                         local pxX = ax + 2
+                         local pxX = ax + 14
                          for j=1, (u.activePixelsCount or 0) do
                              local p = u.avatarPixels[j]
                              if p and p.d then
@@ -640,6 +660,15 @@ function UILib.Window(titleA, titleB, gameName)
         if dCharLbl then
             local nW = dNameTxt and #dNameTxt.Text * 6 or 0
             dCharLbl.Position = Vector2.new(uiX+42+64+nW+8, uiY+curH-L.FOOTER+9)
+        end
+        if dWelcomeTxt then dWelcomeTxt.Position = Vector2.new(uiX+42, uiY+curH-L.FOOTER+9) end
+        if dNameTxt then dNameTxt.Position = Vector2.new(uiX+42+56, uiY+curH-L.FOOTER+9) end
+        if avatarDrawings then
+            local pxY = uiY+curH-L.FOOTER + 5
+            local pxX = uiX + 12
+            for i, p in ipairs(avatarDrawings) do
+                if p.d then p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) end
+            end
         end
         dTopBar.Size  =Vector2.new(L.W-2,L.TOPBAR)
         dTopFill.Size =Vector2.new(L.W-2,7)
