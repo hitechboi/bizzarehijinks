@@ -397,13 +397,14 @@ function UILib.Window(titleA, titleB, gameName)
             for i, u in ipairs(b.users) do
                  local uY = ay + u.ryOff
                  u.bg.Position = Vector2.new(ax + b.pad, uY)
-                 u.name.Position = Vector2.new(ax + b.pad + b.rowH + 10, uY + b.rowH/2 - 7)
+                 local avatarSz = b.rowH - 8
+                 u.name.Position = Vector2.new(ax + b.pad + avatarSz + 8, uY + b.rowH/2 - 7)
                  if u.avatarPixels then
-                     local pxY = uY + b.rowH/2 - 32
-                     local pxX = ax + b.pad + b.rowH/2 - 32
+                     local pxY = uY + (b.rowH - avatarSz)/2
+                     local pxX = ax + b.pad + 2
                      for j=1, (u.activePixelsCount or 0) do
                          local p = u.avatarPixels[j]
-                         p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy)
+                         if p and p.d then p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) end
                      end
                  end
             end
@@ -915,7 +916,7 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 3; local pxSize = 1
+        local step = 6; local pxSize = 3
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
@@ -943,7 +944,10 @@ function UILib.Window(titleA, titleB, gameName)
     end
     local function addUserList(tab, maxUsers, relY)
         local rx=L.SIDEBAR+L.ROW_PAD; local cw=L.CONTENT_W-L.ROW_PAD*2
-        local rowH=40; local pad=5; local ch=(maxUsers*rowH)+pad*2; local ry=L.TOPBAR+relY
+        local rowH=40; local pad=5
+        local maxVisibleH = L.H - L.TOPBAR - L.FOOTER - relY - 10
+        local ch = math.min((maxUsers*rowH)+pad*2, maxVisibleH)
+        local ry=L.TOPBAR+relY
         local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,Color3.fromRGB(12,14,24),true,1,3,nil,6))
         local users = {}
         for i=1,maxUsers do
@@ -1318,7 +1322,7 @@ function UILib.Window(titleA, titleB, gameName)
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
-                    local step = 3
+                    local step = 5
                     local pxSize = 1
                     for y = 1, 64, step do
                         for x = 1, 64, step do
@@ -1341,8 +1345,10 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
+                _G.avatar_data = nil
             end
         end)
+
         local descriptions = {
                 "check it",
                 "hi :p",
@@ -2056,6 +2062,19 @@ function UILib.Window(titleA, titleB, gameName)
         if tipDesc then pcall(function() tipDesc:Remove() end) end
         for _,d in ipairs(miniDrawings) do pcall(function() d:Remove() end) end
         for _,l in ipairs(miniActiveLbls) do pcall(function() l:Remove() end) end
+        for _,b in ipairs(btns) do
+            if b.isUserList then
+                for _, u in ipairs(b.users) do
+                    pcall(function() if u.bg then u.bg:Remove() end end)
+                    pcall(function() if u.name then u.name:Remove() end end)
+                    for pi=1, (u.activePixelsCount or 0) do
+                        pcall(function() if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d:Remove() end end)
+                    end
+                    u.avatarPixels = {}
+                    u.activePixelsCount = 0
+                end
+            end
+        end
     end
     function win:ApplyTheme(name) applyTheme(name) end
     UILib.applyTheme = function(name) applyTheme(name) end
