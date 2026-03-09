@@ -470,6 +470,11 @@ function UILib.Window(titleA, titleB, gameName)
                 tabSet[o.bg]=group; tabSet[o.ln]=group; tabSet[o.lb]=group
             end
         end
+        if b.isUserList then
+            for _, u in ipairs(b.users) do
+                tabSet[u.bg]=group; tabSet[u.name]=group
+            end
+        end
     end
     local function showTab(tab)
         for _,b in ipairs(btns) do
@@ -1061,13 +1066,13 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                         u.name.Text = display
                         u.name.Color = (localName and names[i] == localName) and C.ACCENT or C.WHITE
-                        u.bg.Visible = showSet[b.bg] and true or false
-                        u.name.Visible = showSet[b.bg] and true or false
+                        setShow(u.bg, showSet[b.bg] and true or false)
+                        setShow(u.name, showSet[b.bg] and true or false)
                     else
                         u._active = false
                         u.name.Text = ""
-                        u.bg.Visible = false
-                        u.name.Visible = false
+                        setShow(u.bg, false)
+                        setShow(u.name, false)
                         for pi=1, (u.activePixelsCount or 0) do
                             u.avatarPixels[pi].d.Visible = false
                         end
