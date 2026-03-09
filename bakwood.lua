@@ -942,7 +942,7 @@ function UILib.Window(titleA, titleB, gameName)
         function api:Dropdown(lbl, options, initIdx, cb)
             local y = nextY(L.ROW_H + 4)
             local idx = addDropdown(tabName, lbl, y, options, initIdx, cb)
-            if currentSection then btns[idx].section = currentSection end
+            if currentSection and btns[idx] then btns[idx].section = currentSection end
         end
         function api:Log(lines, starFirst)
             local lineH = 18
