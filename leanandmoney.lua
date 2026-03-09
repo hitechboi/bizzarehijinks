@@ -60,6 +60,7 @@ local THEMES = {
 UILib.Themes = THEMES
 UILib.Colors = THEMES["Check it"] 
 _G.UILib = UILib
+UILib.avatar_cache = {}
 print("[UILib] v1.6.0 loaded")
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -327,6 +328,18 @@ function UILib.Window(titleA, titleB, gameName)
         if b.swatches then
             for _,sw in ipairs(b.swatches) do setShow(sw.sq,yes); setShow(sw.border,yes) end
         end
+        if b.isUserList then
+            for _, u in ipairs(b.users) do
+                setShow(u.bg, yes and u._active)
+                setShow(u.name, yes and u._active)
+                if u.avatarPixels then
+                    for i=1, (u.activePixelsCount or 0) do 
+                        local p = u.avatarPixels[i]
+                        p.d.Visible = (yes and u._active) 
+                    end
+                end
+            end
+        end
         if b.isDropdown then
             for _,o in ipairs(b.optBgs) do
                 setShow(o.bg, yes and b.open)
@@ -348,6 +361,22 @@ function UILib.Window(titleA, titleB, gameName)
                     local off=b.starFirst and (b.starH+b.pad+(i-2)*b.lineH) or (b.pad+(i-1)*b.lineH)
                     lb.Position=Vector2.new(ax+8,ay+off)
                 end
+            end
+            return
+        end
+        if b.isUserList then
+            for i, u in ipairs(b.users) do
+                 local uY = ay + u.ryOff
+                 u.bg.Position = Vector2.new(ax + b.pad, uY)
+                 u.name.Position = Vector2.new(ax + b.pad + b.rowH + 10, uY + b.rowH/2 - 7)
+                 if u.avatarPixels then
+                     local pxY = uY + b.rowH/2 - 32
+                     local pxX = ax + b.pad + b.rowH/2 - 32
+                     for j=1, (u.activePixelsCount or 0) do
+                         local p = u.avatarPixels[j]
+                         p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy)
+                     end
+                 end
             end
             return
         end
@@ -848,6 +877,51 @@ function UILib.Window(titleA, titleB, gameName)
                  starFirst=starFirst,starH=starH}
         table.insert(btns,b); return #btns
     end
+    function UILib:LoadAvatarToRow(uiUser, pixelsData)
+        for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
+        local pIdx = 1
+        local step = 3; local pxSize = 1
+        for y = 1, 64, step do
+            for x = 1, 64, step do
+                local dx = x - 32.5; local dy = y - 32.5
+                if (dx*dx + dy*dy) <= (31.5 * 31.5) then
+                    local pData = pixelsData[y] and pixelsData[y][x]
+                    if pData and pData.a and pData.a > 0.1 then
+                        local sq
+                        if pIdx <= #uiUser.avatarPixels then
+                            sq = uiUser.avatarPixels[pIdx].d
+                        else
+                            sq = Drawing.new("Square")
+                            sq.Size = Vector2.new(pxSize, pxSize)
+                            sq.Filled = true; sq.ZIndex = 8
+                            table.insert(uiUser.avatarPixels, {d=sq, gx=math.floor((x-1)/step), gy=math.floor((y-1)/step)})
+                        end
+                        sq.Color = Color3.fromRGB(pData.r, pData.g, pData.b)
+                        sq.Transparency = pData.a or 1
+                        sq.Visible = uiUser._active
+                        pIdx = pIdx + 1
+                    end
+                end
+            end
+        end
+        uiUser.activePixelsCount = pIdx - 1
+    end
+    local function addUserList(tab, maxUsers, relY)
+        local rx=L.SIDEBAR+L.ROW_PAD; local cw=L.CONTENT_W-L.ROW_PAD*2
+        local rowH=40; local pad=5; local ch=(maxUsers*rowH)+pad*2; local ry=L.TOPBAR+relY
+        local bg=mkD(mkSq(uiX+rx,uiY+ry,cw,ch,Color3.fromRGB(12,14,24),true,1,3,nil,6))
+        local users = {}
+        for i=1,maxUsers do
+            local yOff = pad + (i-1)*rowH
+            local uBg = mkD(mkSq(uiX+rx+pad, uiY+ry+yOff, cw-pad*2, rowH-2, C.ROWBG, true, 1, 7, nil, 4))
+            local uName = mkD(mkTx("", uiX+rx+pad+rowH+10, uiY+ry+yOff+rowH/2-7, 13, C.WHITE, false, 8))
+            uBg.Visible = false; uName.Visible = false
+            table.insert(users, {bg=uBg, name=uName, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false})
+        end
+        local b={tab=tab,isUserList=true,bg=bg,lbl=bg,ln=nil,users=users,
+                 rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,maxUsers=maxUsers,pad=pad,rowH=rowH}
+        table.insert(btns,b); return #btns
+    end
     local function CONTENT_H() return uiCurrentH - L.TOPBAR - L.FOOTER end
     recalculateLayout = function(tname)
         local currentY = 10 
@@ -1167,13 +1241,16 @@ function UILib.Window(titleA, titleB, gameName)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
                     local step = 3
-                    local pxSize = 1 
+                    local pxSize = 1
                     for y = 1, 64, step do
                         for x = 1, 64, step do
                             local dx = x - 32.5
                             local dy = y - 32.5
                             if (dx*dx + dy*dy) <= (31.5 * 31.5) then
-                                local p = pData[y] and pData[y][x]
+                                local cy = math.min(64, y + 1)
+                                local cx = math.min(64, x + 1)
+                                local p = pData[cy] and pData[cy][cx]
+                                if not p then p = pData[y] and pData[y][x] end
                                 if p and p.a and p.a > 0.1 then
                                     local sq = Drawing.new("Square")
                                     sq.Size = Vector2.new(pxSize, pxSize)
