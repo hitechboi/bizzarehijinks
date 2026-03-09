@@ -1506,6 +1506,7 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                 end
+            end
 
                 applyFade()
                 
