@@ -277,25 +277,25 @@ function UILib.Window(titleA, titleB, gameName)
     }
     local chosenEndPhrase = loadingEndPhrases[math.random(1, #loadingEndPhrases)]
     
-    local dBg = mkD(Drawing.new("Square"))
+    local dBg = Drawing.new("Square")
     dBg.Filled=true; dBg.ZIndex=15; dBg.Color=C.BG
     pcall(function() dBg.Corner = 6 end)
-    local dTxt = mkD(Drawing.new("Text"))
+    local dTxt = Drawing.new("Text")
     dTxt.Size=18; dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
     pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)
-    local dDesc = mkD(Drawing.new("Text"))
+    local dDesc = Drawing.new("Text")
     dDesc.Size=13; dDesc.Color=Color3.fromRGB(150, 150, 160); dDesc.Center=true; dDesc.Outline=true; dDesc.ZIndex=16
     pcall(function() dDesc.Font=Drawing.Fonts.Minecraft end)
-    local dBarOuter = mkD(Drawing.new("Square"))
+    local dBarOuter = Drawing.new("Square")
     dBarOuter.Filled=true; dBarOuter.ZIndex=16; dBarOuter.Color=Color3.fromRGB(12, 12, 16)
     pcall(function() dBarOuter.Corner = 4 end)
-    local dBarBg = mkD(Drawing.new("Square"))
+    local dBarBg = Drawing.new("Square")
     dBarBg.Filled=true; dBarBg.ZIndex=17; dBarBg.Color=Color3.fromRGB(25, 25, 30)
     pcall(function() dBarBg.Corner = 2 end)
-    local dBarFg = mkD(Drawing.new("Square"))
+    local dBarFg = Drawing.new("Square")
     dBarFg.Filled=true; dBarFg.ZIndex=18; dBarFg.Color=C.ACCENT
     pcall(function() dBarFg.Corner = 2 end)
-    local dBarGlow = mkD(Drawing.new("Square"))
+    local dBarGlow = Drawing.new("Square")
     dBarGlow.Filled=true; dBarGlow.ZIndex=16; dBarGlow.Color=C.ACCENT
     pcall(function() dBarGlow.Corner = 8 end)
     local function setLoadPos(alpha, text, fillAmt, textDesc)
@@ -354,8 +354,8 @@ function UILib.Window(titleA, titleB, gameName)
     local function incrementLoader(descText)
         if not isLoading then return end
         elementsLoaded = elementsLoaded + 1
-        if elementsLoaded % 12 == 0 then
-            _loadingFillAmt = math.min(0.95, _loadingFillAmt + 0.02)
+        if elementsLoaded % 6 == 0 then
+            _loadingFillAmt = math.min(0.40, _loadingFillAmt + 0.02)
             setLoadPos(1, (gameName or "Check it") .. " Initializing...", _loadingFillAmt, descText)
             task.wait()
         end
@@ -1636,16 +1636,30 @@ function UILib.Window(titleA, titleB, gameName)
 
         if isLoading then
             task.spawn(function()
-                local t2 = tick()
-                while tick() - t2 < 0.2 and not destroyed do
-                    local frac = (tick() - t2) / 0.2
-                    setLoadPos(1, (gameName or "Check it").." Initializing...", _loadingFillAmt + (1 - _loadingFillAmt) * frac, "structuring main layout...")
-                    task.wait()
-                end
-                setLoadPos(1, (gameName or "Check it").." Initializing...", 1, chosenEndPhrase)
-                task.wait(0.75)
+                local progressStages = {
+                    {pct=0.45, text="bypassing security...",                   delay=0.4},
+                    {pct=0.60, text="fetching assets...",                      delay=0.3},
+                    {pct=0.75, text="syncing check.lua routines...",           delay=0.5},
+                    {pct=0.90, text="warming up layout engine... v1.6.0",      delay=0.4},
+                    {pct=0.98, text="initializing core Check it interface...", delay=0.5},
+                    {pct=1.00, text=chosenEndPhrase,                           delay=0.3}
+                }
                 
-                t2 = tick(); local durOut = 0.3
+                local currFill = _loadingFillAmt
+                for _, stage in ipairs(progressStages) do
+                    if currFill < stage.pct and not destroyed then
+                        local startFill = currFill
+                        local frames = math.floor(stage.delay * 60)
+                        for f = 1, frames do
+                            if destroyed then break end
+                            currFill = startFill + (stage.pct - startFill) * (f / frames)
+                            setLoadPos(1, (gameName or "Check it").." Initializing...", currFill, stage.text)
+                            task.wait(1/60)
+                        end
+                    end
+                end
+                
+                local t2 = tick(); local durOut = 0.3
                 while tick()-t2 < durOut and not destroyed do
                     task.wait()
                     setLoadPos(1 - ((tick()-t2)/durOut), "Ready!", 1, chosenEndPhrase)
