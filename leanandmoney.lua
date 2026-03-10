@@ -378,7 +378,6 @@ function UILib.Window(titleA, titleB, gameName)
         d.Visible=yes and true or false
     end
     local function inBox(x,y,w,h)
-        if type(x) ~= "number" or type(y) ~= "number" or type(w) ~= "number" or type(h) ~= "number" then return false end
         return mouse.X>=x and mouse.X<=x+w and mouse.Y>=y and mouse.Y<=y+h
     end
     local uiTargetH = L.H
@@ -420,14 +419,12 @@ function UILib.Window(titleA, titleB, gameName)
             for _,b in ipairs(btns) do
                 if b.isUserList then
                     for _, u in ipairs(b.users) do
-                        if u.out and (not isLoading or not _G._chunksContent_ or not showSet[b.bg]) then
-                            u.out.Visible=false
-                            if u.bg then u.bg.Visible=false end
-                            if u.name then u.name.Visible=false end
-                            if u.youTag then u.youTag.Visible=false end
-                            for pi=1,(u.activePixelsCount or 0) do
-                                if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
-                            end
+                        if u.out then u.out.Visible=false end
+                        if u.bg then u.bg.Visible=false end
+                        if u.name then u.name.Visible=false end
+                        if u.youTag then u.youTag.Visible=false end
+                        for pi=1,(u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
                         end
                     end
                 end
@@ -497,7 +494,7 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                     if u.youTag then
-                        if hide_pixels or not u._active then
+                        if hide_pixels or not showSet[b.bg] or not u._active then
                             u.youTag.Visible = false
                         else
                             u.youTag.Transparency = finalOp
@@ -571,7 +568,7 @@ function UILib.Window(titleA, titleB, gameName)
             local parentVis = showSet[b.bg] and true or false
              for i, u in ipairs(b.users) do
                  local uY = ay + u.ryOff
-                 local isVis = (uY < cBot) and (uY + b.rowH > cTop)
+                 local isVis = menuOpen and not minimized and not isLoading and u._active and parentVis and (uY < cBot) and (uY + b.rowH > cTop)
                  
                  local joinSlide = 0
                  if u._joinTime then
@@ -582,7 +579,7 @@ function UILib.Window(titleA, titleB, gameName)
                  end
                  local axS = ax + joinSlide
 
-                 if isVis and parentVis then
+                 if isVis then
                      local moved = (u._lastPx ~= axS) or (u._lastPy ~= uY) or (u._lastVis ~= true)
                      if moved then
                          u._lastPx = axS
@@ -598,11 +595,11 @@ function UILib.Window(titleA, titleB, gameName)
                          end
                          if u.youTag then
                              u.youTag.Visible = u._isYou and true or false
-                             u.youTag.Position = Vector2.new(axS + avatarSz + 18 + (u._nameW or 0), uY + b.rowH/2 - 7)
+                             u.youTag.Position = Vector2.new(axS + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
                          end
                          if u.avatarPixels then
-                             local pxY = uY + 6
-                             local pxX = axS + 5
+                             local pxY = uY + 3
+                             local pxX = axS + 9
                              for j=1, (u.activePixelsCount or 0) do
                                  local p = u.avatarPixels[j]
                                  if p and p.d then
@@ -615,10 +612,10 @@ function UILib.Window(titleA, titleB, gameName)
                  else
                      if u._lastVis ~= false then
                          u._lastVis = false
-                         if u.out and u.out.Visible then u.out.Visible = false end
-                         if u.bg and u.bg.Visible then u.bg.Visible = false end
-                         if u.name and u.name.Visible then u.name.Visible = false end
-                         if u.youTag and u.youTag.Visible then u.youTag.Visible = false end
+                         if u.out then u.out.Visible = false end
+                         if u.bg then u.bg.Visible = false end
+                         if u.name then u.name.Visible = false end
+                         if u.youTag then u.youTag.Visible = false end
                          if u.avatarPixels then
                              for j=1, (u.activePixelsCount or 0) do
                                  local p = u.avatarPixels[j]
@@ -1170,7 +1167,7 @@ function UILib.Window(titleA, titleB, gameName)
                             sq = Drawing.new("Square")
                             sq.Size = Vector2.new(pxSize, pxSize)
                             sq.Filled = true; sq.ZIndex = 8
-                            table.insert(uiUser.avatarPixels, {d=sq, gx=math.floor((x-1)/step)*mapInterval, gy=math.floor((y-1)/step)*mapInterval})
+                            table.insert(uiUser.avatarPixels, {d=sq, gx=offsetX + math.floor((x-1)/step)*mapInterval, gy=offsetY + math.floor((y-1)/step)*mapInterval})
                         end
                         sq.Color = Color3.fromRGB(pData.r, pData.g, pData.b)
                         sq.Transparency = pData.a or 1
@@ -1181,7 +1178,6 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
         uiUser.activePixelsCount = pIdx - 1
-        uiUser._lastPx = nil
     end
     local function addUserList(tab, maxUsers, relY)
         local rx=L.SIDEBAR+L.ROW_PAD; local cw=L.CONTENT_W-L.ROW_PAD*2
@@ -1205,7 +1201,7 @@ function UILib.Window(titleA, titleB, gameName)
             local uName = mkTx("", uiX+rx+42, uiY+ry+yOff+38/2-7, 13, C.WHITE, false, 8)
             local uYouTag = mkTx(" <-- you", uiX+rx+42, uiY+ry+yOff+38/2-7, 13, C.GRAY, false, 8)
             uOut.Visible = false; uBg.Visible = false; uName.Visible = false; uYouTag.Visible = false
-            table.insert(users, {out=uOut, bg=uBg, name=uName, youTag=uYouTag, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false, _isYou=false, _nameW=0})
+            table.insert(users, {out=uOut, bg=uBg, name=uName, youTag=uYouTag, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false, _isYou=false})
         end
         local b={tab=tab,isUserList=true,bg=bg,lbl=bg,ln=nil,users=users,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,maxUsers=maxUsers,pad=pad,rowH=rowH}
@@ -1381,7 +1377,6 @@ function UILib.Window(titleA, titleB, gameName)
                         if u.lastName ~= names[i] then
                             u.lastName = names[i]
                             u._joinTime = tick()
-                            u._lastPx = nil
                         end
                         u._isYou = (localName and names[i] == localName)
                         u.name.Text = names[i]
@@ -1615,13 +1610,6 @@ function UILib.Window(titleA, titleB, gameName)
         dWelcomeTxt.Visible = true
         dNameTxt = mkTx(uname, 0, 0, 13, C.WHITE, false, 5, false)
         dNameTxt.Visible = true
-        function win:SetActiveCount(count)
-            if dMiniActiveCountLbl then
-                dMiniActiveCountLbl.Text = "Active: " .. tostring(count)
-                dMiniActiveCountLbl.Visible = true
-            end
-        end
-        
         avatarDrawings = {}
         task.spawn(function()
             while _G.avatar_lock and not destroyed do task.wait(0.1) end
