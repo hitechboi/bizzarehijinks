@@ -1,3 +1,15 @@
+local math = math
+local Color3 = Color3
+local Vector2 = Vector2
+local task = task
+local tick = tick
+local pcall = pcall
+local ipairs = ipairs
+local table = table
+local string = string
+local Drawing = Drawing
+local game = game
+local workspace = workspace
 local UILib = {}
 local _collapseSections = {}
 local THEMES = {
@@ -68,7 +80,7 @@ if _G._checkit_active_windows then
 end
 _G._checkit_active_windows = {}
 print("[UILib] v1.6.0 loaded")
-local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
+local clamp = math.clamp
 local function lerpC(a,b,t)
     return Color3.fromRGB(
         math.floor(a.R*255+(b.R*255-a.R*255)*t),
@@ -1637,12 +1649,17 @@ function UILib.Window(titleA, titleB, gameName)
         if isLoading then
             task.spawn(function()
                 local progressStages = {
-                    {pct=0.45, text="bypassing security...",                   delay=0.4},
-                    {pct=0.60, text="fetching assets...",                      delay=0.3},
-                    {pct=0.75, text="syncing check.lua routines...",           delay=0.5},
-                    {pct=0.90, text="warming up layout engine... v1.6.0",      delay=0.4},
-                    {pct=0.98, text="initializing core Check it interface...", delay=0.5},
-                    {pct=1.00, text=chosenEndPhrase,                           delay=0.3}
+                    {pct=0.08, text="loading globals, console & input functions...", delay=0.1},
+                    {pct=0.15, text="initializing memory & miscellaneous functions...", delay=0.1},
+                    {pct=0.25, text="caching classes (BasePart, Camera, Instance)...", delay=0.2},
+                    {pct=0.35, text="binding DataModel & Workspace APIs...", delay=0.1},
+                    {pct=0.50, text="setting up HttpGet service & Humanoid...", delay=0.15},
+                    {pct=0.60, text="resolving Players, Player & Mouse...", delay=0.15},
+                    {pct=0.70, text="allocating GuiObject, TextLabel & ValueBase...", delay=0.15},
+                    {pct=0.80, text="compiling datatypes (Vector2, Vector3, Color3)...", delay=0.2},
+                    {pct=0.90, text="initializing Drawing, DrawingObject & Fonts...", delay=0.3},
+                    {pct=0.98, text="warming up UI layout engine... v1.6.0", delay=0.2},
+                    {pct=1.00, text=chosenEndPhrase, delay=0.3}
                 }
                 
                 local currFill = _loadingFillAmt
