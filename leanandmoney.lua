@@ -76,6 +76,7 @@ UILib.avatar_cache = {}
 if _G._checkit_active_windows then
     for _, w in ipairs(_G._checkit_active_windows) do
         pcall(function() w:Destroy() end)
+        task.wait(0.1)
     end
 end
 _G._checkit_active_windows = {}
@@ -1159,6 +1160,7 @@ function UILib.Window(titleA, titleB, gameName)
                         if pIdx <= #uiUser.avatarPixels then
                             sq = uiUser.avatarPixels[pIdx].d
                         else
+                            if pIdx % 100 == 0 then task.wait() end
                             sq = Drawing.new("Square")
                             sq.Size = Vector2.new(pxSize, pxSize)
                             sq.Filled = true; sq.ZIndex = 8
@@ -1630,6 +1632,7 @@ function UILib.Window(titleA, titleB, gameName)
                                 local p = pData[cy] and pData[cy][cx]
                                 if not p then p = pData[y] and pData[y][x] end
                                 if p and p.a and p.a > 0.1 then
+                                    if #avatarDrawings % 100 == 0 then task.wait() end
                                     local sq = Drawing.new("Square")
                                     sq.Size = Vector2.new(pxSize, pxSize)
                                     sq.Color = Color3.fromRGB(p.r, p.g, p.b)
@@ -1774,24 +1777,34 @@ function UILib.Window(titleA, titleB, gameName)
                 wasClicking=clicking
             end
             if not minimized and not isLoading then
-                for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
+                if win._lastMiniVis ~= false then
+                    for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
+                    win._lastMiniVis = false
+                end
                 for _,t in ipairs(tabObjs) do
                     local tgt=t.sel and 1 or 0
-                    t.lt=t.lt+(tgt-t.lt)*0.15
-                    t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,t.lt)
-                    t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,t.lt)
+                    if math.abs(tgt - t.lt) > 0.005 then
+                        t.lt=t.lt+(tgt-t.lt)*0.15
+                        t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,t.lt)
+                        t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,t.lt)
+                    end
                 end
                 for _,b in ipairs(btns) do
                     if b.isTog and b.tog and b.tab==currentTab then
                         local tgt=b.state and 1 or 0
-                        b.lt=b.lt+(tgt-b.lt)*0.18
-                        b.tog.Color=lerpC(C.OFF,   C.ON,   b.lt)
-                        b.dot.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt)
                         local dox=b.rx+b.cw-L.TOG_W-8
                         local dcy=b.currentRY or b.ry
                         local sc = tabScroll[currentTab] or 0
-                        b.tog.Position=Vector2.new(uiX+dox, uiY+dcy-sc+b.ch/2-L.TOG_H/2)
-                        b.dot.Position=Vector2.new(uiX+dox+2+(L.TOG_W-L.TOG_H)*b.lt, uiY+dcy-sc+b.ch/2-L.TOG_H/2+2)
+                        local newTogPos = Vector2.new(uiX+dox, uiY+dcy-sc+b.ch/2-L.TOG_H/2)
+                        
+                        if math.abs(tgt - b.lt) > 0.005 or b._lastTogPos ~= newTogPos then
+                            b._lastTogPos = newTogPos
+                            b.lt=b.lt+(tgt-b.lt)*0.18
+                            b.tog.Color=lerpC(C.OFF,   C.ON,   b.lt)
+                            b.dot.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt)
+                            b.tog.Position=newTogPos
+                            b.dot.Position=Vector2.new(uiX+dox+2+(L.TOG_W-L.TOG_H)*b.lt, uiY+dcy-sc+b.ch/2-L.TOG_H/2+2)
+                        end
                     end
                 end
                 do
@@ -1848,25 +1861,29 @@ function UILib.Window(titleA, titleB, gameName)
                 end
             end
                 applyFade()
-                if dWelcomeTxt and dNameTxt then
-                    local wX = uiX + 42
-                    local tY = uiY + uiCurrentH - L.FOOTER + 9
-                    dWelcomeTxt.Position = Vector2.new(wX, tY)
-                    dWelcomeTxt.Transparency = menuOpen and 1 or 0
-                    dWelcomeTxt.Visible = menuOpen
-                    dNameTxt.Position = Vector2.new(wX + 64, tY) 
-                    dNameTxt.Transparency = menuOpen and 1 or 0
-                    dNameTxt.Visible = menuOpen
-                end
-                if dCharLbl then
-                    dCharLbl.Transparency = menuOpen and 1 or 0
-                    dCharLbl.Visible = menuOpen
-                end
-                local ax = uiX + 12
-                local ay = uiY + uiCurrentH - L.FOOTER + 6
-                for _,ap in ipairs(avatarDrawings or {}) do
-                    ap.d.Position = Vector2.new(ax + ap.gx, ay + ap.gy)
-                    ap.d.Visible = menuOpen
+                local wX = uiX + 42
+                local tY = uiY + uiCurrentH - L.FOOTER + 9
+                local txtMoved = (win._lastTxtX ~= wX) or (win._lastTxtY ~= tY) or (win._lastMenuOpen ~= menuOpen)
+                if txtMoved then
+                    win._lastTxtX = wX; win._lastTxtY = tY; win._lastMenuOpen = menuOpen
+                    if dWelcomeTxt and dNameTxt then
+                        dWelcomeTxt.Position = Vector2.new(wX, tY)
+                        dWelcomeTxt.Transparency = menuOpen and 1 or 0
+                        dWelcomeTxt.Visible = menuOpen
+                        dNameTxt.Position = Vector2.new(wX + 64, tY) 
+                        dNameTxt.Transparency = menuOpen and 1 or 0
+                        dNameTxt.Visible = menuOpen
+                    end
+                    if dCharLbl then
+                        dCharLbl.Transparency = menuOpen and 1 or 0
+                        dCharLbl.Visible = menuOpen
+                    end
+                    local ax = uiX + 12
+                    local ay = uiY + uiCurrentH - L.FOOTER + 6
+                    for _,ap in ipairs(avatarDrawings or {}) do
+                        ap.d.Position = Vector2.new(ax + ap.gx, ay + ap.gy)
+                        ap.d.Visible = menuOpen
+                    end
                 end
                 for _,b in ipairs(btns) do
                     if b.currentRY ~= nil and b.tab==currentTab then
