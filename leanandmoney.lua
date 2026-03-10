@@ -355,13 +355,23 @@ function UILib.Window(titleA, titleB, gameName)
                 local op = mOp * tOp
                 local hide_pixels = (op <= 0.01) or not showSet[b.bg]
                 for _, u in ipairs(b.users) do
+                    local joinOp = 1
+                    if u._joinTime then
+                        joinOp = math.clamp((tick() - u._joinTime) / 0.75, 0, 1)
+                    end
+                    local finalOp = op * joinOp
+
+                    if u.out and u.out.Visible then u.out.Transparency = finalOp end
+                    if u.bg and u.bg.Visible then u.bg.Transparency = finalOp end
+                    if u.name and u.name.Visible then u.name.Transparency = finalOp end
+
                     for pi=1, (u.activePixelsCount or 0) do
                         local pd = u.avatarPixels[pi] and u.avatarPixels[pi].d
                         if pd then
                             if hide_pixels or not showSet[b.bg] or not u._active then
                                 pd.Visible = false
                             else
-                                pd.Transparency = op * (pd._baseAlpha or 1)
+                                pd.Transparency = finalOp * (pd._baseAlpha or 1)
                             end
                         end
                     end
@@ -369,7 +379,7 @@ function UILib.Window(titleA, titleB, gameName)
                         if hide_pixels or not showSet[b.bg] or not u._active then
                             u.youTag.Visible = false
                         else
-                            u.youTag.Transparency = op
+                            u.youTag.Transparency = finalOp
                         end
                     end
                 end
@@ -1196,6 +1206,10 @@ function UILib.Window(titleA, titleB, gameName)
                 for i, u in ipairs(b.users) do
                     if names[i] then
                         u._active = true
+                        if u.lastName ~= names[i] then
+                            u.lastName = names[i]
+                            u._joinTime = tick()
+                        end
                         u._isYou = (localName and names[i] == localName)
                         u.name.Text = names[i]
                         u._nameW = #names[i] * 7.5
@@ -1211,6 +1225,8 @@ function UILib.Window(titleA, titleB, gameName)
                         u.youTag.Visible = parentVis and u._isYou
                     else
                         u._active = false
+                        u.lastName = nil
+                        u._joinTime = nil
                         u._isYou = false
                         u.name.Text = ""
                         if u.out then u.out.Visible = false end
