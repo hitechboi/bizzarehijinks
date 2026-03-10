@@ -443,15 +443,11 @@ function UILib.Window(titleA, titleB, gameName)
                          u.name.Position = Vector2.new(ax + avatarSz + 18, uY + b.rowH/2 - 7)
                      end
                      if u.youTag then
-                         u.youTag.Visible = u._isYou and true or false
-                         if u.name and u.name.TextBounds then
-                             u.youTag.Position = Vector2.new(ax + avatarSz + 18 + u.name.TextBounds.X, uY + b.rowH/2 - 7)
-                         else
-                             u.youTag.Position = Vector2.new(ax + avatarSz + 18 + (#u.name.Text * 8), uY + b.rowH/2 - 7)
-                         end
+                         u.youTag.Visible = u._isYou and vis and true or false
+                         u.youTag.Position = Vector2.new(ax + avatarSz + 18 + (u._nameW or (#u.name.Text * 8)), uY + b.rowH/2 - 7)
                      end
                      if u.avatarPixels then
-                         local pxY = uY + 6
+                         local pxY = uY + 8
                          local pxX = ax + 14
                          for j=1, (u.activePixelsCount or 0) do
                              local p = u.avatarPixels[j]
@@ -994,7 +990,7 @@ function UILib.Window(titleA, titleB, gameName)
         local pIdx = 1
         local step = 3; local pxSize = 2
         local mapInterval = 1
-        local offsetX = 0; local offsetY = -4
+        local offsetX = 0; local offsetY = -1
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
@@ -1194,6 +1190,7 @@ function UILib.Window(titleA, titleB, gameName)
                         u._active = true
                         u._isYou = (localName and names[i] == localName)
                         u.name.Text = names[i]
+                        u._nameW = u.name.TextBounds.X > 0 and u.name.TextBounds.X or (#names[i] * 7.5)
                         if not userColorMap[names[i]] then
                             userColorMap[names[i]] = namePalette[math.random(1, #namePalette)]
                             userPhaseMap[names[i]] = math.random() * math.pi * 2
@@ -1429,7 +1426,7 @@ function UILib.Window(titleA, titleB, gameName)
                     local step = 3
                     local pxSize = 2
                     local mapInterval = 1
-                    local offsetX = 1; local offsetY = -1
+                    local offsetX = 1; local offsetY = 2
                     for y = 1, 64, step do
                         for x = 1, 64, step do
                             local dx = x - 32.5
