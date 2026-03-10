@@ -202,8 +202,9 @@ function UILib.Window(titleA, titleB, gameName)
     table.insert(_G._checkit_active_windows, win)
     local mouse = game.Players.LocalPlayer:GetMouse()
     local _scrollDelta = 0
-    pcall(function() mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end)
-    pcall(function() mouse.WheelBackward:Connect(function() _scrollDelta = _scrollDelta + 1 end) end)
+    win._scrollConns = {}
+    pcall(function() table.insert(win._scrollConns, mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end)) end)
+    pcall(function() table.insert(win._scrollConns, mouse.WheelBackward:Connect(function() _scrollDelta = _scrollDelta + 1 end)) end)
     local PAD = 10
     local uiX, uiY       = 300, 200
     local dragging        = false
@@ -693,11 +694,9 @@ function UILib.Window(titleA, titleB, gameName)
         dTopLine.From     =Vector2.new(uiX+1,uiY+L.TOPBAR)
         dTopLine.To       =Vector2.new(uiX+L.W-1,uiY+L.TOPBAR)
         dTitleW.Position  =Vector2.new(uiX+14,uiY+12)
-        if dTitleW.TextBounds and dTitleW.TextBounds.X > 0 and dTitleW.TextBounds.X > _twCache then _twCache = dTitleW.TextBounds.X end
-        local tw = _twCache > 0 and _twCache or (#titleA*8)
+        local tw = #titleA*8
         dTitleA.Position  =Vector2.new(uiX+14+tw+3,uiY+12)
-        if dTitleA.TextBounds and dTitleA.TextBounds.X > 0 and dTitleA.TextBounds.X > _taCache then _taCache = dTitleA.TextBounds.X end
-        local ta = _taCache > 0 and _taCache or (#titleB*8)
+        local ta = #titleB*8
         dTitleG.Position  =Vector2.new(uiX+14+tw+3+ta+10,uiY+12)
         dKeyLbl.Position  =Vector2.new(uiX+L.W-22,uiY+14)
         if dActiveCountLbl then
@@ -756,11 +755,9 @@ function UILib.Window(titleA, titleB, gameName)
         dMiniBorder.Size     =Vector2.new(L.W,L.MINI_H)
         dMiniTopBar.Position =Vector2.new(uiX+1,uiY+1)
         dMiniTitleW.Position =Vector2.new(uiX+14,uiY+12)
-        if dMiniTitleW.TextBounds and dMiniTitleW.TextBounds.X > 0 and dMiniTitleW.TextBounds.X > _twCache then _twCache = dMiniTitleW.TextBounds.X end
-        local mtw = _twCache > 0 and _twCache or (#titleA*8)
+        local mtw = #titleA*8
         dMiniTitleA.Position =Vector2.new(uiX+14+mtw+3,uiY+12)
-        if dMiniTitleA.TextBounds and dMiniTitleA.TextBounds.X > 0 and dMiniTitleA.TextBounds.X > _taCache then _taCache = dMiniTitleA.TextBounds.X end
-        local mta = _taCache > 0 and _taCache or (#titleB*8)
+        local mta = #titleB*8
         dMiniTitleG.Position =Vector2.new(uiX+14+mtw+3+mta+10,uiY+12)
         dMiniKeyLbl.Position =Vector2.new(uiX+L.W-22,uiY+14)
         if dMiniActiveCountLbl then
@@ -1023,12 +1020,12 @@ function UILib.Window(titleA, titleB, gameName)
             if starFirst and i==1 then
                 lb.Text=line; lb.Position=Vector2.new(uiX+rx+cw/2,uiY+ry+pad)
                 lb.Size=14; lb.Color=Color3.fromRGB(255,200,40); lb.Center=true
-                lb.Outline=true; lb.Font=Drawing.Fonts.Minecraft
+                lb.Outline=true; pcall(function() lb.Font=Drawing.Fonts.Minecraft end)
             else
                 local off=starFirst and (starH+pad+(i-2)*lineH) or (pad+(i-1)*lineH)
                 lb.Text=line; lb.Position=Vector2.new(uiX+rx+8,uiY+ry+off)
                 lb.Size=11; lb.Color=C.WHITE; lb.Center=false
-                lb.Outline=true; lb.Font=Drawing.Fonts.Minecraft
+                lb.Outline=true; pcall(function() lb.Font=Drawing.Fonts.Minecraft end)
             end
             lb.Transparency=1; lb.ZIndex=8; lb.Visible=false
             table.insert(lbls,lb)
@@ -2258,6 +2255,7 @@ function UILib.Window(titleA, titleB, gameName)
         end
         destroyed=true
         pcall(function() notify("UI destroyed.", titleA.." "..titleB, 3) end)
+        if win._scrollConns then for _, c in ipairs(win._scrollConns) do pcall(function() c:Disconnect() end) end end
         for _,d in ipairs(allDrawings) do pcall(function() d:Remove() end) end
         for _,d in ipairs(glowLines) do pcall(function() d:Remove() end) end
         if dScrollBg then pcall(function() dScrollBg:Remove() end) end
