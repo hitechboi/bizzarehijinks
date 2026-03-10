@@ -597,7 +597,7 @@ function UILib.Window(titleA, titleB, gameName)
                          end
                          if u.youTag then
                              u.youTag.Visible = u._isYou and true or false
-                             u.youTag.Position = Vector2.new(axS + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
+                             u.youTag.Position = Vector2.new(axS + avatarSz + 18 + (u._nameW or 0), uY + b.rowH/2 - 7)
                          end
                          if u.avatarPixels then
                              local pxY = uY + 6
