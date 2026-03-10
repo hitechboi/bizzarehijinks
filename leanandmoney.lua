@@ -454,11 +454,11 @@ function UILib.Window(titleA, titleB, gameName)
             and math.abs((menuOpen and 0 or 1)-clamp(mf,0,1))
             or  (menuOpen and 1 or 0)
         local tp=clamp((tick()-tabSwitchedAt)/TAB_FADE_DUR,0,1)
-        for _,d in ipairs(allDrawings) do
-            if showSet[d] then
-                local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
-                local op=mOp*tOp
-                d.Visible=op>0.01
+        for d, _ in pairs(showSet) do
+            local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
+            local op=mOp*tOp
+            if op>0.01 then
+                d.Visible=true
                 d.Transparency=op
             else
                 d.Visible=false
@@ -1146,9 +1146,9 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 1; local pxSize = 4
-        local mapInterval = 4
-        local offsetX = 0; local offsetY = -2
+        local step = 1; local pxSize = 8
+        local mapInterval = 8
+        local offsetX = 0; local offsetY = -4
         for y = 1, 16, step do
             for x = 1, 16, step do
                 local dx = x - 8.5; local dy = y - 8.5
@@ -1618,9 +1618,9 @@ function UILib.Window(titleA, titleB, gameName)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
                     local step = 1
-                    local pxSize = 4
-                    local mapInterval = 4
-                    local offsetX = 1; local offsetY = 2
+                    local pxSize = 8
+                    local mapInterval = 8
+                    local offsetX = 2; local offsetY = 4
                     for y = 1, 16, step do
                         for x = 1, 16, step do
                             local dx = x - 8.5
@@ -1673,6 +1673,22 @@ function UILib.Window(titleA, titleB, gameName)
                             if destroyed then break end
                             currFill = startFill + (stage.pct - startFill) * (f / frames)
                             setLoadPos(1, (gameName or "Check it").." Initializing...", currFill, stage.text)
+                            
+                            -- Load UI chunks progressively based on %
+                            if currFill >= 0.25 and not _G._chunksBase_ then
+                                _G._chunksBase_ = true
+                                for _,d in ipairs(baseUI) do setShow(d,true) end
+                            elseif currFill >= 0.60 and not _G._chunksTabs_ then
+                                _G._chunksTabs_ = true
+                                for _,t2 in ipairs(tabObjs) do
+                                    setShow(t2.bg,true); setShow(t2.acc,true)
+                                    setShow(t2.lbl,t2.sel); setShow(t2.lblG,not t2.sel)
+                                end
+                            elseif currFill >= 0.85 and not _G._chunksContent_ then
+                                _G._chunksContent_=true
+                                showTab(currentTab)
+                            end
+
                             task.wait(1/60)
                         end
                     end
@@ -1693,14 +1709,18 @@ function UILib.Window(titleA, titleB, gameName)
                 pcall(function() dBarGlow:Remove() end)
                 
                 if not destroyed then
-                    for _,d in ipairs(baseUI) do setShow(d,true) end
-                    for _,t2 in ipairs(tabObjs) do
-                        setShow(t2.bg,true); setShow(t2.acc,true)
-                        setShow(t2.lbl,t2.sel); setShow(t2.lblG,not t2.sel)
+                    if not _G._chunksBase_ then for _,d in ipairs(baseUI) do setShow(d,true) end end
+                    if not _G._chunksTabs_ then 
+                        for _,t2 in ipairs(tabObjs) do
+                            setShow(t2.bg,true); setShow(t2.acc,true)
+                            setShow(t2.lbl,t2.sel); setShow(t2.lblG,not t2.sel)
+                        end
                     end
-                    showTab(currentTab)
+                    if not _G._chunksContent_ then showTab(currentTab) end
                 end
-                
+                _G._chunksBase_ = nil
+                _G._chunksTabs_ = nil
+                _G._chunksContent_ = nil
                 isLoading = false
             end)
         end
