@@ -76,7 +76,6 @@ UILib.avatar_cache = {}
 if _G._checkit_active_windows then
     for _, w in ipairs(_G._checkit_active_windows) do
         pcall(function() w:Destroy() end)
-        task.wait(0.1)
     end
 end
 _G._checkit_active_windows = {}
@@ -1147,13 +1146,13 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 3; local pxSize = 2
-        local mapInterval = 1
+        local step = 1; local pxSize = 4
+        local mapInterval = 4
         local offsetX = 0; local offsetY = -2
-        for y = 1, 64, step do
-            for x = 1, 64, step do
-                local dx = x - 32.5; local dy = y - 32.5
-                if (dx*dx + dy*dy) <= (31.5 * 31.5) then
+        for y = 1, 16, step do
+            for x = 1, 16, step do
+                local dx = x - 8.5; local dy = y - 8.5
+                if (dx*dx + dy*dy) <= (7.5 * 7.5) then
                     local pData = pixelsData[y] and pixelsData[y][x]
                     if pData and pData.a and pData.a > 0.1 then
                         local sq
@@ -1612,25 +1611,24 @@ function UILib.Window(titleA, titleB, gameName)
             while _G.avatar_lock and not destroyed do task.wait(0.1) end
             if destroyed then return end
             _G.avatar_lock = true
-            local url = "https://api.luard.co/v1/user?v5="..uname.."&res=64"
+            local url = "https://api.luard.co/v1/user?v5="..uname.."&res=16"
             local s, code = pcall(function() return game:HttpGet(url) end)
             if s and code and #code > 100 then
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
-                    local step = 3
-                    local pxSize = 2
-                    local mapInterval = 1
+                    local step = 1
+                    local pxSize = 4
+                    local mapInterval = 4
                     local offsetX = 1; local offsetY = 2
-                    for y = 1, 64, step do
-                        for x = 1, 64, step do
-                            local dx = x - 32.5
-                            local dy = y - 32.5
-                            if (dx*dx + dy*dy) <= (31.5 * 31.5) then
-                                local cy = math.min(64, y + 1)
-                                local cx = math.min(64, x + 1)
+                    for y = 1, 16, step do
+                        for x = 1, 16, step do
+                            local dx = x - 8.5
+                            local dy = y - 8.5
+                            if (dx*dx + dy*dy) <= (7.5 * 7.5) then
+                                local cx = x
+                                local cy = y
                                 local p = pData[cy] and pData[cy][cx]
-                                if not p then p = pData[y] and pData[y][x] end
                                 if p and p.a and p.a > 0.1 then
                                     if #avatarDrawings % 100 == 0 then task.wait() end
                                     local sq = Drawing.new("Square")
