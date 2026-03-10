@@ -61,6 +61,12 @@ UILib.Themes = THEMES
 UILib.Colors = THEMES["Check it"] 
 _G.UILib = UILib
 UILib.avatar_cache = {}
+if _G._checkit_active_windows then
+    for _, w in ipairs(_G._checkit_active_windows) do
+        pcall(function() w:Destroy() end)
+    end
+end
+_G._checkit_active_windows = {}
 print("[UILib] v1.6.0 loaded")
 local function clamp(v,lo,hi) return math.max(lo,math.min(hi,v)) end
 local function lerpC(a,b,t)
@@ -193,6 +199,7 @@ kn[0xC0]="`"
 local function kname(k) return kn[k] or ("Key"..k) end
 function UILib.Window(titleA, titleB, gameName)
     local win = {}
+    table.insert(_G._checkit_active_windows, win)
     local mouse = game.Players.LocalPlayer:GetMouse()
     local _scrollDelta = 0
     pcall(function() mouse.WheelForward:Connect(function() _scrollDelta = _scrollDelta - 1 end) end)
