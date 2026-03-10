@@ -1607,7 +1607,8 @@ function UILib.Window(titleA, titleB, gameName)
         dNameTxt.Visible = true
         avatarDrawings = {}
         task.spawn(function()
-            while _G.avatar_lock do task.wait(0.1) end
+            while _G.avatar_lock and not destroyed do task.wait(0.1) end
+            if destroyed then return end
             _G.avatar_lock = true
             local url = "https://api.luard.co/v1/user?v5="..uname.."&res=64"
             local s, code = pcall(function() return game:HttpGet(url) end)
@@ -2310,14 +2311,25 @@ function UILib.Window(titleA, titleB, gameName)
         if dMiniActiveCountLbl then pcall(function() dMiniActiveCountLbl:Remove() end) end
         for _,d in ipairs(miniDrawings) do pcall(function() d:Remove() end) end
         for _,l in ipairs(miniActiveLbls) do pcall(function() l:Remove() end) end
+        
+        pcall(function() if dBg then dBg:Remove() end end)
+        pcall(function() if dTxt then dTxt:Remove() end end)
+        pcall(function() if dDesc then dDesc:Remove() end end)
+        pcall(function() if dBarOuter then dBarOuter:Remove() end end)
+        pcall(function() if dBarBg then dBarBg:Remove() end end)
+        pcall(function() if dBarFg then dBarFg:Remove() end end)
+        pcall(function() if dBarGlow then dBarGlow:Remove() end end)
+
         for _,b in ipairs(btns) do
             if b.isUserList then
                 for _, u in ipairs(b.users) do
                     pcall(function() if u.out then u.out:Remove() end end)
                     pcall(function() if u.bg then u.bg:Remove() end end)
                     pcall(function() if u.name then u.name:Remove() end end)
-                    for pi=1, (u.activePixelsCount or 0) do
-                        pcall(function() if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d:Remove() end end)
+                    if u.avatarPixels then
+                        for pi=1, #(u.avatarPixels) do
+                            pcall(function() if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d:Remove() end end)
+                        end
                     end
                     u.avatarPixels = {}
                     u.activePixelsCount = 0
