@@ -1204,7 +1204,7 @@ function UILib.Window(titleA, titleB, gameName)
             local uName = mkTx("", uiX+rx+42, uiY+ry+yOff+38/2-7, 13, C.WHITE, false, 8)
             local uYouTag = mkTx(" <-- you", uiX+rx+42, uiY+ry+yOff+38/2-7, 13, C.GRAY, false, 8)
             uOut.Visible = false; uBg.Visible = false; uName.Visible = false; uYouTag.Visible = false
-            table.insert(users, {out=uOut, bg=uBg, name=uName, youTag=uYouTag, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false, _isYou=false})
+            table.insert(users, {out=uOut, bg=uBg, name=uName, youTag=uYouTag, ryOff=yOff, avatarPixels={}, activePixelsCount=0, _active=false, _isYou=false, _nameW=0})
         end
         local b={tab=tab,isUserList=true,bg=bg,lbl=bg,ln=nil,users=users,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,maxUsers=maxUsers,pad=pad,rowH=rowH}
