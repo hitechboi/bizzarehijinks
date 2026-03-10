@@ -448,29 +448,47 @@ function UILib.Window(titleA, titleB, gameName)
             local cTop = uiY + L.TOPBAR
             local cBot = uiY + uiCurrentH - L.FOOTER
             local parentVis = showSet[b.bg] and true or false
-            for i, u in ipairs(b.users) do
+             for i, u in ipairs(b.users) do
                  local uY = ay + u.ryOff
                  local isVis = menuOpen and not minimized and not isLoading and u._active and parentVis and (uY < cBot) and (uY + b.rowH > cTop)
+                 
+                 local joinSlide = 0
+                 if u._joinTime then
+                     local jt = tick() - u._joinTime
+                     if jt < 0.75 then
+                         joinSlide = (1 - (jt / 0.75)) * 30 -- Slide in from 30 pixels to the right
+                     end
+                 end
+                 local axS = ax + joinSlide
+
                  if isVis then
-                     if u.out then u.out.Visible = true; u.out.Position = Vector2.new(ax, uY) end
-                     if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(ax+1, uY+1) end
+                     if u.out then u.out.Visible = true; u.out.Position = Vector2.new(axS, uY) end
+                     if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(axS+1, uY+1) end
                      local avatarSz = 24
                      if u.name then
                          u.name.Visible = true
-                         u.name.Position = Vector2.new(ax + avatarSz + 18, uY + b.rowH/2 - 7)
+                         u.name.Position = Vector2.new(axS + avatarSz + 18, uY + b.rowH/2 - 7)
                      end
                      if u.youTag then
                          u.youTag.Visible = u._isYou and isVis and true or false
-                         u.youTag.Position = Vector2.new(ax + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
+                         u.youTag.Position = Vector2.new(axS + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
                      end
                      if u.avatarPixels then
                          local pxY = uY + 8
-                         local pxX = ax + 14
+                         local pxX = axS + 14
+                         
+                         -- Cache check at row level to avoid tracking thousands of vectors if it didn't move
+                         local moved = (u._lastPx ~= pxX) or (u._lastPy ~= pxY)
+                         u._lastPx = pxX
+                         u._lastPy = pxY
+
                          for j=1, (u.activePixelsCount or 0) do
                              local p = u.avatarPixels[j]
                              if p and p.d then
                                  p.d.Visible = isVis and true or false
-                                 if isVis then p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) end
+                                 if isVis and moved then 
+                                     p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) 
+                                 end
                              end
                          end
                      end
@@ -632,13 +650,15 @@ function UILib.Window(titleA, titleB, gameName)
     end
     local dShadow,dMainBg,dGlow1,dGlow2,dBorder
     local dTopBar,dTopFill,dTopLine
-    local dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR
+    local dKeyLbl,dDotY,dDotR
+    local dActiveCountLbl
     local dSide,dSideLn,dContent,dFooter,dFotLine,dCharLbl
     local dScrollBg, dScrollThumb
     local glowLines
     local dMiniShadow,dMiniBg,dMiniGlow1,dMiniGlow2,dMiniBorder
     local dMiniTopBar,dMiniTitleW,dMiniTitleA,dMiniTitleG
     local dMiniKeyLbl,dMiniDotG,dMiniDotR,dMiniDivLn,dMiniActiveBg
+    local dMiniActiveCountLbl
     local miniGlowLines
     local iKeyInfo, iKeyBind
     local tipBg, tipBorder, tipLbl, tipDesc
@@ -673,6 +693,10 @@ function UILib.Window(titleA, titleB, gameName)
         local ta = _taCache > 0 and _taCache or (#titleB*8)
         dTitleG.Position  =Vector2.new(uiX+14+tw+3+ta+10,uiY+12)
         dKeyLbl.Position  =Vector2.new(uiX+L.W-22,uiY+14)
+        if dActiveCountLbl then
+            local aw = dActiveCountLbl.TextBounds and dActiveCountLbl.TextBounds.X or (#dActiveCountLbl.Text * 6)
+            dActiveCountLbl.Position = Vector2.new(uiX+L.W-32-aw-35, uiY+14)
+        end
         dDotY.Position    =Vector2.new(uiX+L.W-55,uiY+15)
         dDotR.Position    =Vector2.new(uiX+L.W-42,uiY+15)
         dSide.Position    =Vector2.new(uiX+1,uiY+L.TOPBAR)
@@ -732,6 +756,10 @@ function UILib.Window(titleA, titleB, gameName)
         local mta = _taCache > 0 and _taCache or (#titleB*8)
         dMiniTitleG.Position =Vector2.new(uiX+14+mtw+3+mta+10,uiY+12)
         dMiniKeyLbl.Position =Vector2.new(uiX+L.W-22,uiY+14)
+        if dMiniActiveCountLbl then
+            local aw = dMiniActiveCountLbl.TextBounds and dMiniActiveCountLbl.TextBounds.X or (#dMiniActiveCountLbl.Text * 6)
+            dMiniActiveCountLbl.Position = Vector2.new(uiX+L.W-32-aw-35, uiY+14)
+        end
         dMiniDotG.Position   =Vector2.new(uiX+L.W-55,uiY+15)
         dMiniDotR.Position   =Vector2.new(uiX+L.W-42,uiY+15)
         dMiniDivLn.From      =Vector2.new(uiX+1,uiY+L.TOPBAR)
@@ -1369,6 +1397,7 @@ function UILib.Window(titleA, titleB, gameName)
             end)
         end
         dKeyLbl  = mkD(mkTx("F1",    uiX+L.W-22, uiY+14,11,C.GRAY,  false,9))
+        dActiveCountLbl = mkD(mkTx("Active: 0", uiX+L.W-120, uiY+14, 11, C.GRAY, false, 9))
         dDotY    = mkD(mkSq(uiX+L.W-55,uiY+15,8,8,C.YELLOW,true,1,9,nil,3))
         dDotR    = mkD(mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3))
         dSide    = mkD(mkSq(uiX+1,uiY+L.TOPBAR,L.SIDEBAR-1,L.H-L.TOPBAR-L.FOOTER-1,C.SIDEBAR,true,1,2,nil,8))
@@ -1392,7 +1421,7 @@ function UILib.Window(titleA, titleB, gameName)
         tipDesc = mkTx("",0,0,10,Color3.fromRGB(130,140,170),false,13,false)
         tipDesc.Visible=false
         baseUI={dShadow,dGlow2,dGlow1,dMainBg,dBorder,dTopBar,dTopFill,dTopLine,
-                dTitleW,dTitleA,dTitleG,dKeyLbl,dDotY,dDotR,dSide,dSideLn,dContent,
+                dTitleW,dTitleA,dTitleG,dKeyLbl,dActiveCountLbl,dDotY,dDotR,dSide,dSideLn,dContent,
                 dFooter,dFotLine,dCharLbl}
         local tabNames = {}
         for name,_ in pairs(tabAPI) do table.insert(tabNames,name) end
@@ -1418,6 +1447,8 @@ function UILib.Window(titleA, titleB, gameName)
         dMiniTitleA  = mkTx(titleB,  uiX+14+(#titleA*8)+3, uiY+12,14,C.ACCENT,false,9,true)
         dMiniTitleG  = mkTx(dTitleG.Text, uiX+100,  uiY+12,13,C.ORANGE,false,9,false)
         dMiniKeyLbl  = mkTx("F1",    uiX+L.W-22,uiY+14,11,C.GRAY,  false,9)
+        dMiniActiveCountLbl = mkTx("Active: 0", uiX+L.W-120, uiY+14, 11, C.GRAY, false, 9)
+        dMiniActiveCountLbl.Visible = false
         dMiniDotG    = mkSq(uiX+L.W-55,uiY+15,8,8,C.ACCENT,true,1,9,nil,3)
         dMiniDotR    = mkSq(uiX+L.W-42,uiY+15,8,8,Color3.fromRGB(170,44,44),true,1,9,nil,3)
         dMiniDivLn   = mkLn(uiX+1,uiY+L.TOPBAR,uiX+L.W-1,uiY+L.TOPBAR,C.BORDER,4,1)
@@ -1429,7 +1460,7 @@ function UILib.Window(titleA, titleB, gameName)
         pcall(function() dMiniBorder.Corner=10 end)
         miniDrawings={dMiniShadow,dMiniBg,dMiniGlow2,dMiniGlow1,dMiniBorder,
                       dMiniTopBar,dMiniTitleW,dMiniTitleA,dMiniTitleG,
-                      dMiniKeyLbl,dMiniDotG,dMiniDotR,dMiniDivLn,dMiniActiveBg}
+                      dMiniKeyLbl,dMiniActiveCountLbl,dMiniDotG,dMiniDotR,dMiniDivLn,dMiniActiveBg}
         for _,d in ipairs(miniDrawings) do d.Visible=false end
         currentTab=defaultTab
         notif("Loaded on "..(gameName or ""),"Check it Interface",4)
@@ -2204,6 +2235,8 @@ function UILib.Window(titleA, titleB, gameName)
         if tipBorder then pcall(function() tipBorder:Remove() end) end
         if tipLbl then pcall(function() tipLbl:Remove() end) end
         if tipDesc then pcall(function() tipDesc:Remove() end) end
+        if dActiveCountLbl then pcall(function() dActiveCountLbl:Remove() end) end
+        if dMiniActiveCountLbl then pcall(function() dMiniActiveCountLbl:Remove() end) end
         for _,d in ipairs(miniDrawings) do pcall(function() d:Remove() end) end
         for _,l in ipairs(miniActiveLbls) do pcall(function() l:Remove() end) end
         for _,b in ipairs(btns) do
@@ -2220,6 +2253,12 @@ function UILib.Window(titleA, titleB, gameName)
                 end
             end
         end
+    end
+    function win:SetActiveCount(count)
+        if dActiveCountLbl then dActiveCountLbl.Text = "Active: " .. tostring(count) end
+        if dMiniActiveCountLbl then dMiniActiveCountLbl.Text = "Active: " .. tostring(count) end
+        updatePos()
+        updateMiniPos()
     end
     function win:ApplyTheme(name) applyTheme(name) end
     UILib.applyTheme = function(name) applyTheme(name) end
