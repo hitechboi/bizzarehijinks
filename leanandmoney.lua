@@ -580,45 +580,47 @@ function UILib.Window(titleA, titleB, gameName)
                  local axS = ax + joinSlide
 
                  if isVis then
-                     if u.out then u.out.Visible = true; u.out.Position = Vector2.new(axS, uY) end
-                     if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(axS+1, uY+1) end
-                     local avatarSz = 24
-                     if u.name then
-                         u.name.Visible = true
-                         u.name.Position = Vector2.new(axS + avatarSz + 18, uY + b.rowH/2 - 7)
-                     end
-                     if u.youTag then
-                         u.youTag.Visible = u._isYou and isVis and true or false
-                         u.youTag.Position = Vector2.new(axS + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
-                     end
-                     if u.avatarPixels then
-                         local pxY = uY + 8
-                         local pxX = axS + 14
-                         
-                         -- Cache check at row level to avoid tracking thousands of vectors if it didn't move
-                         local moved = (u._lastPx ~= pxX) or (u._lastPy ~= pxY)
-                         u._lastPx = pxX
-                         u._lastPy = pxY
+                     local moved = (u._lastPx ~= axS) or (u._lastPy ~= uY) or (u._lastVis ~= true)
+                     if moved then
+                         u._lastPx = axS
+                         u._lastPy = uY
+                         u._lastVis = true
 
-                         for j=1, (u.activePixelsCount or 0) do
-                             local p = u.avatarPixels[j]
-                             if p and p.d then
-                                 p.d.Visible = isVis and true or false
-                                 if isVis and moved then 
+                         if u.out then u.out.Visible = true; u.out.Position = Vector2.new(axS, uY) end
+                         if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(axS+1, uY+1) end
+                         local avatarSz = 24
+                         if u.name then
+                             u.name.Visible = true
+                             u.name.Position = Vector2.new(axS + avatarSz + 18, uY + b.rowH/2 - 7)
+                         end
+                         if u.youTag then
+                             u.youTag.Visible = u._isYou and true or false
+                             u.youTag.Position = Vector2.new(axS + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
+                         end
+                         if u.avatarPixels then
+                             local pxY = uY + 3
+                             local pxX = axS + 9
+                             for j=1, (u.activePixelsCount or 0) do
+                                 local p = u.avatarPixels[j]
+                                 if p and p.d then
+                                     p.d.Visible = true
                                      p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) 
                                  end
                              end
                          end
                      end
                  else
-                     if u.out then u.out.Visible = false end
-                     if u.bg then u.bg.Visible = false end
-                     if u.name then u.name.Visible = false end
-                     if u.youTag then u.youTag.Visible = false end
-                     if u.avatarPixels then
-                         for j=1, (u.activePixelsCount or 0) do
-                             local p = u.avatarPixels[j]
-                             if p and p.d then p.d.Visible = false end
+                     if u._lastVis ~= false then
+                         u._lastVis = false
+                         if u.out then u.out.Visible = false end
+                         if u.bg then u.bg.Visible = false end
+                         if u.name then u.name.Visible = false end
+                         if u.youTag then u.youTag.Visible = false end
+                         if u.avatarPixels then
+                             for j=1, (u.activePixelsCount or 0) do
+                                 local p = u.avatarPixels[j]
+                                 if p and p.d then p.d.Visible = false end
+                             end
                          end
                      end
                  end
