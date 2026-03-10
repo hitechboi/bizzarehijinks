@@ -358,11 +358,18 @@ function UILib.Window(titleA, titleB, gameName)
                     for pi=1, (u.activePixelsCount or 0) do
                         local pd = u.avatarPixels[pi] and u.avatarPixels[pi].d
                         if pd then
-                            if hide_pixels then
+                            if hide_pixels or not showSet[b.bg] or not u._active then
                                 pd.Visible = false
                             else
                                 pd.Transparency = op * (pd._baseAlpha or 1)
                             end
+                        end
+                    end
+                    if u.youTag then
+                        if hide_pixels or not showSet[b.bg] or not u._active then
+                            u.youTag.Visible = false
+                        else
+                            u.youTag.Transparency = op
                         end
                     end
                 end
@@ -443,8 +450,8 @@ function UILib.Window(titleA, titleB, gameName)
                          u.name.Position = Vector2.new(ax + avatarSz + 18, uY + b.rowH/2 - 7)
                      end
                      if u.youTag then
-                         u.youTag.Visible = u._isYou and vis and true or false
-                         u.youTag.Position = Vector2.new(ax + avatarSz + 18 + (u._nameW or (#u.name.Text * 8)), uY + b.rowH/2 - 7)
+                         u.youTag.Visible = u._isYou and isVis and true or false
+                         u.youTag.Position = Vector2.new(ax + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
                      end
                      if u.avatarPixels then
                          local pxY = uY + 8
@@ -452,8 +459,8 @@ function UILib.Window(titleA, titleB, gameName)
                          for j=1, (u.activePixelsCount or 0) do
                              local p = u.avatarPixels[j]
                              if p and p.d then
-                                 p.d.Visible = true
-                                 p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy)
+                                 p.d.Visible = isVis and true or false
+                                 if isVis then p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) end
                              end
                          end
                      end
@@ -461,6 +468,7 @@ function UILib.Window(titleA, titleB, gameName)
                      if u.out then u.out.Visible = false end
                      if u.bg then u.bg.Visible = false end
                      if u.name then u.name.Visible = false end
+                     if u.youTag then u.youTag.Visible = false end
                      if u.avatarPixels then
                          for j=1, (u.activePixelsCount or 0) do
                              local p = u.avatarPixels[j]
@@ -990,7 +998,7 @@ function UILib.Window(titleA, titleB, gameName)
         local pIdx = 1
         local step = 3; local pxSize = 2
         local mapInterval = 1
-        local offsetX = 0; local offsetY = -1
+        local offsetX = 0; local offsetY = -6
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
@@ -1190,7 +1198,7 @@ function UILib.Window(titleA, titleB, gameName)
                         u._active = true
                         u._isYou = (localName and names[i] == localName)
                         u.name.Text = names[i]
-                        u._nameW = u.name.TextBounds.X > 0 and u.name.TextBounds.X or (#names[i] * 7.5)
+                        u._nameW = #names[i] * 7.5
                         if not userColorMap[names[i]] then
                             userColorMap[names[i]] = namePalette[math.random(1, #namePalette)]
                             userPhaseMap[names[i]] = math.random() * math.pi * 2
