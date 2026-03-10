@@ -378,6 +378,7 @@ function UILib.Window(titleA, titleB, gameName)
         d.Visible=yes and true or false
     end
     local function inBox(x,y,w,h)
+        if type(x) ~= "number" or type(y) ~= "number" or type(w) ~= "number" or type(h) ~= "number" then return false end
         return mouse.X>=x and mouse.X<=x+w and mouse.Y>=y and mouse.Y<=y+h
     end
     local uiTargetH = L.H
