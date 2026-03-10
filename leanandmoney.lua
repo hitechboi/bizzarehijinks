@@ -440,7 +440,7 @@ function UILib.Window(titleA, titleB, gameName)
             local parentVis = showSet[b.bg] and true or false
             for i, u in ipairs(b.users) do
                  local uY = ay + u.ryOff
-                 local isVis = u._active and parentVis and (uY < cBot) and (uY + b.rowH > cTop)
+                 local isVis = menuOpen and not minimized and not isLoading and u._active and parentVis and (uY < cBot) and (uY + b.rowH > cTop)
                  if isVis then
                      if u.out then u.out.Visible = true; u.out.Position = Vector2.new(ax, uY) end
                      if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(ax+1, uY+1) end
@@ -998,7 +998,7 @@ function UILib.Window(titleA, titleB, gameName)
         local pIdx = 1
         local step = 3; local pxSize = 2
         local mapInterval = 1
-        local offsetX = 0; local offsetY = -6
+        local offsetX = 0; local offsetY = -2
         for y = 1, 64, step do
             for x = 1, 64, step do
                 local dx = x - 32.5; local dy = y - 32.5
