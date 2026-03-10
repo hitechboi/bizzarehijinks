@@ -264,6 +264,102 @@ function UILib.Window(titleA, titleB, gameName)
         d.Visible=false
         return d
     end
+
+    local elementsLoaded = 0
+    local _loadingFillAmt = 0.0
+    local loadingEndPhrases = {
+        "youre goated",
+        "osamason is goated",
+        "check it",
+        "star da post C:",
+        "took off from da jet",
+        "back in action"
+    }
+    local chosenEndPhrase = loadingEndPhrases[math.random(1, #loadingEndPhrases)]
+    
+    local dBg = mkD(Drawing.new("Square"))
+    dBg.Filled=true; dBg.ZIndex=15; dBg.Color=C.BG
+    pcall(function() dBg.Corner = 6 end)
+    local dTxt = mkD(Drawing.new("Text"))
+    dTxt.Size=18; dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
+    pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)
+    local dDesc = mkD(Drawing.new("Text"))
+    dDesc.Size=13; dDesc.Color=Color3.fromRGB(150, 150, 160); dDesc.Center=true; dDesc.Outline=true; dDesc.ZIndex=16
+    pcall(function() dDesc.Font=Drawing.Fonts.Minecraft end)
+    local dBarOuter = mkD(Drawing.new("Square"))
+    dBarOuter.Filled=true; dBarOuter.ZIndex=16; dBarOuter.Color=Color3.fromRGB(12, 12, 16)
+    pcall(function() dBarOuter.Corner = 4 end)
+    local dBarBg = mkD(Drawing.new("Square"))
+    dBarBg.Filled=true; dBarBg.ZIndex=17; dBarBg.Color=Color3.fromRGB(25, 25, 30)
+    pcall(function() dBarBg.Corner = 2 end)
+    local dBarFg = mkD(Drawing.new("Square"))
+    dBarFg.Filled=true; dBarFg.ZIndex=18; dBarFg.Color=C.ACCENT
+    pcall(function() dBarFg.Corner = 2 end)
+    local dBarGlow = mkD(Drawing.new("Square"))
+    dBarGlow.Filled=true; dBarGlow.ZIndex=16; dBarGlow.Color=C.ACCENT
+    pcall(function() dBarGlow.Corner = 8 end)
+    local function setLoadPos(alpha, text, fillAmt, textDesc)
+        dBg.Position = Vector2.new(uiX, uiY); dBg.Size = Vector2.new(L.W, L.H)
+        dBg.Transparency = alpha
+        dTxt.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 26)
+        dTxt.Text = text
+        dTxt.Transparency = alpha
+        local bw = 240; local bh = 8
+        local bx = uiX + L.W/2 - bw/2; local by = uiY + L.H/2 + 2
+        dBarOuter.Position = Vector2.new(bx - 3, by - 3); dBarOuter.Size = Vector2.new(bw + 6, bh + 6)
+        dBarOuter.Transparency = alpha * 0.8
+        dBarBg.Position = Vector2.new(bx, by); dBarBg.Size = Vector2.new(bw, bh)
+        dBarBg.Transparency = alpha
+        local fillW = bw * fillAmt
+        dBarFg.Position = Vector2.new(bx, by); dBarFg.Size = Vector2.new(fillW, bh)
+        dBarFg.Transparency = alpha
+        if fillW > 0 then
+            dBarGlow.Position = Vector2.new(bx - 2, by - 2)
+            dBarGlow.Size = Vector2.new(fillW + 4, bh + 4)
+            dBarGlow.Transparency = alpha * 0.4
+            dBarGlow.Visible = true
+        else
+            dBarGlow.Visible = false
+        end
+        local targetString = textDesc or ""
+        dDesc.Position = Vector2.new(uiX + L.W/2, by + 18)
+        if targetString == "" then
+            dDesc.Text = ""
+        else
+            dDesc.Text = math.floor(fillAmt*100).."% - "..tostring(targetString)
+        end
+        dDesc.Transparency = alpha
+        local vis = alpha>0.05
+        dBg.Visible = vis; dTxt.Visible = vis; dDesc.Visible = vis
+        dBarBg.Visible = vis; dBarFg.Visible = vis
+        dBarOuter.Visible = vis
+    end
+    setLoadPos(1, (gameName or "Check it") .. " Initializing...", 0, "preparing environment...")
+    
+    local updateLoaderFrame = function()
+        if dBg and dBg.Visible then
+            dBg.Position = Vector2.new(uiX, uiY)
+            dTxt.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 26)
+            local bw = 240; local bh = 8
+            local bx = uiX + L.W/2 - bw/2; local by = uiY + L.H/2 + 2
+            dBarOuter.Position = Vector2.new(bx - 3, by - 3)
+            dBarBg.Position = Vector2.new(bx, by)
+            local fillW = dBarFg.Size.X
+            dBarFg.Position = Vector2.new(bx, by)
+            if dBarGlow.Visible then dBarGlow.Position = Vector2.new(bx - 2, by - 2) end
+            dDesc.Position = Vector2.new(uiX + L.W/2, by + 18)
+        end
+    end
+    
+    local function incrementLoader(descText)
+        if not isLoading then return end
+        elementsLoaded = elementsLoaded + 1
+        if elementsLoaded % 12 == 0 then
+            _loadingFillAmt = math.min(0.95, _loadingFillAmt + 0.02)
+            setLoadPos(1, (gameName or "Check it") .. " Initializing...", _loadingFillAmt, descText)
+            task.wait()
+        end
+    end
     local function setShow(d,yes)
         if not d then return end
         showSet[d]=yes or nil
@@ -879,7 +975,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isTog=true,state=init,bg=bg,lbl=lb,ln=dl,tog=tog,dot=dot,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,ox=ox,oy=oy,lt=init and 1 or 0,cb=cb,toggleName=lbl,
                  desc=desc,qbg=qbg,qlb=qlb,qox=ox-22,qch=ch}
-        table.insert(btns,b); return #btns
+        table.insert(btns,b); incrementLoader("loading setting: "..tostring(lbl)); return #btns
     end
     local function addDiv(tab,lbl,relY,collapsible)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
@@ -893,7 +989,7 @@ function UILib.Window(titleA, titleB, gameName)
         end
         local db={tab=tab,isDiv=true,bg=lb,lbl=lb,ln=dl,rx=rx,ry=ry,cw=cw,ch=14,
                   collapsible=collapsible,sectionName=lbl,arrow=arrow,currentRY=ry,baseRY=ry}
-        table.insert(btns,db); return #btns
+        table.insert(btns,db); incrementLoader("loading section: "..tostring(lbl)); return #btns
     end
     local function addAct(tab,lbl,relY,col,cb,lblCol)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
@@ -904,7 +1000,7 @@ function UILib.Window(titleA, titleB, gameName)
         local bg=mkD(mkSq(uiX+rx+1,uiY+ry+1,cw-2,ch-2,col or C.ROWBG,true,1,4,nil,4))
         local lb=mkD(mkTx(lbl,uiX+rx+cw/2,uiY+ry+ch/2-6,12,lblCol or C.WHITE,true,8))
         local b={tab=tab,isAct=true,customCol=col~=nil,out=out,bg=bg,lbl=lb,ln=nil,rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,cb=cb}
-        table.insert(btns,b); return #btns
+        table.insert(btns,b); incrementLoader("loading option: "..tostring(lbl)); return #btns
     end
     local function addSlider(tab,lbl,relY,minV,maxV,initV,cb,isFloat,desc)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
@@ -924,7 +1020,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isSlider=true,bg=bg,lbl=lb,ln=dl,track=trk,fill=fil,handle=hdl,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,trackW=trackW,minV=minV,maxV=maxV,
                  value=initV,baseLbl=lbl,dragging=false,cb=cb,isFloat=isFloat or false,dlb=dlb}
-        table.insert(btns,b); return #btns
+        table.insert(btns,b); incrementLoader("loading slider: "..tostring(lbl)); return #btns
     end
     local function addColorPicker(tab,lbl,relY,initCol,cb)
         local rx=L.SIDEBAR+L.ROW_PAD; local ry=L.TOPBAR+relY
@@ -955,7 +1051,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isColorPicker=true,bg=bg,lbl=lb,ln=dl,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,swatches=swatchBgs,
                  selected=selected,value=swatches[1],cb=cb}
-        table.insert(btns,b); return #btns
+        table.insert(btns,b); incrementLoader("loading color input: "..tostring(lbl)); return #btns
     end
     local openDropdown = nil
     local function applyWindowH(h)
@@ -1005,7 +1101,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isDropdown=true,out=out,bg=bg,lbl=lb,ln=dl,valLbl=val,arrow=arrow,currentRY=ry,baseRY=ry,
                  rx=rx,ry=ry,cw=cw,ch=ch,options=options,optBgs=optBgs,
                  selected=valIdx,open=false,openedAt=0,cb=cb}
-        table.insert(btns,b); return #btns
+        table.insert(btns,b); incrementLoader("loading dropdown: "..tostring(lbl)); return #btns
     end
     local function addLog(tab,lines,relY,starFirst)
         local rx=L.SIDEBAR+L.ROW_PAD
@@ -1033,7 +1129,7 @@ function UILib.Window(titleA, titleB, gameName)
         local b={tab=tab,isLog=true,bg=bg,lbl=bg,ln=nil,lbls=lbls,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,lines=lines,lineH=lineH,pad=pad,
                  starFirst=starFirst,starH=starH}
-        table.insert(btns,b); return #btns
+        table.insert(btns,b); incrementLoader("loading log output..."); return #btns
     end
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
@@ -1092,7 +1188,7 @@ function UILib.Window(titleA, titleB, gameName)
         end
         local b={tab=tab,isUserList=true,bg=bg,lbl=bg,ln=nil,users=users,
                  rx=rx,ry=ry,baseRY=ry,currentRY=ry,cw=cw,ch=ch,maxUsers=maxUsers,pad=pad,rowH=rowH}
-        table.insert(btns,b); return #btns
+        table.insert(btns,b); incrementLoader("loading user list..."); return #btns
     end
     local function CONTENT_H() return uiCurrentH - L.TOPBAR - L.FOOTER end
     recalculateLayout = function(tname)
@@ -1538,77 +1634,32 @@ function UILib.Window(titleA, titleB, gameName)
             task.wait(0.2)
         end)
 
-        local descriptions = {
-                "check it",
-                "hi :p",
-                "osamason is goated",
-                "you're goated",
-                "fetching assets...",
-                "preparing environment...",
-                "warming up engine...",
-                "syncing configurations...",
-                "initializing check it core...",
-                "bypassing security...",
-                "almost there..."
-            }
-            local chosenDesc = descriptions[math.random(1, #descriptions)]
-            local dBg = Drawing.new("Square")
-            dBg.Filled=true; dBg.ZIndex=15; dBg.Color=C.BG
-            pcall(function() dBg.Corner = 6 end)
-            local dTxt = Drawing.new("Text")
-            dTxt.Size=18; dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
-            pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)
-            local dDesc = Drawing.new("Text")
-            dDesc.Size=13; dDesc.Color=Color3.fromRGB(150, 150, 160); dDesc.Center=true; dDesc.Outline=true; dDesc.ZIndex=16
-            pcall(function() dDesc.Font=Drawing.Fonts.Minecraft end)
-            local dBarOuter = Drawing.new("Square")
-            dBarOuter.Filled=true; dBarOuter.ZIndex=16; dBarOuter.Color=Color3.fromRGB(12, 12, 16)
-            pcall(function() dBarOuter.Corner = 4 end)
-            local dBarBg = Drawing.new("Square")
-            dBarBg.Filled=true; dBarBg.ZIndex=17; dBarBg.Color=Color3.fromRGB(25, 25, 30)
-            pcall(function() dBarBg.Corner = 2 end)
-            local dBarFg = Drawing.new("Square")
-            dBarFg.Filled=true; dBarFg.ZIndex=18; dBarFg.Color=C.ACCENT
-            pcall(function() dBarFg.Corner = 2 end)
-            local dBarGlow = Drawing.new("Square")
-            dBarGlow.Filled=true; dBarGlow.ZIndex=16; dBarGlow.Color=C.ACCENT
-            pcall(function() dBarGlow.Corner = 8 end)
-            local function setLoadPos(alpha, text, fillAmt, textDesc)
-                dBg.Position = Vector2.new(uiX, uiY); dBg.Size = Vector2.new(L.W, L.H)
-                dBg.Transparency = alpha
-                dTxt.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 26)
-                dTxt.Text = text
-                dTxt.Transparency = alpha
-                local bw = 240; local bh = 8
-                local bx = uiX + L.W/2 - bw/2; local by = uiY + L.H/2 + 2
-                dBarOuter.Position = Vector2.new(bx - 3, by - 3); dBarOuter.Size = Vector2.new(bw + 6, bh + 6)
-                dBarOuter.Transparency = alpha * 0.8
-                dBarBg.Position = Vector2.new(bx, by); dBarBg.Size = Vector2.new(bw, bh)
-                dBarBg.Transparency = alpha
-                local fillW = bw * fillAmt
-                dBarFg.Position = Vector2.new(bx, by); dBarFg.Size = Vector2.new(fillW, bh)
-                dBarFg.Transparency = alpha
-                if fillW > 0 then
-                    dBarGlow.Position = Vector2.new(bx - 2, by - 2)
-                    dBarGlow.Size = Vector2.new(fillW + 4, bh + 4)
-                    dBarGlow.Transparency = alpha * 0.4
-                    dBarGlow.Visible = true
-                else
-                    dBarGlow.Visible = false
+        if isLoading then
+            task.spawn(function()
+                local t2 = tick()
+                while tick() - t2 < 0.2 and not destroyed do
+                    local frac = (tick() - t2) / 0.2
+                    setLoadPos(1, (gameName or "Check it").." Initializing...", _loadingFillAmt + (1 - _loadingFillAmt) * frac, "structuring main layout...")
+                    task.wait()
                 end
-                local targetString = textDesc or chosenDesc
-                dDesc.Position = Vector2.new(uiX + L.W/2, by + 18)
-                if textDesc == "" then
-                    dDesc.Text = ""
-                else
-                    dDesc.Text = math.floor(fillAmt*100).."% - "..targetString
+                setLoadPos(1, (gameName or "Check it").." Initializing...", 1, chosenEndPhrase)
+                task.wait(0.75)
+                
+                t2 = tick(); local durOut = 0.3
+                while tick()-t2 < durOut and not destroyed do
+                    task.wait()
+                    setLoadPos(1 - ((tick()-t2)/durOut), "Ready!", 1, chosenEndPhrase)
                 end
-                dDesc.Transparency = alpha
-                local vis = alpha>0
-                dBg.Visible = vis; dTxt.Visible = vis; dDesc.Visible = vis
-                dBarBg.Visible = vis; dBarFg.Visible = vis
-                dBarOuter.Visible = vis
-                if alpha <= 0 then
+                
+                pcall(function() dBg:Remove() end)
+                pcall(function() dTxt:Remove() end)
+                pcall(function() dDesc:Remove() end)
+                pcall(function() dBarOuter:Remove() end)
+                pcall(function() dBarBg:Remove() end)
+                pcall(function() dBarFg:Remove() end)
+                pcall(function() dBarGlow:Remove() end)
+                
+                if not destroyed then
                     for _,d in ipairs(baseUI) do setShow(d,true) end
                     for _,t2 in ipairs(tabObjs) do
                         setShow(t2.bg,true); setShow(t2.acc,true)
@@ -1616,54 +1667,10 @@ function UILib.Window(titleA, titleB, gameName)
                     end
                     showTab(currentTab)
                 end
-            end
-            updateLoaderFrame = function()
-                if dBg and dBg.Visible then
-                    dBg.Position = Vector2.new(uiX, uiY)
-                    dTxt.Position = Vector2.new(uiX + L.W/2, uiY + L.H/2 - 26)
-                    local bw = 240; local bh = 8
-                    local bx = uiX + L.W/2 - bw/2; local by = uiY + L.H/2 + 2
-                    dBarOuter.Position = Vector2.new(bx - 3, by - 3)
-                    dBarBg.Position = Vector2.new(bx, by)
-                    local fillW = dBarFg.Size.X
-                    dBarFg.Position = Vector2.new(bx, by)
-                    if dBarGlow.Visible then dBarGlow.Position = Vector2.new(bx - 2, by - 2) end
-                    dDesc.Position = Vector2.new(uiX + L.W/2, by + 18)
-                end
-            end
-            local fillAmt = 0.0
-            setLoadPos(1, gameName.." Initializing...", fillAmt)
-            task.spawn(function()
-                local progressStages = {
-                {pct=0.15, text="bypassing security...",                   delay=0.6},
-                {pct=0.33, text="fetching assets...",                      delay=0.4},
-                {pct=0.46, text="syncing check.lua routines...",           delay=0.8},
-                {pct=0.68, text="warming up layout engine... v1.6.0",      delay=0.5},
-                {pct=0.85, text="initializing core Check it interface...", delay=0.7},
-                {pct=0.98, text=chosenDesc,                                delay=0.3},
-                {pct=1.00, text="done.",                                   delay=0.4}
-            }
-            for _, stage in ipairs(progressStages) do
-                local startFill = fillAmt
-                local frames = math.floor(stage.delay * 60)
-                for f = 1, frames do
-                    fillAmt = startFill + (stage.pct - startFill) * (f / frames)
-                    setLoadPos(1, gameName.." Initializing...", fillAmt, stage.text)
-                    task.wait(1/60)
-                end
-                task.wait(0.1)
-            end
-            local t2 = tick(); local durOut = 0.3
-            while tick()-t2 < durOut and not destroyed do
-                task.wait()
-                setLoadPos(1 - ((tick()-t2)/durOut), "Ready!", 1, "")
-            end
-            pcall(function() dBg:Remove() end)
-            pcall(function() dTxt:Remove() end)
-            pcall(function() dDesc:Remove() end)
-            pcall(function() dBarBg:Remove() end)
-            isLoading = false
-        end)
+                
+                isLoading = false
+            end)
+        end
         task.spawn(function()
         while not destroyed do
             task.wait()
