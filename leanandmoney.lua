@@ -1495,6 +1495,8 @@ function UILib.Window(titleA, titleB, gameName)
         dNameTxt.Visible = true
         avatarDrawings = {}
         task.spawn(function()
+            while _G.avatar_lock do task.wait(0.1) end
+            _G.avatar_lock = true
             local url = "https://api.luard.co/v1/user?v5="..uname.."&res=64"
             local s, code = pcall(function() return game:HttpGet(url) end)
             if s and code and #code > 100 then
@@ -1528,6 +1530,8 @@ function UILib.Window(titleA, titleB, gameName)
                 end
                 _G.avatar_data = nil
             end
+            _G.avatar_lock = false
+            task.wait(0.2)
         end)
 
         local descriptions = {
@@ -1659,7 +1663,8 @@ function UILib.Window(titleA, titleB, gameName)
         task.spawn(function()
         while not destroyed do
             task.wait()
-            local _rbxOk, _rbxActive = pcall(function() return isrbxactive() end)
+            local _rbxOk, _rbxActive = true, true
+            if type(isrbxactive) == "function" then _rbxOk, _rbxActive = pcall(isrbxactive) end
             if not _rbxOk or _rbxActive then
                 local clicking=ismouse1pressed()
             local keyDown=iskeypressed(menuKey)
