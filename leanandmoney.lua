@@ -598,8 +598,8 @@ function UILib.Window(titleA, titleB, gameName)
                              u.youTag.Position = Vector2.new(axS + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
                          end
                          if u.avatarPixels then
-                             local pxY = uY + 3
-                             local pxX = axS + 9
+                             local pxY = uY + 6
+                             local pxX = axS + 5
                              for j=1, (u.activePixelsCount or 0) do
                                  local p = u.avatarPixels[j]
                                  if p and p.d then
@@ -1167,7 +1167,7 @@ function UILib.Window(titleA, titleB, gameName)
                             sq = Drawing.new("Square")
                             sq.Size = Vector2.new(pxSize, pxSize)
                             sq.Filled = true; sq.ZIndex = 8
-                            table.insert(uiUser.avatarPixels, {d=sq, gx=offsetX + math.floor((x-1)/step)*mapInterval, gy=offsetY + math.floor((y-1)/step)*mapInterval})
+                            table.insert(uiUser.avatarPixels, {d=sq, gx=math.floor((x-1)/step)*mapInterval, gy=math.floor((y-1)/step)*mapInterval})
                         end
                         sq.Color = Color3.fromRGB(pData.r, pData.g, pData.b)
                         sq.Transparency = pData.a or 1
@@ -1178,6 +1178,7 @@ function UILib.Window(titleA, titleB, gameName)
             end
         end
         uiUser.activePixelsCount = pIdx - 1
+        uiUser._lastPx = nil
     end
     local function addUserList(tab, maxUsers, relY)
         local rx=L.SIDEBAR+L.ROW_PAD; local cw=L.CONTENT_W-L.ROW_PAD*2
@@ -1377,6 +1378,7 @@ function UILib.Window(titleA, titleB, gameName)
                         if u.lastName ~= names[i] then
                             u.lastName = names[i]
                             u._joinTime = tick()
+                            u._lastPx = nil
                         end
                         u._isYou = (localName and names[i] == localName)
                         u.name.Text = names[i]
@@ -1610,6 +1612,13 @@ function UILib.Window(titleA, titleB, gameName)
         dWelcomeTxt.Visible = true
         dNameTxt = mkTx(uname, 0, 0, 13, C.WHITE, false, 5, false)
         dNameTxt.Visible = true
+        function win:SetActiveCount(count)
+            if dMiniActiveCountLbl then
+                dMiniActiveCountLbl.Text = "Active: " .. tostring(count)
+                dMiniActiveCountLbl.Visible = true
+            end
+        end
+        
         avatarDrawings = {}
         task.spawn(function()
             while _G.avatar_lock and not destroyed do task.wait(0.1) end
