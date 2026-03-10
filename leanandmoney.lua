@@ -419,12 +419,14 @@ function UILib.Window(titleA, titleB, gameName)
             for _,b in ipairs(btns) do
                 if b.isUserList then
                     for _, u in ipairs(b.users) do
-                        if u.out then u.out.Visible=false end
-                        if u.bg then u.bg.Visible=false end
-                        if u.name then u.name.Visible=false end
-                        if u.youTag then u.youTag.Visible=false end
-                        for pi=1,(u.activePixelsCount or 0) do
-                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
+                        if u.out and (not isLoading or not _G._chunksContent_ or not showSet[b.bg]) then
+                            u.out.Visible=false
+                            if u.bg then u.bg.Visible=false end
+                            if u.name then u.name.Visible=false end
+                            if u.youTag then u.youTag.Visible=false end
+                            for pi=1,(u.activePixelsCount or 0) do
+                                if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
+                            end
                         end
                     end
                 end
@@ -494,7 +496,7 @@ function UILib.Window(titleA, titleB, gameName)
                         end
                     end
                     if u.youTag then
-                        if hide_pixels or not showSet[b.bg] or not u._active then
+                        if hide_pixels or not u._active then
                             u.youTag.Visible = false
                         else
                             u.youTag.Transparency = finalOp
@@ -568,7 +570,7 @@ function UILib.Window(titleA, titleB, gameName)
             local parentVis = showSet[b.bg] and true or false
              for i, u in ipairs(b.users) do
                  local uY = ay + u.ryOff
-                 local isVis = menuOpen and not minimized and not isLoading and u._active and parentVis and (uY < cBot) and (uY + b.rowH > cTop)
+                 local isVis = (uY < cBot) and (uY + b.rowH > cTop)
                  
                  local joinSlide = 0
                  if u._joinTime then
@@ -579,7 +581,7 @@ function UILib.Window(titleA, titleB, gameName)
                  end
                  local axS = ax + joinSlide
 
-                 if isVis then
+                 if isVis and parentVis then
                      local moved = (u._lastPx ~= axS) or (u._lastPy ~= uY) or (u._lastVis ~= true)
                      if moved then
                          u._lastPx = axS
@@ -612,10 +614,10 @@ function UILib.Window(titleA, titleB, gameName)
                  else
                      if u._lastVis ~= false then
                          u._lastVis = false
-                         if u.out then u.out.Visible = false end
-                         if u.bg then u.bg.Visible = false end
-                         if u.name then u.name.Visible = false end
-                         if u.youTag then u.youTag.Visible = false end
+                         if u.out and u.out.Visible then u.out.Visible = false end
+                         if u.bg and u.bg.Visible then u.bg.Visible = false end
+                         if u.name and u.name.Visible then u.name.Visible = false end
+                         if u.youTag and u.youTag.Visible then u.youTag.Visible = false end
                          if u.avatarPixels then
                              for j=1, (u.activePixelsCount or 0) do
                                  local p = u.avatarPixels[j]
