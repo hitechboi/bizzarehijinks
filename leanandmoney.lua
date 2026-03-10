@@ -694,7 +694,7 @@ function UILib.Window(titleA, titleB, gameName)
         dTitleG.Position  =Vector2.new(uiX+14+tw+3+ta+10,uiY+12)
         dKeyLbl.Position  =Vector2.new(uiX+L.W-22,uiY+14)
         if dActiveCountLbl then
-            local aw = dActiveCountLbl.TextBounds and dActiveCountLbl.TextBounds.X or (#dActiveCountLbl.Text * 6)
+            local aw = #dActiveCountLbl.Text * 6
             dActiveCountLbl.Position = Vector2.new(uiX+L.W-32-aw-35, uiY+14)
         end
         dDotY.Position    =Vector2.new(uiX+L.W-55,uiY+15)
@@ -709,11 +709,11 @@ function UILib.Window(titleA, titleB, gameName)
         dFotLine.From     =Vector2.new(uiX+1,uiY+curH-L.FOOTER)
         dFotLine.To       =Vector2.new(uiX+L.W-1,uiY+curH-L.FOOTER)
         if dCharLbl then
-            local nW = dNameTxt and #dNameTxt.Text * 6 or 0
-            dCharLbl.Position = Vector2.new(uiX+42+64+nW+8, uiY+curH-L.FOOTER+9)
+            local nW = dNameTxt and (#dNameTxt.Text * 7.5) or 0
+            dCharLbl.Position = Vector2.new(math.floor(uiX+42+64+nW+8), math.floor(uiY+curH-L.FOOTER+9))
         end
-        if dWelcomeTxt then dWelcomeTxt.Position = Vector2.new(uiX+42, uiY+curH-L.FOOTER+9) end
-        if dNameTxt then dNameTxt.Position = Vector2.new(uiX+42+56, uiY+curH-L.FOOTER+9) end
+        if dWelcomeTxt then dWelcomeTxt.Position = Vector2.new(math.floor(uiX+42), math.floor(uiY+curH-L.FOOTER+9)) end
+        if dNameTxt then dNameTxt.Position = Vector2.new(math.floor(uiX+42+56), math.floor(uiY+curH-L.FOOTER+9)) end
         if avatarDrawings then
             local pxY = uiY+curH-L.FOOTER + 5
             local pxX = uiX + 12
@@ -757,7 +757,7 @@ function UILib.Window(titleA, titleB, gameName)
         dMiniTitleG.Position =Vector2.new(uiX+14+mtw+3+mta+10,uiY+12)
         dMiniKeyLbl.Position =Vector2.new(uiX+L.W-22,uiY+14)
         if dMiniActiveCountLbl then
-            local aw = dMiniActiveCountLbl.TextBounds and dMiniActiveCountLbl.TextBounds.X or (#dMiniActiveCountLbl.Text * 6)
+            local aw = #dMiniActiveCountLbl.Text * 6
             dMiniActiveCountLbl.Position = Vector2.new(uiX+L.W-32-aw-35, uiY+14)
         end
         dMiniDotG.Position   =Vector2.new(uiX+L.W-55,uiY+15)
