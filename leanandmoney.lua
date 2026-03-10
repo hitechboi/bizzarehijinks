@@ -384,27 +384,24 @@ function UILib.Window(titleA, titleB, gameName)
     local uiCurrentH = L.H
     local function applyFade()
         if isLoading then
-            if not _G._chunksContent_ then
-                if dScrollBg then dScrollBg.Visible=false end
-                if dScrollThumb then dScrollThumb.Visible=false end
-                if dWelcomeTxt then dWelcomeTxt.Visible=false end
-                if dNameTxt then dNameTxt.Visible=false end
-                if dCharLbl then dCharLbl.Visible=false end
-                for _,ap in ipairs(avatarDrawings or {}) do pcall(function() ap.d.Visible=false end) end
-            end
+            for _,d in ipairs(allDrawings) do d.Visible=false end
+            if dScrollBg then dScrollBg.Visible=false end
+            if dScrollThumb then dScrollThumb.Visible=false end
+            if dWelcomeTxt then dWelcomeTxt.Visible=false end
+            if dNameTxt then dNameTxt.Visible=false end
+            if dCharLbl then dCharLbl.Visible=false end
+            for _,ap in ipairs(avatarDrawings or {}) do pcall(function() ap.d.Visible=false end) end
             for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
             for _,d in ipairs(miniDrawings) do d.Visible=false end
             for _,b in ipairs(btns) do
                 if b.isUserList then
                     for _, u in ipairs(b.users) do
-                        if u.out and not showSet[b.bg] then
-                            u.out.Visible=false
-                            if u.bg then u.bg.Visible=false end
-                            if u.name then u.name.Visible=false end
-                            if u.youTag then u.youTag.Visible=false end
-                            for pi=1,(u.activePixelsCount or 0) do
-                                if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
-                            end
+                        if u.out then u.out.Visible=false end
+                        if u.bg then u.bg.Visible=false end
+                        if u.name then u.name.Visible=false end
+                        if u.youTag then u.youTag.Visible=false end
+                        for pi=1,(u.activePixelsCount or 0) do
+                            if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d.Visible=false end
                         end
                     end
                 end
@@ -413,6 +410,7 @@ function UILib.Window(titleA, titleB, gameName)
                 tipBg.Visible=false; tipBorder.Visible=false
                 tipLbl.Visible=false; tipDesc.Visible=false
             end
+            return
         end
         if minimized then
             for _,d in ipairs(allDrawings) do d.Visible=false end
@@ -580,47 +578,45 @@ function UILib.Window(titleA, titleB, gameName)
                  local axS = ax + joinSlide
 
                  if isVis then
-                     local moved = (u._lastPx ~= axS) or (u._lastPy ~= uY) or (u._lastVis ~= true)
-                     if moved then
-                         u._lastPx = axS
-                         u._lastPy = uY
-                         u._lastVis = true
+                     if u.out then u.out.Visible = true; u.out.Position = Vector2.new(axS, uY) end
+                     if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(axS+1, uY+1) end
+                     local avatarSz = 24
+                     if u.name then
+                         u.name.Visible = true
+                         u.name.Position = Vector2.new(axS + avatarSz + 18, uY + b.rowH/2 - 7)
+                     end
+                     if u.youTag then
+                         u.youTag.Visible = u._isYou and isVis and true or false
+                         u.youTag.Position = Vector2.new(axS + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
+                     end
+                     if u.avatarPixels then
+                         local pxY = uY + 8
+                         local pxX = axS + 14
+                         
+                         -- Cache check at row level to avoid tracking thousands of vectors if it didn't move
+                         local moved = (u._lastPx ~= pxX) or (u._lastPy ~= pxY)
+                         u._lastPx = pxX
+                         u._lastPy = pxY
 
-                         if u.out then u.out.Visible = true; u.out.Position = Vector2.new(axS, uY) end
-                         if u.bg then u.bg.Visible = true; u.bg.Position = Vector2.new(axS+1, uY+1) end
-                         local avatarSz = 24
-                         if u.name then
-                             u.name.Visible = true
-                             u.name.Position = Vector2.new(axS + avatarSz + 18, uY + b.rowH/2 - 7)
-                         end
-                         if u.youTag then
-                             u.youTag.Visible = u._isYou and true or false
-                             u.youTag.Position = Vector2.new(axS + avatarSz + 18 + u._nameW, uY + b.rowH/2 - 7)
-                         end
-                         if u.avatarPixels then
-                             local pxY = uY + 3
-                             local pxX = axS + 9
-                             for j=1, (u.activePixelsCount or 0) do
-                                 local p = u.avatarPixels[j]
-                                 if p and p.d then
-                                     p.d.Visible = true
+                         for j=1, (u.activePixelsCount or 0) do
+                             local p = u.avatarPixels[j]
+                             if p and p.d then
+                                 p.d.Visible = isVis and true or false
+                                 if isVis and moved then 
                                      p.d.Position = Vector2.new(pxX + p.gx, pxY + p.gy) 
                                  end
                              end
                          end
                      end
                  else
-                     if u._lastVis ~= false then
-                         u._lastVis = false
-                         if u.out then u.out.Visible = false end
-                         if u.bg then u.bg.Visible = false end
-                         if u.name then u.name.Visible = false end
-                         if u.youTag then u.youTag.Visible = false end
-                         if u.avatarPixels then
-                             for j=1, (u.activePixelsCount or 0) do
-                                 local p = u.avatarPixels[j]
-                                 if p and p.d then p.d.Visible = false end
-                             end
+                     if u.out then u.out.Visible = false end
+                     if u.bg then u.bg.Visible = false end
+                     if u.name then u.name.Visible = false end
+                     if u.youTag then u.youTag.Visible = false end
+                     if u.avatarPixels then
+                         for j=1, (u.activePixelsCount or 0) do
+                             local p = u.avatarPixels[j]
+                             if p and p.d then p.d.Visible = false end
                          end
                      end
                  end
@@ -1150,13 +1146,13 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 1; local pxSize = 1
-        local mapInterval = 1
-        local offsetX = 4; local offsetY = 0
-        for y = 1, 32, step do
-            for x = 1, 32, step do
-                local dx = x - 16.5; local dy = y - 16.5
-                if (dx*dx + dy*dy) <= (15.5 * 15.5) then
+        local step = 1; local pxSize = 8
+        local mapInterval = 8
+        local offsetX = 0; local offsetY = -4
+        for y = 1, 16, step do
+            for x = 1, 16, step do
+                local dx = x - 8.5; local dy = y - 8.5
+                if (dx*dx + dy*dy) <= (7.5 * 7.5) then
                     local pData = pixelsData[y] and pixelsData[y][x]
                     if pData and pData.a and pData.a > 0.1 then
                         local sq
@@ -1615,21 +1611,21 @@ function UILib.Window(titleA, titleB, gameName)
             while _G.avatar_lock and not destroyed do task.wait(0.1) end
             if destroyed then return end
             _G.avatar_lock = true
-            local url = "https://api.luard.co/v1/user?v5="..uname.."&res=32"
+            local url = "https://api.luard.co/v1/user?v5="..uname.."&res=16"
             local s, code = pcall(function() return game:HttpGet(url) end)
             if s and code and #code > 100 then
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
                     local step = 1
-                    local pxSize = 1
-                    local mapInterval = 1
-                    local offsetX = 1; local offsetY = 2
-                    for y = 1, 32, step do
-                        for x = 1, 32, step do
-                            local dx = x - 16.5
-                            local dy = y - 16.5
-                            if (dx*dx + dy*dy) <= (15.5 * 15.5) then
+                    local pxSize = 8
+                    local mapInterval = 8
+                    local offsetX = 2; local offsetY = 4
+                    for y = 1, 16, step do
+                        for x = 1, 16, step do
+                            local dx = x - 8.5
+                            local dy = y - 8.5
+                            if (dx*dx + dy*dy) <= (7.5 * 7.5) then
                                 local cx = x
                                 local cy = y
                                 local p = pData[cy] and pData[cy][cx]
