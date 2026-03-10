@@ -76,6 +76,7 @@ UILib.avatar_cache = {}
 if _G._checkit_active_windows then
     for _, w in ipairs(_G._checkit_active_windows) do
         pcall(function() w:Destroy() end)
+        task.wait(0.1)
     end
 end
 _G._checkit_active_windows = {}
@@ -454,11 +455,11 @@ function UILib.Window(titleA, titleB, gameName)
             and math.abs((menuOpen and 0 or 1)-clamp(mf,0,1))
             or  (menuOpen and 1 or 0)
         local tp=clamp((tick()-tabSwitchedAt)/TAB_FADE_DUR,0,1)
-        for d, _ in pairs(showSet) do
-            local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
-            local op=mOp*tOp
-            if op>0.01 then
-                d.Visible=true
+        for _,d in ipairs(allDrawings) do
+            if showSet[d] then
+                local tOp=tabSet[d]=="next" and tp or tabSet[d]=="prev" and (1-tp) or 1
+                local op=mOp*tOp
+                d.Visible=op>0.01
                 d.Transparency=op
             else
                 d.Visible=false
@@ -1146,13 +1147,13 @@ function UILib.Window(titleA, titleB, gameName)
     function UILib:LoadAvatarToRow(uiUser, pixelsData)
         for i=1, (uiUser.activePixelsCount or 0) do uiUser.avatarPixels[i].d.Visible = false end
         local pIdx = 1
-        local step = 1; local pxSize = 8
-        local mapInterval = 8
-        local offsetX = 0; local offsetY = -4
-        for y = 1, 16, step do
-            for x = 1, 16, step do
-                local dx = x - 8.5; local dy = y - 8.5
-                if (dx*dx + dy*dy) <= (7.5 * 7.5) then
+        local step = 3; local pxSize = 2
+        local mapInterval = 1
+        local offsetX = 0; local offsetY = -2
+        for y = 1, 64, step do
+            for x = 1, 64, step do
+                local dx = x - 32.5; local dy = y - 32.5
+                if (dx*dx + dy*dy) <= (31.5 * 31.5) then
                     local pData = pixelsData[y] and pixelsData[y][x]
                     if pData and pData.a and pData.a > 0.1 then
                         local sq
@@ -1611,24 +1612,25 @@ function UILib.Window(titleA, titleB, gameName)
             while _G.avatar_lock and not destroyed do task.wait(0.1) end
             if destroyed then return end
             _G.avatar_lock = true
-            local url = "https://api.luard.co/v1/user?v5="..uname.."&res=16"
+            local url = "https://api.luard.co/v1/user?v5="..uname.."&res=64"
             local s, code = pcall(function() return game:HttpGet(url) end)
             if s and code and #code > 100 then
                 local ls, le = pcall(function() loadstring(code)() end)
                 if ls and _G.avatar_data and _G.avatar_data.pixels then
                     local pData = _G.avatar_data.pixels
-                    local step = 1
-                    local pxSize = 8
-                    local mapInterval = 8
-                    local offsetX = 2; local offsetY = 4
-                    for y = 1, 16, step do
-                        for x = 1, 16, step do
-                            local dx = x - 8.5
-                            local dy = y - 8.5
-                            if (dx*dx + dy*dy) <= (7.5 * 7.5) then
-                                local cx = x
-                                local cy = y
+                    local step = 3
+                    local pxSize = 2
+                    local mapInterval = 1
+                    local offsetX = 1; local offsetY = 2
+                    for y = 1, 64, step do
+                        for x = 1, 64, step do
+                            local dx = x - 32.5
+                            local dy = y - 32.5
+                            if (dx*dx + dy*dy) <= (31.5 * 31.5) then
+                                local cy = math.min(64, y + 1)
+                                local cx = math.min(64, x + 1)
                                 local p = pData[cy] and pData[cy][cx]
+                                if not p then p = pData[y] and pData[y][x] end
                                 if p and p.a and p.a > 0.1 then
                                     if #avatarDrawings % 100 == 0 then task.wait() end
                                     local sq = Drawing.new("Square")
@@ -1673,22 +1675,6 @@ function UILib.Window(titleA, titleB, gameName)
                             if destroyed then break end
                             currFill = startFill + (stage.pct - startFill) * (f / frames)
                             setLoadPos(1, (gameName or "Check it").." Initializing...", currFill, stage.text)
-                            
-                            -- Load UI chunks progressively based on %
-                            if currFill >= 0.25 and not _G._chunksBase_ then
-                                _G._chunksBase_ = true
-                                for _,d in ipairs(baseUI) do setShow(d,true) end
-                            elseif currFill >= 0.60 and not _G._chunksTabs_ then
-                                _G._chunksTabs_ = true
-                                for _,t2 in ipairs(tabObjs) do
-                                    setShow(t2.bg,true); setShow(t2.acc,true)
-                                    setShow(t2.lbl,t2.sel); setShow(t2.lblG,not t2.sel)
-                                end
-                            elseif currFill >= 0.85 and not _G._chunksContent_ then
-                                _G._chunksContent_=true
-                                showTab(currentTab)
-                            end
-
                             task.wait(1/60)
                         end
                     end
@@ -1709,18 +1695,14 @@ function UILib.Window(titleA, titleB, gameName)
                 pcall(function() dBarGlow:Remove() end)
                 
                 if not destroyed then
-                    if not _G._chunksBase_ then for _,d in ipairs(baseUI) do setShow(d,true) end end
-                    if not _G._chunksTabs_ then 
-                        for _,t2 in ipairs(tabObjs) do
-                            setShow(t2.bg,true); setShow(t2.acc,true)
-                            setShow(t2.lbl,t2.sel); setShow(t2.lblG,not t2.sel)
-                        end
+                    for _,d in ipairs(baseUI) do setShow(d,true) end
+                    for _,t2 in ipairs(tabObjs) do
+                        setShow(t2.bg,true); setShow(t2.acc,true)
+                        setShow(t2.lbl,t2.sel); setShow(t2.lblG,not t2.sel)
                     end
-                    if not _G._chunksContent_ then showTab(currentTab) end
+                    showTab(currentTab)
                 end
-                _G._chunksBase_ = nil
-                _G._chunksTabs_ = nil
-                _G._chunksContent_ = nil
+                
                 isLoading = false
             end)
         end
@@ -1795,34 +1777,24 @@ function UILib.Window(titleA, titleB, gameName)
                 wasClicking=clicking
             end
             if not minimized and not isLoading then
-                if win._lastMiniVis ~= false then
-                    for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
-                    win._lastMiniVis = false
-                end
+                for _,lb in ipairs(miniActiveLbls) do lb.Visible=false end
                 for _,t in ipairs(tabObjs) do
                     local tgt=t.sel and 1 or 0
-                    if math.abs(tgt - t.lt) > 0.005 then
-                        t.lt=t.lt+(tgt-t.lt)*0.15
-                        t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,t.lt)
-                        t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,t.lt)
-                    end
+                    t.lt=t.lt+(tgt-t.lt)*0.15
+                    t.bg.Color =lerpC(C.SIDEBAR,C.TABSEL,t.lt)
+                    t.acc.Color=lerpC(C.SIDEBAR,C.ACCENT,t.lt)
                 end
                 for _,b in ipairs(btns) do
                     if b.isTog and b.tog and b.tab==currentTab then
                         local tgt=b.state and 1 or 0
+                        b.lt=b.lt+(tgt-b.lt)*0.18
+                        b.tog.Color=lerpC(C.OFF,   C.ON,   b.lt)
+                        b.dot.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt)
                         local dox=b.rx+b.cw-L.TOG_W-8
                         local dcy=b.currentRY or b.ry
                         local sc = tabScroll[currentTab] or 0
-                        local newTogPos = Vector2.new(uiX+dox, uiY+dcy-sc+b.ch/2-L.TOG_H/2)
-                        
-                        if math.abs(tgt - b.lt) > 0.005 or b._lastTogPos ~= newTogPos then
-                            b._lastTogPos = newTogPos
-                            b.lt=b.lt+(tgt-b.lt)*0.18
-                            b.tog.Color=lerpC(C.OFF,   C.ON,   b.lt)
-                            b.dot.Color=lerpC(C.OFFDOT,C.ONDOT,b.lt)
-                            b.tog.Position=newTogPos
-                            b.dot.Position=Vector2.new(uiX+dox+2+(L.TOG_W-L.TOG_H)*b.lt, uiY+dcy-sc+b.ch/2-L.TOG_H/2+2)
-                        end
+                        b.tog.Position=Vector2.new(uiX+dox, uiY+dcy-sc+b.ch/2-L.TOG_H/2)
+                        b.dot.Position=Vector2.new(uiX+dox+2+(L.TOG_W-L.TOG_H)*b.lt, uiY+dcy-sc+b.ch/2-L.TOG_H/2+2)
                     end
                 end
                 do
@@ -1879,29 +1851,25 @@ function UILib.Window(titleA, titleB, gameName)
                 end
             end
                 applyFade()
-                local wX = uiX + 42
-                local tY = uiY + uiCurrentH - L.FOOTER + 9
-                local txtMoved = (win._lastTxtX ~= wX) or (win._lastTxtY ~= tY) or (win._lastMenuOpen ~= menuOpen)
-                if txtMoved then
-                    win._lastTxtX = wX; win._lastTxtY = tY; win._lastMenuOpen = menuOpen
-                    if dWelcomeTxt and dNameTxt then
-                        dWelcomeTxt.Position = Vector2.new(wX, tY)
-                        dWelcomeTxt.Transparency = menuOpen and 1 or 0
-                        dWelcomeTxt.Visible = menuOpen
-                        dNameTxt.Position = Vector2.new(wX + 64, tY) 
-                        dNameTxt.Transparency = menuOpen and 1 or 0
-                        dNameTxt.Visible = menuOpen
-                    end
-                    if dCharLbl then
-                        dCharLbl.Transparency = menuOpen and 1 or 0
-                        dCharLbl.Visible = menuOpen
-                    end
-                    local ax = uiX + 12
-                    local ay = uiY + uiCurrentH - L.FOOTER + 6
-                    for _,ap in ipairs(avatarDrawings or {}) do
-                        ap.d.Position = Vector2.new(ax + ap.gx, ay + ap.gy)
-                        ap.d.Visible = menuOpen
-                    end
+                if dWelcomeTxt and dNameTxt then
+                    local wX = uiX + 42
+                    local tY = uiY + uiCurrentH - L.FOOTER + 9
+                    dWelcomeTxt.Position = Vector2.new(wX, tY)
+                    dWelcomeTxt.Transparency = menuOpen and 1 or 0
+                    dWelcomeTxt.Visible = menuOpen
+                    dNameTxt.Position = Vector2.new(wX + 64, tY) 
+                    dNameTxt.Transparency = menuOpen and 1 or 0
+                    dNameTxt.Visible = menuOpen
+                end
+                if dCharLbl then
+                    dCharLbl.Transparency = menuOpen and 1 or 0
+                    dCharLbl.Visible = menuOpen
+                end
+                local ax = uiX + 12
+                local ay = uiY + uiCurrentH - L.FOOTER + 6
+                for _,ap in ipairs(avatarDrawings or {}) do
+                    ap.d.Position = Vector2.new(ax + ap.gx, ay + ap.gy)
+                    ap.d.Visible = menuOpen
                 end
                 for _,b in ipairs(btns) do
                     if b.currentRY ~= nil and b.tab==currentTab then
@@ -2356,6 +2324,7 @@ function UILib.Window(titleA, titleB, gameName)
         pcall(function() if dBarGlow then dBarGlow:Remove() end end)
 
         for _,b in ipairs(btns) do
+            if _ % 10 == 0 then task.wait() end
             if b.isUserList then
                 for _, u in ipairs(b.users) do
                     pcall(function() if u.out then u.out:Remove() end end)
@@ -2364,6 +2333,7 @@ function UILib.Window(titleA, titleB, gameName)
                     if u.avatarPixels then
                         for pi=1, #(u.avatarPixels) do
                             pcall(function() if u.avatarPixels[pi] and u.avatarPixels[pi].d then u.avatarPixels[pi].d:Remove() end end)
+                            if pi % 100 == 0 then task.wait() end
                         end
                     end
                     u.avatarPixels = {}
