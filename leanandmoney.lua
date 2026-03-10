@@ -1552,25 +1552,25 @@ function UILib.Window(titleA, titleB, gameName)
                 "almost there..."
             }
             local chosenDesc = descriptions[math.random(1, #descriptions)]
-            local dBg = Drawing.new("Square")
+            local dBg = mkD(Drawing.new("Square"))
             dBg.Filled=true; dBg.ZIndex=15; dBg.Color=C.BG
             pcall(function() dBg.Corner = 6 end)
-            local dTxt = Drawing.new("Text")
+            local dTxt = mkD(Drawing.new("Text"))
             dTxt.Size=18; dTxt.Color=C.WHITE; dTxt.Center=true; dTxt.Outline=true; dTxt.ZIndex=16
             pcall(function() dTxt.Font=Drawing.Fonts.Minecraft end)
-            local dDesc = Drawing.new("Text")
+            local dDesc = mkD(Drawing.new("Text"))
             dDesc.Size=13; dDesc.Color=Color3.fromRGB(150, 150, 160); dDesc.Center=true; dDesc.Outline=true; dDesc.ZIndex=16
             pcall(function() dDesc.Font=Drawing.Fonts.Minecraft end)
-            local dBarOuter = Drawing.new("Square")
+            local dBarOuter = mkD(Drawing.new("Square"))
             dBarOuter.Filled=true; dBarOuter.ZIndex=16; dBarOuter.Color=Color3.fromRGB(12, 12, 16)
             pcall(function() dBarOuter.Corner = 4 end)
-            local dBarBg = Drawing.new("Square")
+            local dBarBg = mkD(Drawing.new("Square"))
             dBarBg.Filled=true; dBarBg.ZIndex=17; dBarBg.Color=Color3.fromRGB(25, 25, 30)
             pcall(function() dBarBg.Corner = 2 end)
-            local dBarFg = Drawing.new("Square")
+            local dBarFg = mkD(Drawing.new("Square"))
             dBarFg.Filled=true; dBarFg.ZIndex=18; dBarFg.Color=C.ACCENT
             pcall(function() dBarFg.Corner = 2 end)
-            local dBarGlow = Drawing.new("Square")
+            local dBarGlow = mkD(Drawing.new("Square"))
             dBarGlow.Filled=true; dBarGlow.ZIndex=16; dBarGlow.Color=C.ACCENT
             pcall(function() dBarGlow.Corner = 8 end)
             local function setLoadPos(alpha, text, fillAmt, textDesc)
