@@ -1164,6 +1164,29 @@ function UILib.Window(titleA, titleB, gameName)
             local y = nextY(L.ROW_H + 4)
             local idx = addToggle(tabName, lbl, y, init, cb, desc)
             if currentSection then btns[idx].section = currentSection end
+            
+            local togApi = {}
+            function togApi:SetState(newState)
+                local b = btns[idx]
+                if not b then return end
+                b.state = newState
+                b.lt = newState and 1 or 0
+                pcall(function()
+                    b.tog.Color = b.state and C.ON or C.OFF
+                    b.dot.Color = b.state and C.ONDOT or C.OFFDOT
+                    local dox = b.rx + b.cw - L.TOG_W - 8
+                    local dcy = b.currentRY or b.ry
+                    local sc = tabScroll[b.tab] or 0
+                    b.tog.Position = Vector2.new(uiX + dox, uiY + dcy - sc + b.ch / 2 - L.TOG_H / 2)
+                    b.dot.Position = Vector2.new(uiX + dox + 2 + (L.TOG_W - L.TOG_H) * b.lt, uiY + dcy - sc + b.ch / 2 - L.TOG_H / 2 + 2)
+                end)
+                if b.cb then pcall(function() b.cb(b.state) end) end
+                pcall(function()
+                    refreshMiniLabels()
+                    if minimized and not miniClosed then updateMiniPos() end
+                end)
+            end
+            return togApi
         end
         function api:Slider(lbl, minV, maxV, initV, cb, isFloat, desc)
             local y = nextY(L.ROW_H + 10)
